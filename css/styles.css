@@ -62,6 +62,7 @@ body {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
+  text-align: center;
 }
 
 .container-wide {
@@ -97,14 +98,13 @@ body {
   background-clip: text;
   -webkit-text-fill-color: white
   background-clip text;
-  margin: auto;
-  text-align: center;
 }
 
 .navbar-menu {
   display: flex;
   gap: 30px;
   list-style: none;
+  margin: auto;
 }
 
 .navbar-menu a {
