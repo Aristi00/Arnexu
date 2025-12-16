@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio| Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <img src="arnexu-64x (1).png" alt="Logo Arnexu">
+      <div class="navbar-logo">ARNEXU</div>
+    <ul class="navbar-menu">
+        <li><a href="inicio.html">🏠 Inicio</a></li>
+        <li><a href="crear.html">➕ Crear</a></li>
+        <li><a href="chat.html">💬 Chat</a></li>
+        <li><a href="perfil.html" id="navPerfil">👤 Perfil</a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">Cerrar Sesión</a></li>
+    </ul>
+    </div>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <div class="container" style="margin-top: 30px;">
+    <h2 style="margin-bottom: 25px; font-size: 28px;">
+      Descubre Proyectos
+    </h2>
+
+    <!-- Área de publicaciones -->
+    <div id="feedPublicaciones">
+      <div class="loading">Cargando publicaciones...</div>
+    </div>
+
+    <!-- Mensaje cuando no hay publicaciones -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <h3>No hay publicaciones aún</h3>
+      <p>Sé el primero en compartir tu proyecto</p>
+      <a href="crear.html" class="btn btn-primary" style="margin-top: 20px;">
+        Crear Publicación
+      </a>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // ============================================
+    // PROTEGER PÁGINA Y CARGAR USUARIO
+    // ============================================
+    let usuarioActual = null;
+
+    async function inicializar() {
+      await protegerPagina();
+      usuarioActual = await getCurrentUser();
+      if (usuarioActual) {
+        cargarPublicaciones();
+      }
+    }
+
+    // ============================================
+    // CARGAR PUBLICACIONES
+    // ============================================
+    async function cargarPublicaciones() {
+      try {
+        // Obtener todas las publicaciones con información del autor
+        const { data: publicaciones, error } = await supabase
+          .from('publicaciones')
+          .select(`
+            *,
+            usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const feed = document.getElementById('feedPublicaciones');
+        const emptyState = document.getElementById('emptyState');
+
+        if (!publicaciones || publicaciones.length === 0) {
+          feed.style.display = 'none';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        // Para cada publicación, verificar si el usuario actual le dio like
+        const publicacionesConLikes = await Promise.all(
+          publicaciones.map(async (pub) => {
+            const { data: miLike } = await supabase
+              .from('likes')
+              .select('id')
+              .eq('publicacion_id', pub.id)
+              .eq('usuario_id', usuarioActual.id)
+              .single();
+
+            return { ...pub, usuarioLeDioLike: !!miLike };
+          })
+        );
+
+        mostrarPublicaciones(publicacionesConLikes);
+
+      } catch (error) {
+        console.error('Error cargando publicaciones:', error);
+        document.getElementById('feedPublicaciones').innerHTML = 
+          '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
+      }
+    }
+
+    // ============================================
+    // MOSTRAR PUBLICACIONES EN EL FEED
+    // ============================================
+    function mostrarPublicaciones(publicaciones) {
+      const feed = document.getElementById('feedPublicaciones');
+      
+      feed.innerHTML = publicaciones.map(pub => {
+        const tipoEmoji = {
+          'idea': '💡',
+          'proyecto': '🚀',
+          'otro': '📌'
+        };
+
+        const tipoTexto = {
+          'idea': 'Solo una idea',
+          'proyecto': 'Proyecto en desarrollo',
+          'otro': 'Otro'
+        };
+
+        return `
+          <div class="publicacion-card">
+            <div class="publicacion-header">
+              <img 
+                src="${pub.usuario.foto_perfil || 'https://via.placeholder.com/48'}" 
+                alt="${pub.usuario.nombre_completo}"
+                class="publicacion-avatar"
+                onclick="verPerfil('${pub.usuario_id}')"
+                style="cursor: pointer;"
+              >
+              <div class="publicacion-info" style="flex: 1;">
+                <h3 onclick="verPerfil('${pub.usuario_id}')" style="cursor: pointer;">
+                  ${pub.usuario.nombre_completo}
+                </h3>
+                <p>@${pub.usuario.nombre_usuario} • ${formatearFecha(pub.created_at)}</p>
+              </div>
+            </div>
+
+            <div class="publicacion-badge">
+              ${tipoEmoji[pub.tipo]} ${tipoTexto[pub.tipo]}
+            </div>
+
+            <h2 class="publicacion-titulo">${pub.titulo}</h2>
+            
+            <p class="publicacion-descripcion">${pub.descripcion}</p>
+
+            <span class="publicacion-categoria">${pub.categoria}</span>
+
+            <div class="publicacion-acciones">
+              <button 
+                class="publicacion-accion ${pub.usuarioLeDioLike ? 'liked' : ''}" 
+                onclick="toggleLike('${pub.id}', ${pub.usuarioLeDioLike})"
+                id="like-${pub.id}"
+              >
+                ${pub.usuarioLeDioLike ? '❤️' : '🤍'} 
+                <span id="count-${pub.id}">${pub.likes_count || 0}</span>
+              </button>
+
+              <button class="publicacion-accion" onclick="compartir('${pub.id}')">
+                🔗 Compartir
+              </button>
+
+              <button class="publicacion-accion" onclick="verPerfil('${pub.usuario_id}')">
+                👤 Ver perfil
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // DAR/QUITAR LIKE
+    // ============================================
+    async function toggleLike(publicacionId, yaLeDioLike) {
+      try {
+        if (yaLeDioLike) {
+          // Quitar like
+          await supabase
+            .from('likes')
+            .delete()
+            .eq('publicacion_id', publicacionId)
+            .eq('usuario_id', usuarioActual.id);
+
+          // Actualizar contador
+          await supabase.rpc('decrement_likes', { pub_id: publicacionId });
+          
+        } else {
+          // Dar like
+          await supabase
+            .from('likes')
+            .insert([{
+              publicacion_id: publicacionId,
+              usuario_id: usuarioActual.id
+            }]);
+
+          // Actualizar contador
+          await supabase.rpc('increment_likes', { pub_id: publicacionId });
+        }
+
+        // Recargar publicaciones para reflejar cambios
+        cargarPublicaciones();
+
+      } catch (error) {
+        console.error('Error al dar like:', error);
+        mostrarNotificacion('Error al procesar el like', 'error');
+      }
+    }
+
+    // ============================================
+    // COMPARTIR PUBLICACIÓN
+    // ============================================
+    function compartir(publicacionId) {
+      const url = `${window.location.origin}/inicio.html#pub-${publicacionId}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'Publicación en Arnexu',
+          url: url
+        });
+      } else {
+        navigator.clipboard.writeText(url);
+        mostrarNotificacion('Enlace copiado al portapapeles');
+      }
+    }
+
+    // ============================================
+    // VER PERFIL DE USUARIO
+    // ============================================
+    function verPerfil(usuarioId) {
+      window.location.href = `perfil.html?id=${usuarioId}`;
+    }
+
+    // ============================================
+    // INICIALIZAR AL CARGAR LA PÁGINA
+    // ============================================
+    inicializar();
+  </script>
+
+  <!-- Nota: Necesitamos crear funciones RPC en Supabase -->
+  <!-- Ve al SQL Editor y ejecuta esto: -->
+  <!--
+  CREATE OR REPLACE FUNCTION increment_likes(pub_id UUID)
+  RETURNS void AS $$
+  BEGIN
+    UPDATE publicaciones 
+    SET likes_count = likes_count + 1 
+    WHERE id = pub_id;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE OR REPLACE FUNCTION decrement_likes(pub_id UUID)
+  RETURNS void AS $$
+  BEGIN
+    UPDATE publicaciones 
+    SET likes_count = GREATEST(likes_count - 1, 0)
+    WHERE id = pub_id;
+  END;
+  $$ LANGUAGE plpgsql;
+  -->
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>

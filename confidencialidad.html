@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acuerdo de Confidencialidad - Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .nda-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 40px;
+      background: var(--gris-oscuro);
+      border-radius: 12px;
+      border: 1px solid var(--gris-medio);
+    }
+
+    .nda-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 30px;
+      border-bottom: 2px solid var(--gris-medio);
+    }
+
+    .nda-header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff, #5f5f5f);
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .nda-fecha {
+      color: var(--gris-neon);
+      font-size: 14px;
+    }
+
+    .seccion {
+      margin-bottom: 35px;
+    }
+
+    .seccion h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--acento);
+      margin-bottom: 15px;
+    }
+
+    .seccion h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--blanco);
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .seccion p {
+      color: var(--gris-neon);
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .seccion ul, .seccion ol {
+      color: var(--gris-neon);
+      line-height: 1.8;
+      margin-left: 20px;
+      margin-bottom: 15px;
+    }
+
+    .seccion li {
+      margin-bottom: 10px;
+    }
+
+    .destacado {
+      background: var(--gris-medio);
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--acento);
+      margin: 20px 0;
+    }
+
+    .destacado p {
+      color: var(--blanco);
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .advertencia-box {
+      background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 136, 0, 0.1));
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #ff4444;
+      margin: 20px 0;
+    }
+
+    .advertencia-box p {
+      color: #ff8888;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .ejemplo-box {
+      background: rgba(0, 255, 136, 0.05);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 3px solid var(--acento);
+    }
+
+    .ejemplo-box h4 {
+      color: var(--acento);
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .ejemplo-box p {
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .btn-volver {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, var(--gris-neon), #c0c0c0);
+      color: var(--negro);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.3s;
+    }
+
+    .btn-volver:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="nda-container">
+    <!-- Header -->
+    <div class="nda-header">
+      <h1>🔐 ACUERDO DE CONFIDENCIALIDAD</h1>
+      <p class="nda-fecha">Última actualización: Diciembre 15, 2025</p>
+    </div>
+
+    <!-- Introducción -->
+    <div class="seccion">
+      <h2>Introducción</h2>
+      <p>
+        Este Acuerdo de Confidencialidad (en adelante, el "Acuerdo") establece los términos bajo los cuales 
+        los usuarios de <strong>ARNEXU</strong> comparten y protegen información confidencial en la plataforma.
+      </p>
+      <div class="destacado">
+        <p>
+          🤝 Al usar Arnexu para compartir proyectos, ideas o información empresarial, aceptas cumplir con 
+          este Acuerdo de Confidencialidad.
+        </p>
+      </div>
+    </div>
+
+    <!-- Importancia -->
+    <div class="seccion">
+      <h2>¿Por Qué es Importante este Acuerdo?</h2>
+      <p>
+        Arnexu es una plataforma donde emprendedores e inversores comparten ideas de negocio, proyectos 
+        en desarrollo y oportunidades de inversión. La confidencialidad es fundamental para:
+      </p>
+      <ul>
+        <li>Proteger la propiedad intelectual de los emprendedores</li>
+        <li>Mantener la ventaja competitiva de los proyectos</li>
+        <li>Generar confianza entre usuarios</li>
+        <li>Facilitar conversaciones honestas y abiertas</li>
+        <li>Prevenir el uso indebido de información privilegiada</li>
+      </ul>
+    </div>
+
+    <!-- 1. Definiciones -->
+    <div class="seccion">
+      <h2>1. Definiciones</h2>
+      
+      <h3>1.1 Información Confidencial</h3>
+      <p>Se considera "Información Confidencial" cualquier información que:</p>
+      <ul>
+        <li>Sea revelada por un usuario (el "Divulgador") a otro usuario (el "Receptor")</li>
+        <li>Esté marcada explícitamente como confidencial</li>
+        <li>Sea razonablemente entendida como confidencial dado su naturaleza</li>
+      </ul>
+
+      <h3>Ejemplos de Información Confidencial:</h3>
+      <div class="ejemplo-box">
+        <h4>✅ Información que SÍ es Confidencial:</h4>
+        <p>• Planes de negocio detallados y estrategias</p>
+        <p>• Proyecciones financieras y modelos económicos</p>
+        <p>• Información sobre clientes y proveedores</p>
+        <p>• Tecnología propietaria y procesos únicos</p>
+        <p>• Datos de ventas y métricas no públicas</p>
+        <p>• Información compartida en conversaciones privadas</p>
+        <p>• Documentos marcados como "Confidencial"</p>
+      </div>
+
+      <div class="ejemplo-box">
+        <h4>❌ Información que NO es Confidencial:</h4>
+        <p>• Información que ya es pública</p>
+        <p>• Información que obtienes de otra fuente legítima</p>
+        <p>• Información que desarrollas independientemente</p>
+        <p>• Información publicada abiertamente en tu perfil público</p>
+      </div>
+
+      <h3>1.2 Partes del Acuerdo</h3>
+      <ul>
+        <li><strong>Divulgador:</strong> Usuario que comparte información confidencial</li>
+        <li><strong>Receptor:</strong> Usuario que recibe información confidencial</li>
+        <li><strong>Arnexu:</strong> La plataforma que facilita la conexión</li>
+      </ul>
+    </div>
+
+    <!-- 2. Obligaciones del Receptor -->
+    <div class="seccion">
+      <h2>2. Obligaciones del Receptor de Información</h2>
+      
+      <h3>2.1 Deber de Confidencialidad</h3>
+      <p>Como receptor de información confidencial, te comprometes a:</p>
+      <ol>
+        <li><strong>No divulgar</strong> la información confidencial a terceros sin autorización escrita del divulgador</li>
+        <li><strong>Proteger</strong> la información con el mismo nivel de cuidado que usas para tu propia información confidencial</li>
+        <li><strong>Usar</strong> la información únicamente para evaluar oportunidades de colaboración o inversión</li>
+        <li><strong>Limitar el acceso</strong> solo a personas que necesiten conocerla y que estén también obligadas por confidencialidad</li>
+      </ol>
+
+      <h3>2.2 Usos Permitidos</h3>
+      <p>Puedes usar la información confidencial SOLO para:</p>
+      <ul>
+        <li>Evaluar la viabilidad de un proyecto o inversión</li>
+        <li>Realizar análisis de due diligence autorizado</li>
+        <li>Negociar términos de colaboración o inversión</li>
+        <li>Cualquier otro propósito expresamente autorizado por el divulgador</li>
+      </ul>
+
+      <h3>2.3 Usos Prohibidos</h3>
+      <div class="advertencia-box">
+        <p>
+          🚫 ESTRICTAMENTE PROHIBIDO usar información confidencial para:
+        </p>
+      </div>
+      <ul>
+        <li>Desarrollar o copiar la idea o proyecto revelado</li>
+        <li>Competir con el divulgador</li>
+        <li>Compartir con competidores del divulgador</li>
+        <li>Publicar o divulgar públicamente</li>
+        <li>Cualquier propósito que perjudique al divulgador</li>
+      </ul>
+    </div>
+
+    <!-- 3. Obligaciones del Divulgador -->
+    <div class="seccion">
+      <h2>3. Obligaciones del Divulgador de Información</h2>
+      
+      <h3>3.1 Responsabilidad por lo que Compartes</h3>
+      <p>Como divulgador de información, debes:</p>
+      <ul>
+        <li><strong>Marcar claramente</strong> qué información consideras confidencial</li>
+        <li><strong>Compartir selectivamente</strong> solo lo necesario</li>
+        <li><strong>Usar mensajes privados</strong> para información sensible</li>
+        <li><strong>Verificar</strong> con quién compartes antes de revelar información crítica</li>
+      </ul>
+
+      <h3>3.2 Información Pública vs. Privada</h3>
+      <div class="destacado">
+        <p>
+          ⚠️ IMPORTANTE: Cualquier información que publiques en tu perfil público o en publicaciones 
+          abiertas NO está protegida por este acuerdo de confidencialidad.
+        </p>
+      </div>
+      <p>
+        Si quieres proteger información:
+      </p>
+      <ul>
+        <li>✅ Usa el sistema de chat privado</li>
+        <li>✅ Envía documentos confidenciales directamente</li>
+        <li>✅ Marca explícitamente los documentos como "Confidencial"</li>
+        <li>❌ NO publiques en tu perfil público</li>
+        <li>❌ NO compartas en publicaciones abiertas</li>
+      </ul>
+    </div>
+
+    <!-- 4. Duración de la Confidencialidad -->
+    <div class="seccion">
+      <h2>4. Duración de la Confidencialidad</h2>
+      
+      <h3>4.1 Periodo de Protección</h3>
+      <p>
+        La obligación de confidencialidad permanece en vigor durante:
+      </p>
+      <ul>
+        <li><strong>Mínimo:</strong> 2 años desde la fecha de divulgación</li>
+        <li><strong>Máximo:</strong> Hasta que la información se vuelva pública por medios legítimos</li>
+        <li><strong>Indefinidamente:</strong> Para secretos comerciales o información altamente sensible</li>
+      </ul>
+
+      <h3>4.2 Supervivencia del Acuerdo</h3>
+      <p>
+        Este acuerdo continúa vigente incluso si:
+      </p>
+      <ul>
+        <li>Decides no invertir o colaborar en el proyecto</li>
+        <li>Cierras tu cuenta en Arnexu</li>
+        <li>Terminas cualquier relación comercial con el divulgador</li>
+      </ul>
+    </div>
+
+    <!-- 5. Excepciones -->
+    <div class="seccion">
+      <h2>5. Excepciones a la Confidencialidad</h2>
+      
+      <p>NO estás obligado a mantener confidencialidad si:</p>
+      
+      <h3>5.1 Divulgación Legal Requerida</h3>
+      <ul>
+        <li>Recibes una orden judicial o citación legal</li>
+        <li>Es requerido por ley o regulación</li>
+        <li>Autoridades gubernamentales lo solicitan legalmente</li>
+      </ul>
+      <p>
+        <strong>IMPORTANTE:</strong> Si recibes tal requerimiento, debes notificar al divulgador inmediatamente 
+        (a menos que esté legalmente prohibido hacerlo).
+      </p>
+
+      <h3>5.2 Información Previamente Conocida</h3>
+      <ul>
+        <li>Ya conocías la información antes de recibirla del divulgador</li>
+        <li>La información se vuelve pública sin culpa tuya</li>
+        <li>La recibes legalmente de un tercero no obligado por confidencialidad</li>
+        <li>La desarrollas independientemente sin usar información confidencial</li>
+      </ul>
+    </div>
+
+    <!-- 6. Consecuencias del Incumplimiento -->
+    <div class="seccion">
+      <h2>6. Consecuencias del Incumplimiento</h2>
+      
+      <div class="advertencia-box">
+        <p>
+          ⚖️ El incumplimiento de este Acuerdo de Confidencialidad puede resultar en:
+        </p>
+      </div>
+
+      <h3>6.1 Acciones Inmediatas</h3>
+      <ul>
+        <li>Suspensión o terminación de tu cuenta en Arnexu</li>
+        <li>Prohibición permanente de usar la plataforma</li>
+        <li>Reporte a las autoridades competentes</li>
+      </ul>
+
+      <h3>6.2 Responsabilidad Legal</h3>
+      <ul>
+        <li><strong>Daños y perjuicios:</strong> Puedes ser responsable de compensar al divulgador por daños causados</li>
+        <li><strong>Medidas cautelares:</strong> El divulgador puede solicitar órdenes judiciales para prevenir divulgación adicional</li>
+        <li><strong>Costos legales:</strong> Puedes ser obligado a pagar los honorarios legales del divulgador</li>
+        <li><strong>Sanciones penales:</strong> En casos graves, puede haber consecuencias criminales</li>
+      </ul>
+
+      <h3>6.3 Daño Reputacional</h3>
+      <p>
+        Violar la confidencialidad puede dañar seriamente tu reputación en la comunidad emprendedora 
+        y de inversión, afectando futuras oportunidades de negocio.
+      </p>
+    </div>
+
+    <!-- 7. Propiedad Intelectual -->
+    <div class="seccion">
+      <h2>7. Propiedad Intelectual</h2>
+      
+      <h3>7.1 Retención de Derechos</h3>
+      <p>
+        La divulgación de información confidencial NO transfiere ningún derecho de propiedad intelectual. 
+        El divulgador conserva todos los derechos sobre:
+      </p>
+      <ul>
+        <li>Patentes y solicitudes de patentes</li>
+        <li>Derechos de autor</li>
+        <li>Marcas registradas</li>
+        <li>Secretos comerciales</li>
+        <li>Cualquier otra propiedad intelectual</li>
+      </ul>
+
+      <h3>7.2 No Licencia</h3>
+      <p>
+        Este acuerdo NO te otorga ninguna licencia, implícita o explícita, para usar la propiedad 
+        intelectual del divulgador.
+      </p>
+    </div>
+
+    <!-- 8. Mejores Prácticas -->
+    <div class="seccion">
+      <h2>8. Mejores Prácticas de Confidencialidad</h2>
+      
+      <h3>Para Emprendedores (Divulgadores):</h3>
+      <div class="ejemplo-box">
+        <h4>✅ Recomendaciones:</h4>
+        <p>• Comparte gradualmente - No reveles todo de inmediato</p>
+        <p>• Verifica perfiles antes de compartir información sensible</p>
+        <p>• Usa el chat privado para información confidencial</p>
+        <p>• Marca documentos como "Confidencial"</p>
+        <p>• Considera NDAs formales para negociaciones avanzadas</p>
+        <p>• Mantén registro de qué compartiste y con quién</p>
+      </div>
+
+      <h3>Para Inversores (Receptores):</h3>
+      <div class="ejemplo-box">
+        <h4>✅ Recomendaciones:</h4>
+        <p>• Respeta la confidencialidad incluso si decides no invertir</p>
+        <p>• No compartas información con otros inversores sin permiso</p>
+        <p>• Elimina información confidencial si no procedes con el proyecto</p>
+        <p>• Pregunta si puedes compartir antes de hacerlo</p>
+        <p>• Sé transparente sobre conflictos de interés</p>
+      </div>
+    </div>
+
+    <!-- 9. Rol de Arnexu -->
+    <div class="seccion">
+      <h2>9. Rol de Arnexu en la Confidencialidad</h2>
+      
+      <h3>9.1 Lo que Arnexu Hace:</h3>
+      <ul>
+        <li>✅ Proporciona herramientas de mensajería privada</li>
+        <li>✅ Establece este marco de confidencialidad</li>
+        <li>✅ Puede suspender cuentas por violaciones evidentes</li>
+        <li>✅ Encripta comunicaciones y almacena datos de forma segura</li>
+      </ul>
+
+      <h3>9.2 Lo que Arnexu NO Hace:</h3>
+      <ul>
+        <li>❌ NO monitorea conversaciones privadas entre usuarios</li>
+        <li>❌ NO puede garantizar que todos cumplan el acuerdo</li>
+        <li>❌ NO es responsable de violaciones entre usuarios</li>
+        <li>❌ NO proporciona asesoría legal sobre confidencialidad</li>
+      </ul>
+
+      <div class="destacado">
+        <p>
+          ⚠️ Arnexu es un facilitador. La responsabilidad de proteger y respetar la confidencialidad 
+          recae en los usuarios individuales.
+        </p>
+      </div>
+    </div>
+
+    <!-- 10. Recomendaciones Legales -->
+    <div class="seccion">
+      <h2>10. Recomendaciones Legales</h2>
+      
+      <h3>Para Protección Adicional:</h3>
+      <p>
+        Este acuerdo proporciona protección básica, pero para negociaciones importantes, 
+        considera obtener:
+      </p>
+      <ul>
+        <li><strong>NDA Bilateral Formal:</strong> Acuerdo legal firmado entre ambas partes</li>
+        <li><strong>Asesoría Legal:</strong> Consulta con un abogado especializado</li>
+        <li><strong>Registro de Propiedad Intelectual:</strong> Protege tus patentes y marcas</li>
+        <li><strong>Contratos Detallados:</strong> Para acuerdos de inversión o sociedad</li>
+      </ul>
+
+      <div class="advertencia-box">
+        <p>
+          👨‍⚖️ IMPORTANTE: Arnexu NO proporciona asesoría legal. Consulta con un abogado para 
+          asuntos específicos de confidencialidad y propiedad intelectual.
+        </p>
+      </div>
+    </div>
+
+    <!-- 11. Jurisdicción -->
+    <div class="seccion">
+      <h2>11. Jurisdicción y Ley Aplicable</h2>
+      <p>
+        Este Acuerdo de Confidencialidad se rige por las leyes de Colombia. 
+        Cualquier disputa relacionada será resuelta en los tribunales competentes de Medellín, Antioquia.
+      </p>
+    </div>
+
+    <!-- 12. Contacto -->
+    <div class="seccion">
+      <h2>12. Reportar Violaciones</h2>
+      <p>
+        Si crees que alguien ha violado este Acuerdo de Confidencialidad:
+      </p>
+      <ol>
+        <li>Documenta la violación con evidencia (capturas, emails, etc.)</li>
+        <li>Contáctanos inmediatamente</li>
+        <li>Consulta con un abogado sobre acciones legales</li>
+      </ol>
+      <div class="destacado">
+        <p style="text-align: center;">
+          📧 Email: <strong>legal@arnexu.com</strong><br>
+          🌐 Web: www.arnexu.com<br>
+          📍 Medellín, Antioquia, Colombia
+        </p>
+      </div>
+    </div>
+
+    <!-- Aceptación -->
+    <div class="destacado" style="margin-top: 40px; text-align: center;">
+      <p style="font-size: 16px; font-weight: 600;">
+        ✅ Al usar Arnexu para compartir o recibir información confidencial, aceptas estar obligado 
+        por este Acuerdo de Confidencialidad.
+      </p>
+    </div>
+
+    <!-- Botón Volver -->
+    <div style="text-align: center;">
+      <a href="index.html" class="btn-volver">← Volver a Arnexu</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>

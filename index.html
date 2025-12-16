@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login| Arnexu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container" style="max-width: 450px; margin-top: 80px;">
+    <!-- Logo -->
+    <div class="text-center mb-20">
+      <h1 style="font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #5f5f5f); background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">
+        ARNEXU
+      </h1>
+      <p style="color: var(--gris-neon); font-size: 16px;">
+        Conecta tu proyecto con el mundo
+      </p>
+    </div>
+
+    <!-- Formulario de Login -->
+    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+      <h2 style="margin-bottom: 25px; font-size: 24px;">Iniciar Sesión</h2>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Correo o Teléfono</label>
+          <input 
+            type="text" 
+            id="loginIdentifier" 
+            class="form-input" 
+            placeholder="correo@ejemplo.com o +57..."
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input 
+            type="password" 
+            id="loginPassword" 
+            class="form-input" 
+            placeholder="••••••••"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          INICIAR SESIÓN
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--gris-medio);">
+        <p style="color: var(--gris-neon); font-size: 14px;">
+          ¿No tienes cuenta? 
+          <a href="registro.html" style="color: var(--acento); text-decoration: none; font-weight: 600;">
+            Regístrate aquí
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div style="text-align: center; margin-top: 40px; color: var(--gris-neon); font-size: 14px;">
+      <p>🚀 Emprendedores | 💼 Inversores | 🌟 Oportunidades</p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // ============================================
+    // VERIFICAR SI YA HAY SESIÓN ACTIVA
+    // ============================================
+    checkSession().then(session => {
+      if (session) {
+        window.location.href = 'inicio.html';
+      }
+    });
+
+    // ============================================
+    // MANEJO DEL FORMULARIO DE LOGIN
+    // ============================================
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const identifier = document.getElementById('loginIdentifier').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      // Validaciones básicas
+      if (!identifier || !password) {
+        mostrarNotificacion('Por favor completa todos los campos', 'error');
+        return;
+      }
+
+      try {
+        // Determinar si es email o teléfono
+        const esEmail = identifier.includes('@');
+        
+        let resultado;
+        
+        if (esEmail) {
+          // Login con email
+          resultado = await supabase.auth.signInWithPassword({
+            email: identifier,
+            password: password,
+          });
+        } else {
+          // Login con teléfono
+          resultado = await supabase.auth.signInWithPassword({
+            phone: identifier,
+            password: password,
+          });
+        }
+
+        if (resultado.error) throw resultado.error;
+
+        // Login exitoso
+        mostrarNotificacion('¡Bienvenido a Arnexu!');
+        setTimeout(() => {
+          window.location.href = 'inicio.html';
+        }, 1000);
+
+      } catch (error) {
+        console.error('Error en login:', error);
+        mostrarNotificacion('Credenciales incorrectas. Intenta de nuevo.', 'error');
+      }
+    });
+  </script>
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>

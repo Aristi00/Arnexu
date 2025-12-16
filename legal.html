@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentos Legales - Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .legal-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 40px;
+    }
+
+    .legal-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .legal-header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff, #5f5f5f);
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+    }
+
+    .legal-header p {
+      color: var(--gris-neon);
+      font-size: 16px;
+    }
+
+    .documentos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-bottom: 50px;
+    }
+
+    .documento-card {
+      background: var(--gris-oscuro);
+      border: 2px solid var(--gris-medio);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .documento-card:hover {
+      border-color: var(--acento);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
+    }
+
+    .documento-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .documento-card h3 {
+      font-size: 20px;
+      color: var(--blanco);
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .documento-card p {
+      color: var(--gris-neon);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .documento-card .btn {
+      width: 100%;
+    }
+
+    .info-section {
+      background: var(--gris-oscuro);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 30px;
+      border: 1px solid var(--gris-medio);
+    }
+
+    .info-section h2 {
+      font-size: 24px;
+      color: var(--acento);
+      margin-bottom: 20px;
+    }
+
+    .info-section p {
+      color: var(--gris-neon);
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .info-section ul {
+      color: var(--gris-neon);
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+
+    .contacto-legal {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 255, 0.1));
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .contacto-legal h2 {
+      color: var(--acento);
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .contacto-legal p {
+      color: var(--gris-neon);
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .contacto-legal strong {
+      color: var(--blanco);
+    }
+
+    .ultima-actualizacion {
+      text-align: center;
+      color: var(--gris-neon);
+      font-size: 14px;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid var(--gris-medio);
+    }
+
+    .btn-volver {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 30px;
+      background: linear-gradient(135deg, var(--gris-neon), #c0c0c0);
+      color: var(--negro);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.3s;
+    }
+
+    .btn-volver:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="legal-container">
+    <!-- Header -->
+    <div class="legal-header">
+      <h1>📚 Documentos Legales</h1>
+      <p>Información importante sobre el uso de Arnexu</p>
+    </div>
+
+    <!-- Grid de Documentos -->
+    <div class="documentos-grid">
+      <!-- Términos y Condiciones -->
+      <div class="documento-card" onclick="window.location.href='terminos.html'">
+        <div class="documento-icon">📋</div>
+        <h3>Términos y Condiciones</h3>
+        <p>
+          Reglas de uso de la plataforma, derechos y obligaciones de los usuarios, 
+          y limitaciones de responsabilidad.
+        </p>
+        <a href="terminos.html" class="btn btn-primary">Leer Documento</a>
+      </div>
+
+      <!-- Política de Privacidad -->
+      <div class="documento-card" onclick="window.location.href='privacidad.html'">
+        <div class="documento-icon">🔒</div>
+        <h3>Política de Privacidad</h3>
+        <p>
+          Cómo recopilamos, usamos y protegemos tus datos personales. 
+          Tus derechos de privacidad y control sobre tu información.
+        </p>
+        <a href="privacidad.html" class="btn btn-primary">Leer Documento</a>
+      </div>
+
+      <!-- Política de Cookies -->
+      <div class="documento-card" onclick="window.location.href='cookies.html'">
+        <div class="documento-icon">🍪</div>
+        <h3>Política de Cookies</h3>
+        <p>
+          Qué cookies utilizamos, por qué las necesitamos y cómo puedes 
+          controlarlas en tu navegador.
+        </p>
+        <a href="cookies.html" class="btn btn-primary">Leer Documento</a>
+      </div>
+
+      <!-- Acuerdo de Confidencialidad -->
+      <div class="documento-card" onclick="window.location.href='confidencialidad.html'">
+        <div class="documento-icon">🤐</div>
+        <h3>Acuerdo de Confidencialidad</h3>
+        <p>
+          Protección de información confidencial compartida entre emprendedores 
+          e inversores en la plataforma.
+        </p>
+        <a href="confidencialidad.html" class="btn btn-primary">Leer Documento</a>
+      </div>
+    </div>
+
+    <!-- Información Importante -->
+    <div class="info-section">
+      <h2>⚖️ Información Legal Importante</h2>
+      
+      <h3 style="color: var(--blanco); margin-top: 20px; margin-bottom: 10px;">
+        ¿Por Qué Debes Leer Estos Documentos?
+      </h3>
+      <p>
+        Estos documentos legales son fundamentales para entender:
+      </p>
+      <ul>
+        <li>Cómo funciona Arnexu y qué puedes esperar de nosotros</li>
+        <li>Tus derechos como usuario de la plataforma</li>
+        <li>Tus responsabilidades al usar nuestros servicios</li>
+        <li>Cómo protegemos tu información personal</li>
+        <li>Las reglas de confidencialidad al compartir proyectos</li>
+      </ul>
+
+      <h3 style="color: var(--blanco); margin-top: 25px; margin-bottom: 10px;">
+        Resumen Ejecutivo
+      </h3>
+      <p><strong>Lo más importante que debes saber:</strong></p>
+      <ul>
+        <li><strong>Responsabilidad:</strong> Arnexu es una plataforma de conexión, no somos asesores financieros ni garantizamos inversiones</li>
+        <li><strong>Privacidad:</strong> Tus datos están protegidos y nunca los vendemos a terceros</li>
+        <li><strong>Confidencialidad:</strong> La información que compartes en privado debe ser respetada por otros usuarios</li>
+        <li><strong>Due Diligence:</strong> Siempre investiga antes de invertir o compartir información sensible</li>
+        <li><strong>Uso Responsable:</strong> No toleramos fraudes, spam o comportamiento abusivo</li>
+      </ul>
+    </div>
+
+    <!-- Jurisdicción -->
+    <div class="info-section">
+      <h2>🌎 Jurisdicción y Ley Aplicable</h2>
+      <p>
+        Arnexu opera bajo las leyes de la República de Colombia. Todos nuestros documentos 
+        legales están elaborados en cumplimiento de:
+      </p>
+      <ul>
+        <li><strong>Ley 1581 de 2012:</strong> Protección de Datos Personales</li>
+        <li><strong>Decreto 1377 de 2013:</strong> Reglamentación de protección de datos</li>
+        <li><strong>Ley 1266 de 2008:</strong> Habeas Data</li>
+        <li><strong>Código de Comercio Colombiano:</strong> Regulaciones comerciales</li>
+        <li><strong>Ley 527 de 1999:</strong> Comercio electrónico y firmas digitales</li>
+      </ul>
+      <p style="margin-top: 20px;">
+        <strong>Jurisdicción:</strong> Medellín, Antioquia, Colombia
+      </p>
+    </div>
+
+    <!-- Cambios y Actualizaciones -->
+    <div class="info-section">
+      <h2>🔄 Cambios y Actualizaciones</h2>
+      <p>
+        Nos reservamos el derecho de actualizar estos documentos periódicamente para:
+      </p>
+      <ul>
+        <li>Reflejar nuevas funcionalidades de la plataforma</li>
+        <li>Cumplir con cambios en la legislación</li>
+        <li>Mejorar la claridad y transparencia</li>
+        <li>Incorporar feedback de usuarios y asesores legales</li>
+      </ul>
+      <p style="margin-top: 20px;">
+        <strong>Te notificaremos sobre cambios importantes mediante:</strong>
+      </p>
+      <ul>
+        <li>Email a tu dirección registrada</li>
+        <li>Notificaciones en la plataforma</li>
+        <li>Avisos prominentes en el sitio web</li>
+      </ul>
+      <p style="margin-top: 20px; background: var(--gris-medio); padding: 15px; border-radius: 8px;">
+        💡 <strong>Consejo:</strong> Revisa estos documentos periódicamente. La fecha de 
+        "Última actualización" en cada documento indica cuándo fue modificado por última vez.
+      </p>
+    </div>
+
+    <!-- Tus Derechos -->
+    <div class="info-section">
+      <h2>✊ Tus Derechos como Usuario</h2>
+      <p>Como usuario de Arnexu, tienes derecho a:</p>
+      <ul>
+        <li><strong>Acceso:</strong> Solicitar una copia de toda tu información personal</li>
+        <li><strong>Rectificación:</strong> Corregir datos inexactos o desactualizados</li>
+        <li><strong>Supresión:</strong> Solicitar la eliminación de tu cuenta y datos</li>
+        <li><strong>Portabilidad:</strong> Exportar tus datos en formato estructurado</li>
+        <li><strong>Oposición:</strong> Oponerte a ciertos procesamientos de tus datos</li>
+        <li><strong>Limitación:</strong> Restringir cómo usamos tu información</li>
+        <li><strong>Revocar Consentimiento:</strong> Retirar permisos previamente otorgados</li>
+      </ul>
+      <p style="margin-top: 20px;">
+        Para ejercer cualquiera de estos derechos, contáctanos en 
+        <strong style="color: var(--acento);">privacidad@arnexu.com</strong>
+      </p>
+    </div>
+
+    <!-- Contacto Legal -->
+    <div class="contacto-legal">
+      <h2>📞 Contacto Legal</h2>
+      <p>
+        ¿Tienes preguntas sobre nuestros documentos legales?<br>
+        ¿Necesitas ejercer tus derechos?<br>
+        ¿Quieres reportar una violación?
+      </p>
+      <div style="margin-top: 25px;">
+        <p>📧 Email General: <strong>legal@arnexu.com</strong></p>
+        <p>🔒 Privacidad: <strong>privacidad@arnexu.com</strong></p>
+        <p>📋 Términos: <strong>soporte@arnexu.com</strong></p>
+        <p>🌐 Web: <strong>www.arnexu.com</strong></p>
+        <p>📍 Dirección: <strong>Medellín, Antioquia, Colombia</strong></p>
+      </div>
+      <p style="margin-top: 25px; font-size: 14px;">
+        Responderemos a tu consulta en un plazo máximo de 15 días hábiles.
+      </p>
+    </div>
+
+    <!-- Descargo Importante -->
+    <div class="info-section" style="background: rgba(255, 68, 68, 0.05); border-left: 4px solid #ff4444;">
+      <h2 style="color: #ff8888;">⚠️ Descargo Importante</h2>
+      <p>
+        <strong>Arnexu NO proporciona asesoría legal, financiera, fiscal o de inversión.</strong>
+      </p>
+      <p>
+        Los documentos legales en esta sección proporcionan información general sobre el uso de 
+        la plataforma, pero no constituyen asesoría legal personalizada.
+      </p>
+      <p style="margin-top: 20px;">
+        <strong>Te recomendamos consultar con profesionales calificados:</strong>
+      </p>
+      <ul>
+        <li>Un abogado para asuntos legales y contractuales</li>
+        <li>Un asesor financiero para decisiones de inversión</li>
+        <li>Un contador para asuntos fiscales</li>
+        <li>Expertos en propiedad intelectual para proteger tus ideas</li>
+      </ul>
+    </div>
+
+    <!-- Última Actualización -->
+    <div class="ultima-actualizacion">
+      <p>📅 Todos los documentos fueron actualizados por última vez el: <strong>15 de Diciembre de 2025</strong></p>
+      <p>🔍 Versión de documentos: <strong>1.0</strong></p>
+    </div>
+
+    <!-- Botón Volver -->
+    <div style="text-align: center;">
+      <a href="index.html" class="btn-volver">← Volver a Arnexu</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container" style="max-width: 500px; margin-top: 40px; margin-bottom: 40px;">
+    <div class="text-center mb-20">
+      <h1 style="font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #5f5f5f); background-clip: text; -webkit-text-fill-color: transparent;">
+        Únete a Arnexu
+      </h1>
+      <p style="color: var(--gris-neon);">Crea tu cuenta y empieza a conectar</p>
+    </div>
+
+    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+      <form id="registroForm">
+        <!-- Foto de Perfil (Opcional) -->
+        <div class="form-group">
+          <label class="form-label">Foto de Perfil (Opcional)</label>
+          <div style="text-align: center; margin-bottom: 15px;">
+            <img 
+              id="previewFoto" 
+              src="https://via.placeholder.com/120" 
+              alt="Preview" 
+              style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; background: var(--gris-medio); border: 3px solid var(--gris-neon);"
+            >
+          </div>
+          <input 
+            type="file" 
+            id="fotoPerfil" 
+            class="form-file" 
+            accept="image/*"
+          >
+          <label for="fotoPerfil" class="form-file-label" style="width: 100%;">
+            📷 Seleccionar Foto
+          </label>
+        </div>
+
+        <!-- Nombre Completo -->
+        <div class="form-group">
+          <label class="form-label">Nombre y Apellido *</label>
+          <input 
+            type="text" 
+            id="nombreCompleto" 
+            class="form-input" 
+            placeholder="Juan Pérez"
+            required
+          >
+        </div>
+
+        <!-- Nombre de Usuario -->
+        <div class="form-group">
+          <label class="form-label">Nombre de Usuario *</label>
+          <input 
+            type="text" 
+            id="nombreUsuario" 
+            class="form-input" 
+            placeholder="juanperez"
+            required
+          >
+          <small style="color: var(--gris-neon); font-size: 12px;">Sin espacios ni caracteres especiales</small>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label">Correo Electrónico *</label>
+          <input 
+            type="email" 
+            id="email" 
+            class="form-input" 
+            placeholder="correo@ejemplo.com"
+            required
+          >
+        </div>
+
+        <!-- Teléfono -->
+        <div class="form-group">
+          <label class="form-label">Teléfono *</label>
+          <input 
+            type="tel" 
+            id="telefono" 
+            class="form-input" 
+            placeholder="+57 300 123 4567"
+            required
+          >
+        </div>
+
+        <!-- Rol -->
+        <div class="form-group">
+          <label class="form-label">¿Qué te describe mejor? *</label>
+          <select id="rol" class="form-select" required>
+            <option value="">Selecciona una opción</option>
+            <option value="emprendedor">🚀 Emprendedor</option>
+            <option value="inversor">💼 Inversor</option>
+            <option value="ambos">⚡ Ambos</option>
+          </select>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+          <label class="form-label">Contraseña *</label>
+          <input 
+            type="password" 
+            id="password" 
+            class="form-input" 
+            placeholder="Mínimo 6 caracteres"
+            required
+          >
+        </div>
+
+        <!-- Confirmar Contraseña -->
+        <div class="form-group">
+          <label class="form-label">Confirmar Contraseña *</label>
+          <input 
+            type="password" 
+            id="confirmarPassword" 
+            class="form-input" 
+            placeholder="Repite tu contraseña"
+            required
+          >
+        </div>
+
+        <!-- Términos y Condiciones -->
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input 
+              type="checkbox" 
+              id="terminos" 
+              required
+              style="width: 20px; height: 20px; cursor: pointer;"
+            >
+            <span style="color: var(--gris-neon); font-size: 14px;">
+              Acepto los 
+              <a href="terminos.html" target="_blank" style="color: var(--acento); text-decoration: underline;">
+                términos y condiciones
+              </a> 
+              de Arnexu
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          REGISTRARSE
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--gris-medio);">
+        <p style="color: var(--gris-neon); font-size: 14px;">
+          ¿Ya tienes cuenta? 
+          <a href="index.html" style="color: var(--acento); text-decoration: none; font-weight: 600;">
+            Inicia sesión
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // ============================================
+    // PREVIEW DE FOTO DE PERFIL
+    // ============================================
+    document.getElementById('fotoPerfil').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('previewFoto').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ============================================
+    // MANEJO DEL FORMULARIO DE REGISTRO
+    // ============================================
+    document.getElementById('registroForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Obtener valores del formulario
+      const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
+      const nombreUsuario = document.getElementById('nombreUsuario').value.trim().toLowerCase();
+      const email = document.getElementById('email').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const rol = document.getElementById('rol').value;
+      const password = document.getElementById('password').value;
+      const confirmarPassword = document.getElementById('confirmarPassword').value;
+      const fotoPerfil = document.getElementById('fotoPerfil').files[0];
+
+      // Validaciones
+      if (password !== confirmarPassword) {
+        mostrarNotificacion('Las contraseñas no coinciden', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        mostrarNotificacion('La contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+      }
+
+      if (!/^[a-z0-9_]+$/.test(nombreUsuario)) {
+        mostrarNotificacion('El nombre de usuario solo puede contener letras, números y guiones bajos', 'error');
+        return;
+      }
+
+      try {
+        // 1. Registrar usuario en Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          phone: telefono,
+        });
+
+        if (authError) throw authError;
+
+        // 2. Subir foto de perfil (si existe)
+        let fotoUrl = null;
+        if (fotoPerfil) {
+          const nombreArchivo = `${authData.user.id}_${Date.now()}.jpg`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('arnexu-files')
+            .upload(`avatars/${nombreArchivo}`, fotoPerfil);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from('arnexu-files')
+              .getPublicUrl(`avatars/${nombreArchivo}`);
+            fotoUrl = urlData.publicUrl;
+          }
+        }
+
+        // 3. Crear perfil del usuario en la tabla usuarios
+        const { error: perfilError } = await supabase
+          .from('usuarios')
+          .insert([{
+            id: authData.user.id,
+            email: email,
+            telefono: telefono,
+            nombre_completo: nombreCompleto,
+            nombre_usuario: nombreUsuario,
+            foto_perfil: fotoUrl,
+            rol: rol,
+            biografia: ''
+          }]);
+
+        if (perfilError) throw perfilError;
+
+        // Registro exitoso
+        mostrarNotificacion('¡Registro exitoso! Redirigiendo...');
+        setTimeout(() => {
+          window.location.href = 'inicio.html';
+        }, 1500);
+
+      } catch (error) {
+        console.error('Error en registro:', error);
+        
+        if (error.message.includes('already registered')) {
+          mostrarNotificacion('Este email ya está registrado', 'error');
+        } else if (error.message.includes('duplicate')) {
+          mostrarNotificacion('Este nombre de usuario o teléfono ya está en uso', 'error');
+        } else {
+          mostrarNotificacion('Error al registrarse. Intenta de nuevo.', 'error');
+        }
+      }
+    });
+  </script>
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>

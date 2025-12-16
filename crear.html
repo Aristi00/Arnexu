@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear| Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-logo">ARNEXU</div>
+      <ul class="navbar-menu">
+        <li><a href="inicio.html">🏠 Inicio</a></li>
+        <li><a href="crear.html">➕ Crear</a></li>
+        <li><a href="chat.html">💬 Chat</a></li>
+        <li><a href="perfil.html">👤 Perfil</a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">🚪 Salir</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Contenido Principal -->
+  <div class="container" style="margin-top: 30px;">
+    <h2 style="margin-bottom: 25px; font-size: 28px;">
+      Comparte tu Proyecto
+    </h2>
+
+    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+      <form id="crearPublicacionForm">
+        <!-- Título -->
+        <div class="form-group">
+          <label class="form-label">Título de tu idea o proyecto *</label>
+          <input 
+            type="text" 
+            id="titulo" 
+            class="form-input" 
+            placeholder="Ej: Plataforma de delivery para restaurantes locales"
+            required
+            maxlength="100"
+          >
+          <small style="color: var(--gris-neon); font-size: 12px;">
+            <span id="tituloCount">0</span>/100 caracteres
+          </small>
+        </div>
+
+        <!-- Tipo de Publicación -->
+        <div class="form-group">
+          <label class="form-label">Tipo de publicación *</label>
+          <select id="tipo" class="form-select" required>
+            <option value="">Selecciona una opción</option>
+            <option value="idea">💡 Solo una idea</option>
+            <option value="proyecto">🚀 Proyecto en desarrollo</option>
+            <option value="otro">📌 Otro</option>
+          </select>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label class="form-label">Describe tu idea *</label>
+          <textarea 
+            id="descripcion" 
+            class="form-textarea" 
+            placeholder="Explica tu proyecto: ¿Qué problema resuelve? ¿Cómo funciona? ¿Qué lo hace único?"
+            required
+            style="min-height: 200px;"
+          ></textarea>
+          <small style="color: var(--gris-neon); font-size: 12px;">
+            Sin límite de caracteres - Sé lo más detallado posible
+          </small>
+        </div>
+
+        <!-- Categoría -->
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select id="categoria" class="form-select" required>
+            <option value="">Selecciona una categoría</option>
+            <option value="E-commerce">🛒 E-commerce</option>
+            <option value="Bienes Raíces">🏘️ Bienes Raíces</option>
+            <option value="Alimentos">🍔 Alimentos</option>
+            <option value="Finanzas">💰 Finanzas</option>
+            <option value="Salud">🏥 Salud</option>
+            <option value="Educación">📚 Educación</option>
+            <option value="Tecnología">💻 Tecnología</option>
+            <option value="Moda">👗 Moda</option>
+            <option value="Entretenimiento">🎬 Entretenimiento</option>
+            <option value="Servicios">🔧 Servicios</option>
+            <option value="Turismo">✈️ Turismo</option>
+            <option value="Deportes">⚽ Deportes</option>
+            <option value="Sostenibilidad">🌱 Sostenibilidad</option>
+            <option value="Otro">📌 Otro</option>
+          </select>
+        </div>
+
+        <!-- Adjuntar Archivos -->
+        <div class="form-group">
+          <label class="form-label">Adjuntar archivos (Opcional)</label>
+          <input 
+            type="file" 
+            id="archivos" 
+            class="form-file" 
+            accept="image/*,video/*,.pdf,.doc,.docx"
+            multiple
+          >
+          <label for="archivos" class="form-file-label" style="width: 100%;">
+            📎 Seleccionar archivos (imágenes, videos, documentos)
+          </label>
+          <div id="archivosPreview" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- Contratos Digitales (Próximamente) -->
+        <div style="background: var(--gris-medio); padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+          <p style="color: var(--gris-neon); font-size: 14px;">
+            📄 <strong>Contratos Digitales</strong><br>
+            Próximamente podrás adjuntar contratos digitales a tus publicaciones
+          </p>
+        </div>
+
+        <!-- Botones -->
+        <div style="display: flex; gap: 15px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            PUBLICAR PROYECTO
+          </button>
+          <a href="inicio.html" class="btn btn-secondary" style="flex: 1;">
+            CANCELAR
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    let usuarioActual = null;
+
+    // ============================================
+    // PROTEGER PÁGINA Y CARGAR USUARIO
+    // ============================================
+    async function inicializar() {
+      await protegerPagina();
+      usuarioActual = await getCurrentUser();
+    }
+
+    inicializar();
+
+    // ============================================
+    // CONTADOR DE CARACTERES DEL TÍTULO
+    // ============================================
+    document.getElementById('titulo').addEventListener('input', (e) => {
+      document.getElementById('tituloCount').textContent = e.target.value.length;
+    });
+
+    // ============================================
+    // PREVIEW DE ARCHIVOS
+    // ============================================
+    document.getElementById('archivos').addEventListener('change', (e) => {
+      const archivos = Array.from(e.target.files);
+      const preview = document.getElementById('archivosPreview');
+      
+      if (archivos.length === 0) {
+        preview.innerHTML = '';
+        return;
+      }
+
+      preview.innerHTML = `
+        <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
+          <strong style="color: var(--acento);">Archivos seleccionados:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
+            ${archivos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    });
+
+    // ============================================
+    // CREAR PUBLICACIÓN
+    // ============================================
+    document.getElementById('crearPublicacionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const titulo = document.getElementById('titulo').value.trim();
+      const tipo = document.getElementById('tipo').value;
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const categoria = document.getElementById('categoria').value;
+      const archivosInput = document.getElementById('archivos').files;
+
+      // Validaciones
+      if (!titulo || !tipo || !descripcion || !categoria) {
+        mostrarNotificacion('Por favor completa todos los campos obligatorios', 'error');
+        return;
+      }
+
+      try {
+        // Subir archivos (si hay)
+        const archivosUrls = [];
+        if (archivosInput.length > 0) {
+          for (const archivo of archivosInput) {
+            const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
+            const { data, error } = await supabase.storage
+              .from('arnexu-files')
+              .upload(`publicaciones/${nombreArchivo}`, archivo);
+
+            if (!error) {
+              const { data: urlData } = supabase.storage
+                .from('arnexu-files')
+                .getPublicUrl(`publicaciones/${nombreArchivo}`);
+              archivosUrls.push({
+                url: urlData.publicUrl,
+                nombre: archivo.name,
+                tipo: archivo.type
+              });
+            }
+          }
+        }
+
+        // Crear publicación en la base de datos
+        const { data, error } = await supabase
+          .from('publicaciones')
+          .insert([{
+            usuario_id: usuarioActual.id,
+            titulo: titulo,
+            tipo: tipo,
+            descripcion: descripcion,
+            categoria: categoria,
+            archivos: archivosUrls,
+            likes_count: 0
+          }])
+          .select();
+
+        if (error) throw error;
+
+        mostrarNotificacion('¡Publicación creada exitosamente!');
+        setTimeout(() => {
+          window.location.href = 'inicio.html';
+        }, 1500);
+
+      } catch (error) {
+        console.error('Error creando publicación:', error);
+        mostrarNotificacion('Error al crear la publicación. Intenta de nuevo.', 'error');
+      }
+    });
+  </script>
+
+    <!-- Agregar al final del body en todas las páginas -->
+<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <p style="color: var(--gris-neon); margin: 0;">
+      🍪 Usamos cookies para mejorar tu experiencia. 
+      <a href="cookies.html" style="color: var(--acento);">Más información</a>
+    </p>
+    <button onclick="aceptarCookies()" class="btn btn-primary">
+      Aceptar
+    </button>
+  </div>
+</div>
+
+<script>
+function aceptarCookies() {
+  localStorage.setItem('cookies_aceptadas', 'true');
+  document.getElementById('cookieBanner').style.display = 'none';
+}
+
+// Mostrar banner si no ha aceptado
+if (!localStorage.getItem('cookies_aceptadas')) {
+  document.getElementById('cookieBanner').style.display = 'block';
+}
+</script>
+</body>
+<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+  </div>
+</footer>
+</html>
