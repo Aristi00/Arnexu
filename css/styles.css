@@ -92,11 +92,12 @@ body {
 }
 
 .navbar-logo {
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 800;
   background-clip: text;
   -webkit-text-fill-color: white
   background-clip text;
+  text-align: center;
 }
 
 .navbar-menu {
