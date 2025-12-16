@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat| Arnexu</title>
+  <title>Chat - Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,21 +13,30 @@
   <nav class="navbar">
     <div class="navbar-content">
             <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
-    <ul class="navbar-menu">
+      <ul class="navbar-menu">
         <li><a href="inicio.html">🏠 Inicio</a></li>
         <li><a href="crear.html">➕ Crear</a></li>
         <li><a href="chat.html">💬 Chat</a></li>
-        <li><a href="perfil.html" id="navPerfil">👤 Perfil</a></li>
-        <li><a href="#" onclick="logout()" style="color: var(--error);">Cerrar Sesión</a></li>
-    </ul>
+        <li><a href="perfil.html">👤 Perfil</a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">🚪 Salir</a></li>
+      </ul>
     </div>
   </nav>
 
   <!-- Contenedor del Chat -->
   <div class="container-wide" style="margin-top: 30px;">
+    <!-- Botón para volver a la lista en móvil -->
+    <button 
+      id="btnVolverLista" 
+      onclick="volverALista()" 
+      style="display: none; margin-bottom: 15px; background: var(--gris-medio); border: none; padding: 10px 20px; border-radius: 8px; color: var(--blanco); font-family: 'Montserrat'; cursor: pointer;"
+    >
+      ← Volver a conversaciones
+    </button>
+
     <div class="chat-container">
       <!-- Lista de Conversaciones -->
-      <div class="chat-lista">
+      <div class="chat-lista" id="chatListaContenedor">
         <h3 style="margin-bottom: 20px; font-size: 20px;">Conversaciones</h3>
         <div id="listaChats">
           <div class="loading" style="text-align: center; padding: 20px;">
@@ -37,7 +46,7 @@
       </div>
 
       <!-- Ventana de Chat -->
-      <div class="chat-ventana">
+      <div class="chat-ventana" id="chatVentanaContenedor">
         <div id="chatVacio" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gris-neon); text-align: center;">
           <div>
             <h3 style="font-size: 24px; margin-bottom: 10px;">💬</h3>
@@ -221,6 +230,13 @@
 
         usuarioActivoChat = otroUsuario;
 
+        // EN MÓVIL: Ocultar lista y mostrar ventana de chat
+        if (window.innerWidth <= 768) {
+          document.getElementById('chatListaContenedor').style.display = 'none';
+          document.getElementById('chatVentanaContenedor').style.display = 'flex';
+          document.getElementById('btnVolverLista').style.display = 'block';
+        }
+
         // Mostrar ventana de chat
         document.getElementById('chatVacio').style.display = 'none';
         document.getElementById('chatActivo').style.display = 'flex';
@@ -348,6 +364,52 @@
     }
 
     // ============================================
+    // VOLVER A LA LISTA (PARA MÓVIL)
+    // ============================================
+    function volverALista() {
+      // Detener actualización automática
+      if (intervalActualizacion) {
+        clearInterval(intervalActualizacion);
+        intervalActualizacion = null;
+      }
+
+      // Mostrar lista, ocultar ventana de chat
+      document.getElementById('chatListaContenedor').style.display = 'block';
+      document.getElementById('chatVentanaContenedor').style.display = 'none';
+      document.getElementById('btnVolverLista').style.display = 'none';
+
+      // Ocultar chat activo
+      document.getElementById('chatActivo').style.display = 'none';
+      document.getElementById('chatVacio').style.display = 'flex';
+
+      chatActivo = null;
+      usuarioActivoChat = null;
+    }
+
+    // ============================================
+    // MANEJAR CAMBIO DE TAMAÑO DE PANTALLA
+    // ============================================
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        // En pantallas grandes, mostrar ambos paneles
+        document.getElementById('chatListaContenedor').style.display = 'block';
+        document.getElementById('chatVentanaContenedor').style.display = 'flex';
+        document.getElementById('btnVolverLista').style.display = 'none';
+      } else {
+        // En móvil, mostrar solo uno según el estado
+        if (chatActivo) {
+          document.getElementById('chatListaContenedor').style.display = 'none';
+          document.getElementById('chatVentanaContenedor').style.display = 'flex';
+          document.getElementById('btnVolverLista').style.display = 'block';
+        } else {
+          document.getElementById('chatListaContenedor').style.display = 'block';
+          document.getElementById('chatVentanaContenedor').style.display = 'none';
+          document.getElementById('btnVolverLista').style.display = 'none';
+        }
+      }
+    });
+
+    // ============================================
     // LIMPIAR INTERVALO AL SALIR
     // ============================================
     window.addEventListener('beforeunload', () => {
@@ -361,33 +423,6 @@
     // ============================================
     inicializar();
   </script>
-
-
-
-  <!-- Agregar al final del body en todas las páginas -->
-<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
-  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-    <p style="color: var(--gris-neon); margin: 0;">
-      🍪 Usamos cookies para mejorar tu experiencia. 
-      <a href="cookies.html" style="color: var(--acento);">Más información</a>
-    </p>
-    <button onclick="aceptarCookies()" class="btn btn-primary">
-      Aceptar
-    </button>
-  </div>
-</div>
-
-<script>
-function aceptarCookies() {
-  localStorage.setItem('cookies_aceptadas', 'true');
-  document.getElementById('cookieBanner').style.display = 'none';
-}
-
-// Mostrar banner si no ha aceptado
-if (!localStorage.getItem('cookies_aceptadas')) {
-  document.getElementById('cookieBanner').style.display = 'block';
-}
-</script>
 </body>
 <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
   <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>

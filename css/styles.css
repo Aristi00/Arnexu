@@ -62,7 +62,6 @@ body {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
-  text-align: center;
 }
 
 .container-wide {
@@ -93,18 +92,18 @@ body {
 }
 
 .navbar-logo {
-  font-size: 25px;
+  font-size: 24px;
   font-weight: 800;
+  background: linear-gradient(135deg, var(--acento), #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-fill-color: white
-  background-clip text;
 }
 
 .navbar-menu {
   display: flex;
   gap: 30px;
   list-style: none;
-  margin: auto;
 }
 
 .navbar-menu a {
@@ -505,14 +504,34 @@ body {
   
   .chat-container {
     grid-template-columns: 1fr;
+    height: calc(100vh - 140px);
   }
   
   .chat-lista {
+    display: block;
+    height: 100%;
+  }
+
+  .chat-ventana {
     display: none;
+    height: 100%;
   }
   
   .container,
   .container-wide {
     padding: 15px;
+  }
+
+  .publicacion-card {
+    padding: 15px;
+  }
+
+  .navbar-menu a {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .navbar-logo {
+    font-size: 20px;
   }
 }
