@@ -97,6 +97,7 @@ body {
   background-clip: text;
   -webkit-text-fill-color: white
   background-clip text;
+  margin: auto;
   text-align: center;
 }
 
