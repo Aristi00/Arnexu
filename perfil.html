@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil| Arnexu</title>
+  <title>Perfil - Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,13 +13,44 @@
   <nav class="navbar">
     <div class="navbar-content">
             <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
-    <ul class="navbar-menu">
-        <li><a href="inicio.html">🏠 Inicio</a></li>
-        <li><a href="crear.html">➕ Crear</a></li>
-        <li><a href="chat.html">💬 Chat</a></li>
-        <li><a href="perfil.html" id="navPerfil">👤 Perfil</a></li>
-        <li><a href="#" onclick="logout()" style="color: var(--error);">Cerrar Sesión</a></li>
-    </ul>
+      <ul class="navbar-menu">
+        <li><a href="inicio.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Inicio
+        </a></li>
+        <li><a href="crear.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          Crear
+        </a></li>
+        <li><a href="chat.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Chat
+        </a></li>
+        <li><a href="perfil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Perfil
+        </a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Cerrar Sesión
+        </a></li>
+      </ul>
     </div>
   </nav>
 
@@ -35,6 +66,12 @@
       >
       <h2 id="perfilNombre" class="perfil-nombre">Cargando...</h2>
       <p id="perfilUsername" class="perfil-username">@usuario</p>
+      
+      <!-- Badges/Insignias -->
+      <div id="perfilBadges" style="display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap;">
+        <!-- Los badges se cargarán aquí dinámicamente -->
+      </div>
+      
       <p id="perfilBio" class="perfil-bio"></p>
       
       <div id="perfilAcciones" style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
@@ -116,6 +153,76 @@
     </div>
   </div>
 
+  <!-- Modal para Editar Publicación -->
+  <div id="modalEditarPublicacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+    <div style="max-width: 600px; margin: 50px auto; background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+      <h2 style="margin-bottom: 25px;">Editar Publicación</h2>
+      
+      <form id="editarPublicacionForm">
+        <input type="hidden" id="editPubId">
+        
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input 
+            type="text" 
+            id="editTitulo" 
+            class="form-input" 
+            required
+            maxlength="100"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de publicación</label>
+          <select id="editTipo" class="form-select" required>
+            <option value="idea">💡 Solo una idea</option>
+            <option value="proyecto">🚀 Proyecto en desarrollo</option>
+            <option value="otro">📌 Otro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea 
+            id="editDescripcion" 
+            class="form-textarea" 
+            required
+            style="min-height: 150px;"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select id="editCategoria" class="form-select" required>
+            <option value="E-commerce">🛒 E-commerce</option>
+            <option value="Bienes Raíces">🏘️ Bienes Raíces</option>
+            <option value="Alimentos">🍔 Alimentos</option>
+            <option value="Finanzas">💰 Finanzas</option>
+            <option value="Salud">🏥 Salud</option>
+            <option value="Educación">📚 Educación</option>
+            <option value="Tecnología">💻 Tecnología</option>
+            <option value="Moda">👗 Moda</option>
+            <option value="Entretenimiento">🎬 Entretenimiento</option>
+            <option value="Servicios">🔧 Servicios</option>
+            <option value="Turismo">✈️ Turismo</option>
+            <option value="Deportes">⚽ Deportes</option>
+            <option value="Sostenibilidad">🌱 Sostenibilidad</option>
+            <option value="Otro">📌 Otro</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            GUARDAR CAMBIOS
+          </button>
+          <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="cerrarModalEditarPublicacion()">
+            CANCELAR
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script>
     let usuarioActual = null;
@@ -160,6 +267,9 @@
         document.getElementById('perfilUsername').textContent = `@${data.nombre_usuario}`;
         document.getElementById('perfilBio').textContent = data.biografia || 'Sin biografía';
 
+        // Cargar badges
+        await cargarBadges(userId);
+
         // Mostrar botones apropiados
         const accionesDiv = document.getElementById('perfilAcciones');
         if (esPerfilPropio) {
@@ -183,6 +293,91 @@
         console.error('Error cargando perfil:', error);
         mostrarNotificacion('Error al cargar el perfil', 'error');
       }
+    }
+
+    // ============================================
+    // CARGAR BADGES
+    // ============================================
+    async function cargarBadges(userId) {
+      try {
+        const { data: badges, error } = await supabase
+          .from('badges')
+          .select('*')
+          .eq('usuario_id', userId);
+
+        if (error) throw error;
+
+        const badgesDiv = document.getElementById('perfilBadges');
+        
+        if (!badges || badges.length === 0) {
+          badgesDiv.innerHTML = '';
+          return;
+        }
+
+        const badgeConfig = {
+          'emprendedor_serial': {
+            emoji: '🚀',
+            nombre: 'Emprendedor Serial',
+            color: '#FFD700',
+            descripcion: 'Ha recibido contactos de 5+ inversores en un proyecto'
+          },
+          'inversor_interesado': {
+            emoji: '💼',
+            nombre: 'Inversor Activo',
+            color: '#00ff88',
+            descripcion: 'Ha contactado 15+ proyectos diferentes'
+          },
+          'verificado': {
+            emoji: '✅',
+            nombre: 'Verificado',
+            color: '#1DA1F2',
+            descripcion: 'Identidad verificada'
+          },
+          'mentor': {
+            emoji: '🎓',
+            nombre: 'Mentor',
+            color: '#9146FF',
+            descripcion: 'Mentor certificado'
+          }
+        };
+
+        badgesDiv.innerHTML = badges.map(badge => {
+          const config = badgeConfig[badge.tipo];
+          if (!config) return '';
+          
+          return `
+            <div 
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 12px;
+                background: rgba(${hexToRgb(config.color)}, 0.2);
+                border: 2px solid ${config.color};
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: help;
+              "
+              title="${config.descripcion}"
+            >
+              <span style="font-size: 18px;">${config.emoji}</span>
+              <span style="color: ${config.color};">${config.nombre}</span>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Error cargando badges:', error);
+      }
+    }
+
+    // Helper function para convertir hex a rgb
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? 
+        `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+        '255, 255, 255';
     }
 
     // ============================================
@@ -210,8 +405,16 @@
           return;
         }
 
-        contenido.innerHTML = data.map(pub => `
-          <div class="publicacion-card">
+        contenido.innerHTML = data.map(pub => {
+          const pubDataJson = JSON.stringify({
+            titulo: pub.titulo,
+            tipo: pub.tipo,
+            descripcion: pub.descripcion,
+            categoria: pub.categoria
+          });
+          
+          return `
+          <div class="publicacion-card" data-pub-id="${pub.id}" data-pub-data='${pubDataJson}'>
             <div style="display: flex; justify-content: space-between; align-items: start;">
               <div>
                 <span class="publicacion-badge">
@@ -221,10 +424,19 @@
               </div>
               ${esPerfilPropio ? `
                 <div style="display: flex; gap: 10px;">
-                  <button class="btn-icon" onclick="editarPublicacion('${pub.id}')" title="Editar">
+                  <button 
+                    class="btn-icon" 
+                    onclick="abrirModalEditarPub('${pub.id}')" 
+                    title="Editar"
+                  >
                     ✏️
                   </button>
-                  <button class="btn-icon" onclick="eliminarPublicacion('${pub.id}')" title="Eliminar" style="background: var(--error);">
+                  <button 
+                    class="btn-icon" 
+                    onclick="eliminarPublicacion('${pub.id}')" 
+                    title="Eliminar" 
+                    style="background: var(--error);"
+                  >
                     🗑️
                   </button>
                 </div>
@@ -236,7 +448,8 @@
               ❤️ ${pub.likes_count || 0} likes • ${formatearFecha(pub.created_at)}
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
 
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
@@ -423,6 +636,84 @@
     }
 
     // ============================================
+    // ABRIR MODAL PARA EDITAR PUBLICACIÓN
+    // ============================================
+    function abrirModalEditarPub(pubId) {
+      try {
+        const card = document.querySelector(`[data-pub-id="${pubId}"]`);
+        if (!card) {
+          throw new Error('Publicación no encontrada');
+        }
+        
+        const pubData = JSON.parse(card.getAttribute('data-pub-data'));
+        
+        document.getElementById('editPubId').value = pubId;
+        document.getElementById('editTitulo').value = pubData.titulo;
+        document.getElementById('editTipo').value = pubData.tipo;
+        document.getElementById('editDescripcion').value = pubData.descripcion;
+        document.getElementById('editCategoria').value = pubData.categoria;
+        
+        document.getElementById('modalEditarPublicacion').style.display = 'block';
+      } catch (error) {
+        console.error('Error abriendo modal de edición:', error);
+        mostrarNotificacion('Error al abrir el editor', 'error');
+      }
+    }
+
+    // ============================================
+    // CERRAR MODAL DE EDITAR PUBLICACIÓN
+    // ============================================
+    function cerrarModalEditarPublicacion() {
+      document.getElementById('modalEditarPublicacion').style.display = 'none';
+    }
+
+    // ============================================
+    // GUARDAR CAMBIOS DE PUBLICACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('editarPublicacionForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const pubId = document.getElementById('editPubId').value;
+          const titulo = document.getElementById('editTitulo').value.trim();
+          const tipo = document.getElementById('editTipo').value;
+          const descripcion = document.getElementById('editDescripcion').value.trim();
+          const categoria = document.getElementById('editCategoria').value;
+
+          if (!titulo || !tipo || !descripcion || !categoria) {
+            mostrarNotificacion('Completa todos los campos', 'error');
+            return;
+          }
+
+          try {
+            const { error } = await supabase
+              .from('publicaciones')
+              .update({
+                titulo: titulo,
+                tipo: tipo,
+                descripcion: descripcion,
+                categoria: categoria,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', pubId);
+
+            if (error) throw error;
+
+            mostrarNotificacion('Publicación actualizada');
+            cerrarModalEditarPublicacion();
+            await cargarPublicaciones(usuarioActual.id);
+
+          } catch (error) {
+            console.error('Error actualizando publicación:', error);
+            mostrarNotificacion('Error al actualizar la publicación', 'error');
+          }
+        });
+      }
+    });
+
+    // ============================================
     // INICIAR CHAT
     // ============================================
     function iniciarChat(userId) {
@@ -438,31 +729,6 @@
     // ============================================
     inicializar();
   </script>
-
-    <!-- Agregar al final del body en todas las páginas -->
-<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
-  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-    <p style="color: var(--gris-neon); margin: 0;">
-      🍪 Usamos cookies para mejorar tu experiencia. 
-      <a href="cookies.html" style="color: var(--acento);">Más información</a>
-    </p>
-    <button onclick="aceptarCookies()" class="btn btn-primary">
-      Aceptar
-    </button>
-  </div>
-</div>
-
-<script>
-function aceptarCookies() {
-  localStorage.setItem('cookies_aceptadas', 'true');
-  document.getElementById('cookieBanner').style.display = 'none';
-}
-
-// Mostrar banner si no ha aceptado
-if (!localStorage.getItem('cookies_aceptadas')) {
-  document.getElementById('cookieBanner').style.display = 'block';
-}
-</script>
 </body>
 <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
   <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>

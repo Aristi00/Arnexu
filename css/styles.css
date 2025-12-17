@@ -17,6 +17,7 @@
   --error: #ff4444;
 }
 
+
 body {
   font-family: 'Montserrat', sans-serif;
   background: var(--negro);
@@ -440,8 +441,13 @@ body {
 }
 
 .mensaje.propio .mensaje-contenido {
-  background: var(--gris-neon);
-  color: var(--negro);
+  background: transparent
+    color var(--negro);
+}
+
+.mensaje-ia .mensaje-contenido {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 255, 0.2));
+  border: 1px solid var(--acento);
 }
 
 .chat-input-container {
@@ -449,6 +455,7 @@ body {
   border-top: 1px solid var(--gris-medio);
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .chat-input {
@@ -535,3 +542,4 @@ body {
     font-size: 20px;
   }
 }
+

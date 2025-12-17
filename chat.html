@@ -14,11 +14,42 @@
     <div class="navbar-content">
             <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
       <ul class="navbar-menu">
-        <li><a href="inicio.html">🏠 Inicio</a></li>
-        <li><a href="crear.html">➕ Crear</a></li>
-        <li><a href="chat.html">💬 Chat</a></li>
-        <li><a href="perfil.html">👤 Perfil</a></li>
-        <li><a href="#" onclick="logout()" style="color: var(--error);">🚪 Salir</a></li>
+        <li><a href="inicio.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Inicio
+        </a></li>
+        <li><a href="crear.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          Crear
+        </a></li>
+        <li><a href="chat.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Chat
+        </a></li>
+        <li><a href="perfil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Perfil
+        </a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Cerrar Sesión
+        </a></li>
       </ul>
     </div>
   </nav>
@@ -74,6 +105,30 @@
 
           <!-- Input de Mensaje -->
           <div class="chat-input-container">
+            <input 
+              type="file" 
+              id="archivoInput" 
+              style="display: none;"
+              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              onchange="subirArchivo()"
+            >
+            <button 
+              class="btn-icon" 
+              onclick="document.getElementById('archivoInput').click()"
+              title="Adjuntar archivo"
+              style="background: var(--gris-medio);"
+            >
+              📎
+            </button>
+            <button 
+              class="btn-icon" 
+              id="btnVoz"
+              onclick="toggleGrabacion()"
+              title="Grabar mensaje de voz"
+              style="background: var(--gris-medio);"
+            >
+              🎤
+            </button>
             <input 
               type="text" 
               id="mensajeInput" 
@@ -292,16 +347,84 @@
 
         const scrollBottom = mensajesDiv.scrollHeight - mensajesDiv.scrollTop <= mensajesDiv.clientHeight + 100;
 
-        mensajesDiv.innerHTML = mensajes.map(msg => `
-          <div class="mensaje ${msg.remitente_id === usuarioActual.id ? 'propio' : ''}">
-            <div class="mensaje-contenido">
-              <p style="margin-bottom: 5px;">${msg.contenido}</p>
-              <small style="font-size: 11px; opacity: 0.7;">
-                ${formatearFecha(msg.created_at)}
-              </small>
+        mensajesDiv.innerHTML = mensajes.map(msg => {
+          let contenidoHTML = '';
+          
+          // Mensajes de IA tienen estilo especial
+          const esIA = msg.tipo === 'ia';
+          const claseExtra = esIA ? 'mensaje-ia' : '';
+          const esMio = msg.remitente_id === usuarioActual.id;
+          
+          if (msg.tipo === 'imagen') {
+            contenidoHTML = `
+              <img src="${msg.archivo_url}" alt="Imagen" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer;" onclick="window.open('${msg.archivo_url}', '_blank')">
+              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
+            `;
+          } else if (msg.tipo === 'video') {
+            contenidoHTML = `
+              <video controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;">
+                <source src="${msg.archivo_url}" type="${msg.archivo_tipo}">
+              </video>
+              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
+            `;
+          } else if (msg.tipo === 'audio') {
+            contenidoHTML = `
+              <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 5px;">
+                <span style="font-size: 20px;">🎤</span>
+                <audio controls style="flex: 1; height: 32px;">
+                  <source src="${msg.archivo_url}" type="audio/webm">
+                  Tu navegador no soporta audio.
+                </audio>
+              </div>
+              <p style="margin: 5px 0; font-size: 12px; opacity: 0.7;">${msg.contenido || 'Mensaje de voz'}</p>
+            `;
+          } else if (msg.tipo === 'archivo') {
+            contenidoHTML = `
+              <a href="${msg.archivo_url}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; text-decoration: none; color: inherit; margin-bottom: 5px;">
+                <span style="font-size: 24px;">📄</span>
+                <div>
+                  <div style="font-weight: 600;">${msg.archivo_nombre}</div>
+                  <div style="font-size: 12px; opacity: 0.7;">Clic para descargar</div>
+                </div>
+              </a>
+              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
+            `;
+          } else {
+            contenidoHTML = `<p style="margin-bottom: 5px; white-space: pre-wrap;">${msg.contenido}</p>`;
+          }
+
+          return `
+            <div class="mensaje ${esMio ? 'propio' : ''} ${claseExtra}" style="position: relative;">
+              ${esIA ? '<div style="font-size: 20px; margin-bottom: 5px;">🤖</div>' : ''}
+              <div class="mensaje-contenido">
+                ${contenidoHTML}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                  <small style="font-size: 11px; opacity: 0.7;">
+                    ${formatearFecha(msg.created_at)}
+                  </small>
+                  ${esMio ? `
+                    <div style="display: flex; gap: 5px;">
+                      <button 
+                        onclick="eliminarMensaje('${msg.id}', 'solo_yo')" 
+                        style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;"
+                        title="Eliminar para mí"
+                      >
+                        🗑️
+                      </button>
+                      <button 
+                        onclick="eliminarMensaje('${msg.id}', 'para_todos')" 
+                        style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;"
+                        title="Eliminar para todos"
+                      >
+                        ❌
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         // Auto-scroll si estaba cerca del final
         if (scrollBottom || !silencioso) {
@@ -329,7 +452,8 @@
           .insert([{
             chat_id: chatActivo.id,
             remitente_id: usuarioActual.id,
-            contenido: contenido
+            contenido: contenido,
+            tipo: 'texto'
           }]);
 
         if (error) throw error;
@@ -343,6 +467,31 @@
           })
           .eq('id', chatActivo.id);
 
+        // Registrar contacto para sistema de badges
+        if (usuarioActivoChat) {
+          // Obtener publicaciones del usuario contactado
+          const { data: publicaciones } = await supabase
+            .from('publicaciones')
+            .select('id')
+            .eq('usuario_id', usuarioActivoChat.id)
+            .limit(1);
+
+          if (publicaciones && publicaciones.length > 0) {
+            // Registrar contacto
+            await supabase
+              .from('contactos_proyectos')
+              .insert([{
+                publicacion_id: publicaciones[0].id,
+                contacto_por: usuarioActual.id
+              }])
+              .then(() => {
+                // Verificar badges
+                supabase.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
+                supabase.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
+              });
+          }
+        }
+
         // Limpiar input y recargar mensajes
         input.value = '';
         await cargarMensajes(chatActivo.id);
@@ -351,6 +500,172 @@
       } catch (error) {
         console.error('Error enviando mensaje:', error);
         mostrarNotificacion('Error al enviar el mensaje', 'error');
+      }
+    }
+
+    // ============================================
+    // SUBIR ARCHIVO
+    // ============================================
+    async function subirArchivo() {
+      const fileInput = document.getElementById('archivoInput');
+      const file = fileInput.files[0];
+      
+      if (!file || !chatActivo) return;
+
+      try {
+        mostrarNotificacion('Subiendo archivo...');
+
+        // Determinar tipo de archivo
+        let tipoMensaje = 'archivo';
+        if (file.type.startsWith('image/')) tipoMensaje = 'imagen';
+        if (file.type.startsWith('video/')) tipoMensaje = 'video';
+
+        // Subir a Supabase Storage
+        const extension = file.name.split('.').pop();
+        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('arnexu-files')
+          .upload(`chat/${nombreArchivo}`, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+          .from('arnexu-files')
+          .getPublicUrl(`chat/${nombreArchivo}`);
+
+        // Guardar mensaje con archivo
+        const { error } = await supabase
+          .from('mensajes')
+          .insert([{
+            chat_id: chatActivo.id,
+            remitente_id: usuarioActual.id,
+            contenido: '',
+            tipo: tipoMensaje,
+            archivo_url: urlData.publicUrl,
+            archivo_nombre: file.name,
+            archivo_tipo: file.type
+          }]);
+
+        if (error) throw error;
+
+        // Actualizar último mensaje del chat
+        const mensajePreview = tipoMensaje === 'imagen' ? '📷 Imagen' : 
+                               tipoMensaje === 'video' ? '🎥 Video' : 
+                               `📄 ${file.name}`;
+        
+        await supabase
+          .from('chats')
+          .update({
+            ultimo_mensaje: mensajePreview,
+            ultimo_mensaje_fecha: new Date().toISOString()
+          })
+          .eq('id', chatActivo.id);
+
+        mostrarNotificacion('Archivo enviado');
+        fileInput.value = '';
+        await cargarMensajes(chatActivo.id);
+        await cargarChats();
+
+      } catch (error) {
+        console.error('Error subiendo archivo:', error);
+        mostrarNotificacion('Error al subir el archivo', 'error');
+      }
+    }
+
+    // ============================================
+    // ABRIR CHAT CON IA
+    // ============================================
+    async function abrirChatIA() {
+      try {
+        // Buscar o crear chat con IA (usuario_id especial)
+        const IA_USER_ID = '00000000-0000-0000-0000-000000000000';
+
+        const { data: chatExistente } = await supabase
+          .from('chats')
+          .select('id')
+          .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${IA_USER_ID}),and(participante1_id.eq.${IA_USER_ID},participante2_id.eq.${usuarioActual.id})`)
+          .single();
+
+        if (chatExistente) {
+          // Abrir chat existente con IA
+          usuarioActivoChat = {
+            id: IA_USER_ID,
+            nombre_completo: 'Asistente IA de Arnexu',
+            nombre_usuario: 'arnexu_ia',
+            foto_perfil: 'https://via.placeholder.com/48/00ff88/000000?text=AI'
+          };
+          
+          chatActivo = { id: chatExistente.id };
+          
+          // Actualizar UI
+          document.getElementById('chatVacio').style.display = 'none';
+          document.getElementById('chatActivo').style.display = 'flex';
+          document.getElementById('chatAvatarActivo').src = usuarioActivoChat.foto_perfil;
+          document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
+          document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
+          
+          await cargarMensajes(chatExistente.id);
+        } else {
+          // Crear nuevo chat con IA
+          const { data: nuevoChat, error } = await supabase
+            .from('chats')
+            .insert([{
+              participante1_id: usuarioActual.id,
+              participante2_id: IA_USER_ID,
+              ultimo_mensaje: 'Chat con IA iniciado',
+              ultimo_mensaje_fecha: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          // Enviar mensaje de bienvenida de la IA
+          await supabase
+            .from('mensajes')
+            .insert([{
+              chat_id: nuevoChat.id,
+              remitente_id: IA_USER_ID,
+              contenido: '¡Hola! 👋 Soy tu asistente de IA de Arnexu. Puedo ayudarte con:\n\n• Crear resúmenes ejecutivos\n• Diseñar estrategias de negocio\n• Generar ideas de logos\n• Análisis de mercado\n• Pitch decks\n• Y mucho más sobre emprendimiento\n\n¿En qué puedo ayudarte hoy?',
+              tipo: 'ia'
+            }]);
+
+          // Abrir el chat
+          usuarioActivoChat = {
+            id: IA_USER_ID,
+            nombre_completo: 'Asistente IA de Arnexu',
+            nombre_usuario: 'arnexu_ia',
+            foto_perfil: 'https://via.placeholder.com/48/00ff88/000000?text=AI'
+          };
+          
+          chatActivo = { id: nuevoChat.id };
+          
+          document.getElementById('chatVacio').style.display = 'none';
+          document.getElementById('chatActivo').style.display = 'flex';
+          document.getElementById('chatAvatarActivo').src = usuarioActivoChat.foto_perfil;
+          document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
+          document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
+          
+          await cargarMensajes(nuevoChat.id);
+        }
+
+        await cargarChats();
+
+        // Si es móvil, mostrar el chat
+        if (window.innerWidth <= 768) {
+          document.getElementById('chatListaContenedor').style.display = 'none';
+          document.getElementById('chatVentanaContenedor').style.display = 'flex';
+          document.getElementById('btnVolverLista').style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Error abriendo chat IA:', error);
+        mostrarNotificacion('Error al abrir chat con IA', 'error');
       }
     }
 
@@ -416,7 +731,181 @@
       if (intervalActualizacion) {
         clearInterval(intervalActualizacion);
       }
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
     });
+
+    // ============================================
+    // SISTEMA DE GRABACIÓN DE VOZ
+    // ============================================
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let grabando = false;
+
+    async function toggleGrabacion() {
+      if (!chatActivo) {
+        mostrarNotificacion('Abre un chat primero', 'error');
+        return;
+      }
+
+      if (!grabando) {
+        await iniciarGrabacion();
+      } else {
+        detenerGrabacion();
+      }
+    }
+
+    async function iniciarGrabacion() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          await subirAudio(audioBlob);
+          
+          // Detener todos los tracks del stream
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        grabando = true;
+
+        // Cambiar apariencia del botón
+        const btnVoz = document.getElementById('btnVoz');
+        btnVoz.style.background = '#ff4444';
+        btnVoz.innerHTML = '⏹️';
+        btnVoz.title = 'Detener grabación';
+
+        mostrarNotificacion('🎤 Grabando...');
+
+      } catch (error) {
+        console.error('Error al iniciar grabación:', error);
+        mostrarNotificacion('Error al acceder al micrófono', 'error');
+      }
+    }
+
+    function detenerGrabacion() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        grabando = false;
+
+        // Restaurar apariencia del botón
+        const btnVoz = document.getElementById('btnVoz');
+        btnVoz.style.background = 'var(--gris-medio)';
+        btnVoz.innerHTML = '🎤';
+        btnVoz.title = 'Grabar mensaje de voz';
+      }
+    }
+
+    async function subirAudio(audioBlob) {
+      if (!chatActivo) return;
+
+      try {
+        mostrarNotificacion('Subiendo audio...');
+
+        // Subir a Supabase Storage
+        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.webm`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('arnexu-files')
+          .upload(`chat/voice/${nombreArchivo}`, audioBlob, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+          .from('arnexu-files')
+          .getPublicUrl(`chat/voice/${nombreArchivo}`);
+
+        // Calcular duración aproximada (en segundos)
+        const duracion = Math.round(audioBlob.size / 16000); // Aproximación
+
+        // Guardar mensaje de voz
+        const { error } = await supabase
+          .from('mensajes')
+          .insert([{
+            chat_id: chatActivo.id,
+            remitente_id: usuarioActual.id,
+            contenido: `Mensaje de voz (${duracion}s)`,
+            tipo: 'audio',
+            archivo_url: urlData.publicUrl,
+            archivo_nombre: `audio_${duracion}s.webm`,
+            archivo_tipo: 'audio/webm'
+          }]);
+
+        if (error) throw error;
+
+        // Actualizar último mensaje del chat
+        await supabase
+          .from('chats')
+          .update({
+            ultimo_mensaje: '🎤 Mensaje de voz',
+            ultimo_mensaje_fecha: new Date().toISOString()
+          })
+          .eq('id', chatActivo.id);
+
+        mostrarNotificacion('Audio enviado');
+        await cargarMensajes(chatActivo.id);
+        await cargarChats();
+
+      } catch (error) {
+        console.error('Error subiendo audio:', error);
+        mostrarNotificacion('Error al subir el audio', 'error');
+      }
+    }
+
+    // ============================================
+    // ELIMINAR MENSAJE
+    // ============================================
+    async function eliminarMensaje(mensajeId, tipoEliminacion) {
+      const confirmText = tipoEliminacion === 'para_todos' 
+        ? '¿Eliminar este mensaje para todos?' 
+        : '¿Eliminar este mensaje para ti?';
+      
+      if (!confirm(confirmText)) return;
+
+      try {
+        if (tipoEliminacion === 'para_todos') {
+          // Eliminar completamente de la base de datos
+          const { error } = await supabase
+            .from('mensajes')
+            .delete()
+            .eq('id', mensajeId);
+
+          if (error) throw error;
+          mostrarNotificacion('Mensaje eliminado para todos');
+        } else {
+          // Marcar como eliminado solo para este usuario
+          // Por ahora, simplemente lo eliminamos de la base de datos
+          // En una versión más avanzada, podrías agregar una tabla de mensajes_eliminados
+          const { error } = await supabase
+            .from('mensajes')
+            .delete()
+            .eq('id', mensajeId)
+            .eq('remitente_id', usuarioActual.id);
+
+          if (error) throw error;
+          mostrarNotificacion('Mensaje eliminado');
+        }
+
+        await cargarMensajes(chatActivo.id);
+
+      } catch (error) {
+        console.error('Error eliminando mensaje:', error);
+        mostrarNotificacion('Error al eliminar el mensaje', 'error');
+      }
+    }
 
     // ============================================
     // INICIALIZAR
