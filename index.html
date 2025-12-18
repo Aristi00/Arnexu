@@ -8,6 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
 </head>
 <body>
   <div class="container" style="max-width: 450px; margin-top: 80px;">
@@ -68,17 +71,21 @@
       <p>🚀 Emprendedores | 💼 Inversores | 🌟 Oportunidades</p>
     </div>
   </div>
-
-  <script src="js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
   <script>
     // ============================================
     // VERIFICAR SI YA HAY SESIÓN ACTIVA
     // ============================================
-    checkSession().then(session => {
-      if (session) {
-        window.location.href = 'inicio.html';
-      }
-    });
+document.addEventListener("DOMContentLoaded", async () => {
+  if (typeof checkSession !== "function") return;
+
+  const session = await checkSession();
+  if (session) {
+    window.location.href = "inicio.html";
+  }
+});
 
     // ============================================
     // MANEJO DEL FORMULARIO DE LOGIN
@@ -103,13 +110,13 @@
         
         if (esEmail) {
           // Login con email
-          resultado = await supabase.auth.signInWithPassword({
+          resultado = await window.supabaseClient.auth.signInWithPassword({
             email: identifier,
             password: password,
           });
         } else {
           // Login con teléfono
-          resultado = await supabase.auth.signInWithPassword({
+          resultado = await window.supabaseClient.auth.signInWithPassword({
             phone: identifier,
             password: password,
           });

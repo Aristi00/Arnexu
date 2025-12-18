@@ -7,6 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
   <style>
     /* Estilos adicionales para evitar scroll horizontal en móvil */
     body {
@@ -221,7 +224,7 @@
     // ============================================
     async function cargarChats() {
       try {
-        const { data: chats, error } = await supabase
+        const { data: chats, error } = await window.supabaseClient
           .from('chats')
           .select(`
             *,
@@ -282,7 +285,7 @@
     async function crearOAbrirChat(otroUsuarioId) {
       try {
         // Verificar si ya existe un chat entre estos usuarios
-        const { data: chatExistente, error: errorBuscar } = await supabase
+        const { data: chatExistente, error: errorBuscar } = await window.supabaseClient
           .from('chats')
           .select('id')
           .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${otroUsuarioId}),and(participante1_id.eq.${otroUsuarioId},participante2_id.eq.${usuarioActual.id})`)
@@ -294,7 +297,7 @@
         }
 
         // Crear nuevo chat si no existe
-        const { data: nuevoChat, error: errorCrear } = await supabase
+        const { data: nuevoChat, error: errorCrear } = await window.supabaseClient
           .from('chats')
           .insert([{
             participante1_id: usuarioActual.id,
@@ -321,7 +324,7 @@
         chatActivo = { id: chatId };
 
         // Obtener información del otro usuario
-        const { data: otroUsuario, error } = await supabase
+        const { data: otroUsuario, error } = await window.supabaseClient
           .from('usuarios')
           .select('*')
           .eq('id', otroUsuarioId)
@@ -369,7 +372,7 @@
     // ============================================
     async function cargarMensajes(chatId, silencioso = false) {
       try {
-        const { data: mensajes, error } = await supabase
+        const { data: mensajes, error } = await window.supabaseClient
           .from('mensajes')
           .select('*')
           .eq('chat_id', chatId)
@@ -493,7 +496,7 @@
 
       try {
         // Insertar mensaje
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
           .from('mensajes')
           .insert([{
             chat_id: chatActivo.id,
@@ -505,7 +508,7 @@
         if (error) throw error;
 
         // Actualizar último mensaje del chat
-        await supabase
+        await window.supabaseClient
           .from('chats')
           .update({
             ultimo_mensaje: contenido,
@@ -516,7 +519,7 @@
         // Registrar contacto para sistema de badges
         if (usuarioActivoChat) {
           // Obtener publicaciones del usuario contactado
-          const { data: publicaciones } = await supabase
+          const { data: publicaciones } = await window.supabaseClient
             .from('publicaciones')
             .select('id')
             .eq('usuario_id', usuarioActivoChat.id)
@@ -524,7 +527,7 @@
 
           if (publicaciones && publicaciones.length > 0) {
             // Registrar contacto
-            await supabase
+            await window.supabaseClient
               .from('contactos_proyectos')
               .insert([{
                 publicacion_id: publicaciones[0].id,
@@ -532,8 +535,8 @@
               }])
               .then(() => {
                 // Verificar badges
-                supabase.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
-                supabase.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
+                window.supabaseClient.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
+                window.supabaseClient.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
               });
           }
         }
@@ -570,7 +573,7 @@
         const extension = file.name.split('.').pop();
         const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
           .from('arnexu-files')
           .upload(`chat/${nombreArchivo}`, file, {
             cacheControl: '3600',
@@ -580,12 +583,12 @@
         if (uploadError) throw uploadError;
 
         // Obtener URL pública
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = window.supabaseClient.storage
           .from('arnexu-files')
           .getPublicUrl(`chat/${nombreArchivo}`);
 
         // Guardar mensaje con archivo
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
           .from('mensajes')
           .insert([{
             chat_id: chatActivo.id,
@@ -604,7 +607,7 @@
                                tipoMensaje === 'video' ? '🎥 Video' : 
                                `📄 ${file.name}`;
         
-        await supabase
+        await window.supabaseClient
           .from('chats')
           .update({
             ultimo_mensaje: mensajePreview,
@@ -631,7 +634,7 @@
         // Buscar o crear chat con IA (usuario_id especial)
         const IA_USER_ID = '00000000-0000-0000-0000-000000000000';
 
-        const { data: chatExistente } = await supabase
+        const { data: chatExistente } = await window.supabaseClient
           .from('chats')
           .select('id')
           .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${IA_USER_ID}),and(participante1_id.eq.${IA_USER_ID},participante2_id.eq.${usuarioActual.id})`)
@@ -658,7 +661,7 @@
           await cargarMensajes(chatExistente.id);
         } else {
           // Crear nuevo chat con IA
-          const { data: nuevoChat, error } = await supabase
+          const { data: nuevoChat, error } = await window.supabaseClient
             .from('chats')
             .insert([{
               participante1_id: usuarioActual.id,
@@ -672,7 +675,7 @@
           if (error) throw error;
 
           // Enviar mensaje de bienvenida de la IA
-          await supabase
+          await window.supabaseClient
             .from('mensajes')
             .insert([{
               chat_id: nuevoChat.id,
@@ -860,7 +863,7 @@
         // Subir a Supabase Storage
         const nombreArchivo = `${usuarioActual.id}_${Date.now()}.webm`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
           .from('arnexu-files')
           .upload(`chat/voice/${nombreArchivo}`, audioBlob, {
             cacheControl: '3600',
@@ -870,7 +873,7 @@
         if (uploadError) throw uploadError;
 
         // Obtener URL pública
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = window.supabaseClient.storage
           .from('arnexu-files')
           .getPublicUrl(`chat/voice/${nombreArchivo}`);
 
@@ -878,7 +881,7 @@
         const duracion = Math.round(audioBlob.size / 16000); // Aproximación
 
         // Guardar mensaje de voz
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
           .from('mensajes')
           .insert([{
             chat_id: chatActivo.id,
@@ -893,7 +896,7 @@
         if (error) throw error;
 
         // Actualizar último mensaje del chat
-        await supabase
+        await window.supabaseClient
           .from('chats')
           .update({
             ultimo_mensaje: '🎤 Mensaje de voz',
@@ -924,7 +927,7 @@
       try {
         if (tipoEliminacion === 'para_todos') {
           // Eliminar completamente de la base de datos
-          const { error } = await supabase
+          const { error } = await window.supabaseClient
             .from('mensajes')
             .delete()
             .eq('id', mensajeId);
@@ -935,7 +938,7 @@
           // Marcar como eliminado solo para este usuario
           // Por ahora, simplemente lo eliminamos de la base de datos
           // En una versión más avanzada, podrías agregar una tabla de mensajes_eliminados
-          const { error } = await supabase
+          const { error } = await window.supabaseClient
             .from('mensajes')
             .delete()
             .eq('id', mensajeId)

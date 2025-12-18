@@ -2,7 +2,11 @@ const SUPABASE_URL = 'https://ifdajpaxbvpnbgeuohej.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmZGFqcGF4YnZwbmJnZXVvaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzA4ODMsImV4cCI6MjA4MTQwNjg4M30._2ogsIF2R5knYgea2mg5KE3TVlkEVt13TIyBZ69Yry4';
 
 // Inicializar el cliente de Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
 
 // ============================================
 // FUNCIONES DE UTILIDAD
@@ -10,19 +14,19 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Obtener el usuario actual
 async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await window.supabaseClient.auth.getUser();
   return user;
 }
 
 // Verificar si hay una sesión activa
 async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
   return session;
 }
 
 // Cerrar sesión
 async function logout() {
-  await supabase.auth.signOut();
+  await window.supabaseClient.auth.signOut();
   window.location.href = 'index.html';
 }
 

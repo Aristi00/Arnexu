@@ -6,7 +6,10 @@
   <title>Inicio| Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
 </head>
 <body>
   <!-- Navbar -->
@@ -95,7 +98,7 @@
     async function cargarPublicaciones() {
       try {
         // Obtener todas las publicaciones con información del autor
-        const { data: publicaciones, error } = await supabase
+        const { data: publicaciones, error } = await window.supabaseClient
           .from('publicaciones')
           .select(`
             *,
@@ -117,7 +120,7 @@
         // Para cada publicación, verificar si el usuario actual le dio like
         const publicacionesConLikes = await Promise.all(
           publicaciones.map(async (pub) => {
-            const { data: miLike } = await supabase
+            const { data: miLike } = await window.supabaseClient
               .from('likes')
               .select('id')
               .eq('publicacion_id', pub.id)
@@ -273,18 +276,18 @@
       try {
         if (yaLeDioLike) {
           // Quitar like
-          await supabase
+          await window.supabaseClient
             .from('likes')
             .delete()
             .eq('publicacion_id', publicacionId)
             .eq('usuario_id', usuarioActual.id);
 
           // Actualizar contador
-          await supabase.rpc('decrement_likes', { pub_id: publicacionId });
+          await window.supabaseClient.rpc('decrement_likes', { pub_id: publicacionId });
           
         } else {
           // Dar like
-          await supabase
+          await window.supabaseClient
             .from('likes')
             .insert([{
               publicacion_id: publicacionId,
@@ -292,7 +295,7 @@
             }]);
 
           // Actualizar contador
-          await supabase.rpc('increment_likes', { pub_id: publicacionId });
+          await window.supabaseClient.rpc('increment_likes', { pub_id: publicacionId });
         }
 
         // Recargar publicaciones para reflejar cambios

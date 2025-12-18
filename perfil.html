@@ -6,7 +6,11 @@
   <title>Perfil| Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
+
 </head>
 <body>
   <!-- Navbar -->
@@ -251,7 +255,7 @@
     // ============================================
     async function cargarPerfil(userId) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('usuarios')
           .select('*')
           .eq('id', userId)
@@ -300,7 +304,7 @@
     // ============================================
     async function cargarBadges(userId) {
       try {
-        const { data: badges, error } = await supabase
+        const { data: badges, error } = await window.supabaseClient
           .from('badges')
           .select('*')
           .eq('usuario_id', userId);
@@ -385,7 +389,7 @@
     // ============================================
     async function cargarPublicaciones(userId) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('publicaciones')
           .select('*')
           .eq('usuario_id', userId)
@@ -461,7 +465,7 @@
     // ============================================
     async function cargarLikes(userId) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('likes')
           .select(`
             created_at,
@@ -582,12 +586,12 @@
         // Subir nueva foto si se seleccionó
         if (foto) {
           const nombreArchivo = `${usuarioActual.id}_${Date.now()}.jpg`;
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError } = await window.supabaseClient.storage
             .from('arnexu-files')
             .upload(`avatars/${nombreArchivo}`, foto, { upsert: true });
 
           if (!uploadError) {
-            const { data: urlData } = supabase.storage
+            const { data: urlData } = window.supabaseClient.storage
               .from('arnexu-files')
               .getPublicUrl(`avatars/${nombreArchivo}`);
             fotoUrl = urlData.publicUrl;
@@ -595,7 +599,7 @@
         }
 
         // Actualizar perfil
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
           .from('usuarios')
           .update({ biografia: bio, foto_perfil: fotoUrl })
           .eq('id', usuarioActual.id);
@@ -619,7 +623,7 @@
       if (!confirm('¿Estás seguro de que quieres eliminar esta publicación?')) return;
 
       try {
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
           .from('publicaciones')
           .delete()
           .eq('id', pubId);
@@ -688,7 +692,7 @@
           }
 
           try {
-            const { error } = await supabase
+            const { error } = await window.supabaseClient
               .from('publicaciones')
               .update({
                 titulo: titulo,

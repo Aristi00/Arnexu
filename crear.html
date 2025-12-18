@@ -7,6 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
+
 </head>
 <body>
   <!-- Navbar -->
@@ -229,12 +233,12 @@
         if (archivosInput.length > 0) {
           for (const archivo of archivosInput) {
             const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
-            const { data, error } = await supabase.storage
+            const { data, error } = await window.supabaseClient.storage
               .from('arnexu-files')
               .upload(`publicaciones/${nombreArchivo}`, archivo);
 
             if (!error) {
-              const { data: urlData } = supabase.storage
+              const { data: urlData } = window.supabaseClient.storage
                 .from('arnexu-files')
                 .getPublicUrl(`publicaciones/${nombreArchivo}`);
               archivosUrls.push({
@@ -247,7 +251,7 @@
         }
 
         // Crear publicación en la base de datos
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('publicaciones')
           .insert([{
             usuario_id: usuarioActual.id,

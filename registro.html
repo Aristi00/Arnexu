@@ -7,6 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.1"></script>
+<script src="js/app.js?v=1.0.1"></script>
+
 </head>
 <body>
   <div class="container" style="max-width: 500px; margin-top: 40px; margin-bottom: 40px;">
@@ -211,7 +214,7 @@
 
       try {
         // 1. Registrar usuario en Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({
           email: email,
           password: password,
           phone: telefono,
@@ -223,12 +226,12 @@
         let fotoUrl = null;
         if (fotoPerfil) {
           const nombreArchivo = `${authData.user.id}_${Date.now()}.jpg`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
+          const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
             .from('arnexu-files')
             .upload(`avatars/${nombreArchivo}`, fotoPerfil);
 
           if (!uploadError) {
-            const { data: urlData } = supabase.storage
+            const { data: urlData } = window.supabaseClient.storage
               .from('arnexu-files')
               .getPublicUrl(`avatars/${nombreArchivo}`);
             fotoUrl = urlData.publicUrl;
@@ -236,7 +239,7 @@
         }
 
         // 3. Crear perfil del usuario en la tabla usuarios
-        const { error: perfilError } = await supabase
+        const { error: perfilError } = await window.supabaseClient
           .from('usuarios')
           .insert([{
             id: authData.user.id,
