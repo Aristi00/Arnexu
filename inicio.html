@@ -138,6 +138,63 @@
     }
 
     // ============================================
+    // GENERAR HTML PARA ARCHIVOS ADJUNTOS
+    // ============================================
+    function generarHTMLArchivos(archivos) {
+      if (!archivos || archivos.length === 0) return '';
+
+      const archivosHTML = archivos.map(archivo => {
+        const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
+        const esVideo = archivo.tipo && archivo.tipo.startsWith('video/');
+        const esPDF = archivo.tipo && archivo.tipo.includes('pdf');
+
+        if (esImagen) {
+          return `
+            <div style="margin-bottom: 10px;">
+              <img src="${archivo.url}" alt="${archivo.nombre}" 
+                   style="max-width: 100%; border-radius: 8px; cursor: pointer;"
+                   onclick="window.open('${archivo.url}', '_blank')">
+            </div>
+          `;
+        } else if (esVideo) {
+          return `
+            <div style="margin-bottom: 10px;">
+              <video controls style="max-width: 100%; border-radius: 8px;">
+                <source src="${archivo.url}" type="${archivo.tipo}">
+                Tu navegador no soporta videos.
+              </video>
+            </div>
+          `;
+        } else {
+          // Documentos (PDF, DOC, etc)
+          const icono = esPDF ? '📄' : '📎';
+          return `
+            <div style="background: var(--gris-medio); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 24px;">${icono}</span>
+              <div style="flex: 1;">
+                <a href="${archivo.url}" target="_blank" style="color: var(--acento); text-decoration: none; font-weight: 500;">
+                  ${archivo.nombre}
+                </a>
+              </div>
+              <a href="${archivo.url}" download style="color: var(--acento); text-decoration: none;">
+                ⬇️
+              </a>
+            </div>
+          `;
+        }
+      }).join('');
+
+      return `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gris-medio);">
+          <strong style="color: var(--gris-neon); font-size: 14px; display: block; margin-bottom: 10px;">
+            📎 Archivos adjuntos:
+          </strong>
+          ${archivosHTML}
+        </div>
+      `;
+    }
+
+    // ============================================
     // MOSTRAR PUBLICACIONES EN EL FEED
     // ============================================
     function mostrarPublicaciones(publicaciones) {
@@ -183,6 +240,8 @@
             <p class="publicacion-descripcion">${pub.descripcion}</p>
 
             <span class="publicacion-categoria">${pub.categoria}</span>
+
+            ${generarHTMLArchivos(pub.archivos)}
 
             <div class="publicacion-acciones">
               <button 
@@ -275,29 +334,7 @@
     inicializar();
   </script>
 
-  <!-- Nota: Necesitamos crear funciones RPC en Supabase -->
-  <!-- Ve al SQL Editor y ejecuta esto: -->
-  <!--
-  CREATE OR REPLACE FUNCTION increment_likes(pub_id UUID)
-  RETURNS void AS $$
-  BEGIN
-    UPDATE publicaciones 
-    SET likes_count = likes_count + 1 
-    WHERE id = pub_id;
-  END;
-  $$ LANGUAGE plpgsql;
-
-  CREATE OR REPLACE FUNCTION decrement_likes(pub_id UUID)
-  RETURNS void AS $$
-  BEGIN
-    UPDATE publicaciones 
-    SET likes_count = GREATEST(likes_count - 1, 0)
-    WHERE id = pub_id;
-  END;
-  $$ LANGUAGE plpgsql;
-  -->
-
-    <!-- Agregar al final del body en todas las páginas -->
+  <!-- Agregar al final del body en todas las páginas -->
 <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
   <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
     <p style="color: var(--gris-neon); margin: 0;">
