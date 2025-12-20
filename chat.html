@@ -152,6 +152,7 @@
     let chatActivo = null;
     let usuarioActivoChat = null;
     let intervalActualizacion = null;
+    let ultimosMensajesIds = []; // NUEVA VARIABLE: Para evitar reiniciar audios
 
     // ============================================
     // PROTEGER PÁGINA Y CARGAR CHATS
@@ -238,6 +239,7 @@
       try {
         // Verificar si ya existe un chat entre estos usuarios
         const { data: chatExistente, error: errorBuscar } = await window.supabaseClient
+          .from('chats')
           .select('id')
           .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${otroUsuarioId}),and(participante1_id.eq.${otroUsuarioId},participante2_id.eq.${usuarioActual.id})`)
           .single();
@@ -301,6 +303,9 @@
         document.getElementById('chatNombreActivo').textContent = otroUsuario.nombre_completo;
         document.getElementById('chatUsernameActivo').textContent = `@${otroUsuario.nombre_usuario}`;
 
+        // Resetear el tracking de mensajes
+        ultimosMensajesIds = [];
+
         // Cargar mensajes
         await cargarMensajes(chatId);
 
@@ -319,7 +324,7 @@
     }
 
     // ============================================
-    // CARGAR MENSAJES
+    // CARGAR MENSAJES (VERSIÓN CORREGIDA)
     // ============================================
     async function cargarMensajes(chatId, silencioso = false) {
       try {
@@ -341,9 +346,21 @@
                 <p style="font-size: 12px; margin-top: 10px;">Envía el primer mensaje</p>
               </div>
             `;
+            ultimosMensajesIds = [];
             return;
           }
         }
+
+        // SOLUCIÓN: Solo actualizar si hay cambios en los mensajes
+        const nuevosIds = mensajes.map(m => m.id);
+        const hayDiferencias = JSON.stringify(nuevosIds) !== JSON.stringify(ultimosMensajesIds);
+        
+        if (silencioso && !hayDiferencias) {
+          // No hay mensajes nuevos, no actualizar el HTML para evitar reiniciar audios
+          return;
+        }
+
+        ultimosMensajesIds = nuevosIds;
 
         const scrollBottom = mensajesDiv.scrollHeight - mensajesDiv.scrollTop <= mensajesDiv.clientHeight + 100;
 
@@ -371,7 +388,7 @@
             contenidoHTML = `
               <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 5px;">
                 <span style="font-size: 20px;">🎤</span>
-                <audio controls style="flex: 1; height: 32px;">
+                <audio controls preload="metadata" style="flex: 1; height: 32px;">
                   <source src="${msg.archivo_url}" type="audio/webm">
                   Tu navegador no soporta audio.
                 </audio>
@@ -687,6 +704,9 @@
         clearInterval(intervalActualizacion);
         intervalActualizacion = null;
       }
+
+      // Resetear tracking de mensajes
+      ultimosMensajesIds = [];
 
       // Mostrar lista, ocultar ventana de chat
       document.getElementById('chatListaContenedor').style.display = 'block';
