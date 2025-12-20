@@ -386,14 +386,18 @@
             `;
           } else if (msg.tipo === 'audio') {
             contenidoHTML = `
-              <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 5px;">
-                <span style="font-size: 20px;">🎤</span>
-                <audio controls preload="metadata" style="flex: 1; height: 32px;">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 12px; margin-bottom: 5px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 24px;">🎤</span>
+                  <span style="font-size: 13px; opacity: 0.8;">${msg.contenido || 'Mensaje de voz'}</span>
+                </div>
+                <audio controls preload="metadata" controlsList="nodownload" style="width: 100%; max-width: 100%; height: 40px; border-radius: 8px;">
                   <source src="${msg.archivo_url}" type="audio/webm">
+                  <source src="${msg.archivo_url}" type="audio/ogg">
+                  <source src="${msg.archivo_url}" type="audio/mpeg">
                   Tu navegador no soporta audio.
                 </audio>
               </div>
-              <p style="margin: 5px 0; font-size: 12px; opacity: 0.7;">${msg.contenido || 'Mensaje de voz'}</p>
             `;
           } else if (msg.tipo === 'archivo') {
             contenidoHTML = `
@@ -626,48 +630,6 @@
           document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
           document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
           
-          await cargarMensajes(chatExistente.id);
-        } else {
-          // Crear nuevo chat con IA
-          const { data: nuevoChat, error } = await window.supabaseClient
-            .from('chats')
-            .insert([{
-              participante1_id: usuarioActual.id,
-              participante2_id: IA_USER_ID,
-              ultimo_mensaje: 'Chat con IA iniciado',
-              ultimo_mensaje_fecha: new Date().toISOString()
-            }])
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          // Enviar mensaje de bienvenida de la IA
-          await window.supabaseClient
-            .from('mensajes')
-            .insert([{
-              chat_id: nuevoChat.id,
-              remitente_id: IA_USER_ID,
-              contenido: '¡Hola! 👋 Soy tu asistente de IA de Arnexu. Puedo ayudarte con:\n\n• Crear resúmenes ejecutivos\n• Diseñar estrategias de negocio\n• Generar ideas de logos\n• Análisis de mercado\n• Pitch decks\n• Y mucho más sobre emprendimiento\n\n¿En qué puedo ayudarte hoy?',
-              tipo: 'ia'
-            }]);
-
-          // Abrir el chat
-          usuarioActivoChat = {
-            id: IA_USER_ID,
-            nombre_completo: 'Asistente IA de Arnexu',
-            nombre_usuario: 'arnexu_ia',
-            foto_perfil: 'https://via.placeholder.com/48/00ff88/000000?text=AI'
-          };
-          
-          chatActivo = { id: nuevoChat.id };
-          
-          document.getElementById('chatVacio').style.display = 'none';
-          document.getElementById('chatActivo').style.display = 'flex';
-          document.getElementById('chatAvatarActivo').src = usuarioActivoChat.foto_perfil;
-          document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
-          document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
-          
           await cargarMensajes(nuevoChat.id);
         }
 
@@ -778,18 +740,42 @@
 
     async function iniciarGrabacion() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Verificar soporte del navegador
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          mostrarNotificacion('Tu navegador no soporta grabación de audio', 'error');
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          } 
+        });
         
-        mediaRecorder = new MediaRecorder(stream);
+        // Determinar el tipo MIME soportado
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+          mimeType = 'audio/ogg;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
         audioChunks = [];
 
         mediaRecorder.ondataavailable = (event) => {
-          audioChunks.push(event.data);
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
         };
 
         mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          await subirAudio(audioBlob);
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          await subirAudio(audioBlob, mimeType);
           
           // Detener todos los tracks del stream
           stream.getTracks().forEach(track => track.stop());
@@ -808,7 +794,7 @@
 
       } catch (error) {
         console.error('Error al iniciar grabación:', error);
-        mostrarNotificacion('Error al acceder al micrófono', 'error');
+        mostrarNotificacion('Error al acceder al micrófono. Por favor permite el acceso.', 'error');
       }
     }
 
@@ -825,20 +811,27 @@
       }
     }
 
-    async function subirAudio(audioBlob) {
+    async function subirAudio(audioBlob, mimeType = 'audio/webm') {
       if (!chatActivo) return;
 
       try {
         mostrarNotificacion('Subiendo audio...');
 
+        // Determinar extensión según el tipo MIME
+        let extension = 'webm';
+        if (mimeType.includes('ogg')) extension = 'ogg';
+        else if (mimeType.includes('mp4')) extension = 'mp4';
+        else if (mimeType.includes('mpeg')) extension = 'mp3';
+
         // Subir a Supabase Storage
-        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.webm`;
+        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
         
         const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
           .from('arnexu-files')
           .upload(`chat/voice/${nombreArchivo}`, audioBlob, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
+            contentType: mimeType
           });
 
         if (uploadError) throw uploadError;
@@ -860,8 +853,8 @@
             contenido: `Mensaje de voz (${duracion}s)`,
             tipo: 'audio',
             archivo_url: urlData.publicUrl,
-            archivo_nombre: `audio_${duracion}s.webm`,
-            archivo_tipo: 'audio/webm'
+            archivo_nombre: `audio_${duracion}s.${extension}`,
+            archivo_tipo: mimeType
           }]);
 
         if (error) throw error;
@@ -875,7 +868,7 @@
           })
           .eq('id', chatActivo.id);
 
-        mostrarNotificacion('Audio enviado');
+        mostrarNotificacion('Audio enviado ✅');
         await cargarMensajes(chatActivo.id);
         await cargarChats();
 
@@ -943,4 +936,3 @@
     <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
   </div>
 </footer>
-</html>
