@@ -9,82 +9,111 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=1.0.1"></script>
   <script src="js/app.js?v=1.0.1"></script>
+  <style>
+    .custom-audio-player {
+      background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,150,255,0.1) 100%);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 8px 0;
+      border: 1px solid rgba(0,255,136,0.2);
+    }
+    .audio-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .audio-controls-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: rgba(0,0,0,0.2);
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .play-btn {
+      width: 50px;
+      height: 50px;
+      min-width: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00ff88 0%, #00dd77 100%);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,255,136,0.3);
+      transition: transform 0.1s;
+    }
+    .play-btn:active {
+      transform: scale(0.9);
+    }
+    .progress-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00ff88 0%, #00dd77 100%);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .time-info {
+      font-size: 12px;
+      opacity: 0.8;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
       <ul class="navbar-menu">
-        <li><a href="inicio.html">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-        </a></li>
-        <li><a href="crear.html">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="16"></line>
-            <line x1="8" y1="12" x2="16" y2="12"></line>
-          </svg>
-        </a></li>
-        <li><a href="chat.html">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </a></li>
-        <li><a href="perfil.html">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </a></li>
-        <li><a href="#" onclick="logout()" style="color: var(--error);">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </a></li>
+        <li><a href="inicio.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></a></li>
+        <li><a href="crear.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></li>
+        <li><a href="chat.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a></li>
+        <li><a href="perfil.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></a></li>
       </ul>
     </div>
   </nav>
 
   <div class="container-wide" style="margin-top: 30px;">
-    <button id="btnVolverLista" onclick="volverALista()" style="display: none; margin-bottom: 15px; background: var(--gris-medio); border: none; padding: 10px 20px; border-radius: 8px; color: var(--blanco); font-family: 'Montserrat'; cursor: pointer;">
-      ← Volver a conversaciones
-    </button>
+    <button id="btnVolverLista" onclick="volverALista()" style="display: none; margin-bottom: 15px; background: var(--gris-medio); border: none; padding: 10px 20px; border-radius: 8px; color: var(--blanco); font-family: 'Montserrat'; cursor: pointer;">← Volver a conversaciones</button>
 
     <div class="chat-container">
       <div class="chat-lista" id="chatListaContenedor">
         <h3 style="margin-bottom: 20px; font-size: 20px;">Conversaciones</h3>
-        <div id="listaChats">
-          <div class="loading" style="text-align: center; padding: 20px;">Cargando chats...</div>
-        </div>
+        <div id="listaChats"><div class="loading" style="text-align: center; padding: 20px;">Cargando chats...</div></div>
       </div>
 
       <div class="chat-ventana" id="chatVentanaContenedor">
         <div id="chatVacio" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gris-neon); text-align: center;">
-          <div>
-            <h3 style="font-size: 24px; margin-bottom: 10px;">💬</h3>
-            <p>Selecciona una conversación para empezar</p>
-          </div>
+          <div><h3 style="font-size: 24px; margin-bottom: 10px;">💬</h3><p>Selecciona una conversación para empezar</p></div>
         </div>
 
         <div id="chatActivo" style="display: none; height: 100%; flex-direction: column;">
           <div style="padding: 20px; border-bottom: 1px solid var(--gris-medio); display: flex; align-items: center; gap: 12px;">
             <img id="chatAvatarActivo" src="" alt="" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
-            <div style="flex: 1;">
-              <h3 id="chatNombreActivo" style="font-size: 16px; font-weight: 600;"></h3>
-              <p id="chatUsernameActivo" style="font-size: 12px; color: var(--gris-neon);"></p>
-            </div>
+            <div style="flex: 1;"><h3 id="chatNombreActivo" style="font-size: 16px; font-weight: 600;"></h3><p id="chatUsernameActivo" style="font-size: 12px; color: var(--gris-neon);"></p></div>
             <button class="btn-icon" onclick="verPerfilActivo()" title="Ver perfil">👤</button>
           </div>
-
-          <div class="chat-mensajes" id="chatMensajes">
-            <div class="loading">Cargando mensajes...</div>
-          </div>
-
+          <div class="chat-mensajes" id="chatMensajes"><div class="loading">Cargando mensajes...</div></div>
           <div class="chat-input-container">
             <input type="file" id="archivoInput" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="subirArchivo()">
             <button class="btn-icon" onclick="document.getElementById('archivoInput').click()" title="Adjuntar archivo" style="background: var(--gris-medio);">📎</button>
@@ -98,369 +127,7 @@
   </div>
 
   <script>
-    let usuarioActual = null;
-    let chatActivo = null;
-    let usuarioActivoChat = null;
-    let intervalActualizacion = null;
-    let ultimosMensajesIds = [];
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let grabando = false;
-
-    async function inicializar() {
-      await protegerPagina();
-      usuarioActual = await getCurrentUser();
-      const urlParams = new URLSearchParams(window.location.search);
-      const nuevoUsuarioId = urlParams.get('nuevo');
-      if (nuevoUsuarioId) await crearOAbrirChat(nuevoUsuarioId);
-      await cargarChats();
-    }
-
-    async function cargarChats() {
-      try {
-        const { data: chats, error } = await window.supabaseClient.from('chats').select(`*,participante1:usuarios!chats_participante1_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil),participante2:usuarios!chats_participante2_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil)`).or(`participante1_id.eq.${usuarioActual.id},participante2_id.eq.${usuarioActual.id}`).order('ultimo_mensaje_fecha', { ascending: false, nullsFirst: false });
-        if (error) throw error;
-        const listaDiv = document.getElementById('listaChats');
-        if (!chats || chats.length === 0) {
-          listaDiv.innerHTML = `<div class="empty-state" style="padding: 40px 20px;"><p style="font-size: 14px;">No tienes conversaciones</p><p style="font-size: 12px; margin-top: 10px;">Inicia una desde el perfil de un usuario</p></div>`;
-          return;
-        }
-        listaDiv.innerHTML = chats.map(chat => {
-          const otroUsuario = chat.participante1_id === usuarioActual.id ? chat.participante2 : chat.participante1;
-          return `<div class="chat-item ${chatActivo?.id === chat.id ? 'active' : ''}" onclick="abrirChat('${chat.id}', '${otroUsuario.id}')"><img src="${otroUsuario.foto_perfil || 'https://via.placeholder.com/40'}" alt="${otroUsuario.nombre_completo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"><div style="flex: 1; overflow: hidden;"><h4 style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">${otroUsuario.nombre_completo}</h4><p style="font-size: 12px; color: var(--gris-neon); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${chat.ultimo_mensaje || 'Sin mensajes'}</p></div></div>`;
-        }).join('');
-      } catch (error) {
-        console.error('Error cargando chats:', error);
-      }
-    }
-
-    async function crearOAbrirChat(otroUsuarioId) {
-      try {
-        const { data: chatExistente } = await window.supabaseClient.from('chats').select('id').or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${otroUsuarioId}),and(participante1_id.eq.${otroUsuarioId},participante2_id.eq.${usuarioActual.id})`).single();
-        if (chatExistente) {
-          await abrirChat(chatExistente.id, otroUsuarioId);
-          return;
-        }
-        const { data: nuevoChat, error: errorCrear } = await window.supabaseClient.from('chats').insert([{participante1_id: usuarioActual.id, participante2_id: otroUsuarioId}]).select().single();
-        if (errorCrear) throw errorCrear;
-        await abrirChat(nuevoChat.id, otroUsuarioId);
-      } catch (error) {
-        console.error('Error creando/abriendo chat:', error);
-        mostrarNotificacion('Error al crear la conversación', 'error');
-      }
-    }
-
-    async function abrirChat(chatId, otroUsuarioId) {
-      try {
-        chatActivo = { id: chatId };
-        const { data: otroUsuario, error } = await window.supabaseClient.from('usuarios').select('*').eq('id', otroUsuarioId).single();
-        if (error) throw error;
-        usuarioActivoChat = otroUsuario;
-        if (window.innerWidth <= 768) {
-          document.getElementById('chatListaContenedor').style.display = 'none';
-          document.getElementById('chatVentanaContenedor').style.display = 'flex';
-          document.getElementById('btnVolverLista').style.display = 'block';
-        }
-        document.getElementById('chatVacio').style.display = 'none';
-        document.getElementById('chatActivo').style.display = 'flex';
-        document.getElementById('chatAvatarActivo').src = otroUsuario.foto_perfil || 'https://via.placeholder.com/48';
-        document.getElementById('chatNombreActivo').textContent = otroUsuario.nombre_completo;
-        document.getElementById('chatUsernameActivo').textContent = `@${otroUsuario.nombre_usuario}`;
-        ultimosMensajesIds = [];
-        await cargarMensajes(chatId);
-        await cargarChats();
-        if (intervalActualizacion) clearInterval(intervalActualizacion);
-        intervalActualizacion = setInterval(() => cargarMensajes(chatId, true), 3000);
-      } catch (error) {
-        console.error('Error abriendo chat:', error);
-      }
-    }
-
-    async function cargarMensajes(chatId, silencioso = false) {
-      try {
-        const { data: mensajes, error } = await window.supabaseClient.from('mensajes').select('*').eq('chat_id', chatId).order('created_at', { ascending: true });
-        if (error) throw error;
-        const mensajesDiv = document.getElementById('chatMensajes');
-        if (!silencioso && (!mensajes || mensajes.length === 0)) {
-          mensajesDiv.innerHTML = `<div class="empty-state"><p>No hay mensajes aún</p><p style="font-size: 12px; margin-top: 10px;">Envía el primer mensaje</p></div>`;
-          ultimosMensajesIds = [];
-          return;
-        }
-        const nuevosIds = mensajes.map(m => m.id);
-        if (silencioso && JSON.stringify(nuevosIds) === JSON.stringify(ultimosMensajesIds)) return;
-        ultimosMensajesIds = nuevosIds;
-        const scrollBottom = mensajesDiv.scrollHeight - mensajesDiv.scrollTop <= mensajesDiv.clientHeight + 100;
-        mensajesDiv.innerHTML = mensajes.map(msg => {
-          let contenido = '';
-          const esIA = msg.tipo === 'ia';
-          const esMio = msg.remitente_id === usuarioActual.id;
-          if (msg.tipo === 'imagen') {
-            contenido = `<img src="${msg.archivo_url}" alt="Imagen" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer;" onclick="window.open('${msg.archivo_url}', '_blank')"><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
-          } else if (msg.tipo === 'video') {
-            contenido = `<video controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;"><source src="${msg.archivo_url}" type="${msg.archivo_tipo}"></video><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
-          } else if (msg.tipo === 'audio') {
-            contenido = `
-              <div style="width: 100%; background: rgba(100,100,100,0.2); border-radius: 12px; padding: 15px; margin: 5px 0;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                  <span style="font-size: 24px;">🎤</span>
-                  <span style="font-size: 13px; font-weight: 600; color: #fff;">${msg.contenido || 'Mensaje de voz'}</span>
-                </div>
-                <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px; border: 1px solid rgba(255,255,255,0.1);">
-                  <audio 
-                    controls 
-                    preload="auto" 
-                    style="width: 100%; height: 60px; display: block; outline: none; border-radius: 8px;"
-                    onloadedmetadata="console.log('Audio cargado:', this.src)"
-                    onerror="console.error('Error cargando audio:', this.src, this.error)"
-                  >
-                    <source src="${msg.archivo_url}" type="audio/webm">
-                    <source src="${msg.archivo_url}" type="audio/ogg">
-                    <source src="${msg.archivo_url}" type="audio/mpeg">
-                    <source src="${msg.archivo_url}" type="audio/mp4">
-                    <source src="${msg.archivo_url}" type="audio/wav">
-                    Tu navegador no soporta audio.
-                  </audio>
-                  <div style="margin-top: 8px; font-size: 11px; opacity: 0.6; text-align: center;">
-                    URL: ${msg.archivo_url.substring(0, 50)}...
-                  </div>
-                </div>
-              </div>
-            `;
-          } else if (msg.tipo === 'archivo') {
-            contenido = `<a href="${msg.archivo_url}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; text-decoration: none; color: inherit; margin-bottom: 5px;"><span style="font-size: 24px;">📄</span><div><div style="font-weight: 600;">${msg.archivo_nombre}</div><div style="font-size: 12px; opacity: 0.7;">Clic para descargar</div></div></a><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
-          } else {
-            contenido = `<p style="margin-bottom: 5px; white-space: pre-wrap;">${msg.contenido}</p>`;
-          }
-          return `<div class="mensaje ${esMio ? 'propio' : ''} ${esIA ? 'mensaje-ia' : ''}">${esIA ? '<div style="font-size: 20px; margin-bottom: 5px;">🤖</div>' : ''}<div class="mensaje-contenido">${contenido}<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;"><small style="font-size: 11px; opacity: 0.7;">${formatearFecha(msg.created_at)}</small>${esMio ? `<div style="display: flex; gap: 5px;"><button onclick="eliminarMensaje('${msg.id}', 'solo_yo')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;" title="Eliminar para mí">🗑️</button><button onclick="eliminarMensaje('${msg.id}', 'para_todos')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;" title="Eliminar para todos">❌</button></div>` : ''}</div></div></div>`;
-        }).join('');
-        if (scrollBottom || !silencioso) mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
-      } catch (error) {
-        console.error('Error cargando mensajes:', error);
-      }
-    }
-
-    async function enviarMensaje() {
-      const input = document.getElementById('mensajeInput');
-      const contenido = input.value.trim();
-      if (!contenido || !chatActivo) return;
-      try {
-        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: contenido, tipo: 'texto'}]);
-        if (error) throw error;
-        await window.supabaseClient.from('chats').update({ultimo_mensaje: contenido, ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
-        if (usuarioActivoChat) {
-          const { data: publicaciones } = await window.supabaseClient.from('publicaciones').select('id').eq('usuario_id', usuarioActivoChat.id).limit(1);
-          if (publicaciones && publicaciones.length > 0) {
-            await window.supabaseClient.from('contactos_proyectos').insert([{publicacion_id: publicaciones[0].id, contacto_por: usuarioActual.id}]).then(() => {
-              window.supabaseClient.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
-              window.supabaseClient.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
-            });
-          }
-        }
-        input.value = '';
-        await cargarMensajes(chatActivo.id);
-        await cargarChats();
-      } catch (error) {
-        console.error('Error enviando mensaje:', error);
-        mostrarNotificacion('Error al enviar el mensaje', 'error');
-      }
-    }
-
-    async function subirArchivo() {
-      const fileInput = document.getElementById('archivoInput');
-      const file = fileInput.files[0];
-      if (!file || !chatActivo) return;
-      try {
-        mostrarNotificacion('Subiendo archivo...');
-        let tipoMensaje = 'archivo';
-        if (file.type.startsWith('image/')) tipoMensaje = 'imagen';
-        if (file.type.startsWith('video/')) tipoMensaje = 'video';
-        const extension = file.name.split('.').pop();
-        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
-        const { error: uploadError } = await window.supabaseClient.storage.from('arnexu-files').upload(`chat/${nombreArchivo}`, file, {cacheControl: '3600', upsert: false});
-        if (uploadError) throw uploadError;
-        const { data: urlData } = window.supabaseClient.storage.from('arnexu-files').getPublicUrl(`chat/${nombreArchivo}`);
-        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: '', tipo: tipoMensaje, archivo_url: urlData.publicUrl, archivo_nombre: file.name, archivo_tipo: file.type}]);
-        if (error) throw error;
-        const mensajePreview = tipoMensaje === 'imagen' ? '📷 Imagen' : tipoMensaje === 'video' ? '🎥 Video' : `📄 ${file.name}`;
-        await window.supabaseClient.from('chats').update({ultimo_mensaje: mensajePreview, ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
-        mostrarNotificacion('Archivo enviado');
-        fileInput.value = '';
-        await cargarMensajes(chatActivo.id);
-        await cargarChats();
-      } catch (error) {
-        console.error('Error subiendo archivo:', error);
-        mostrarNotificacion('Error al subir el archivo', 'error');
-      }
-    }
-
-    async function toggleGrabacion() {
-      if (!chatActivo) {
-        mostrarNotificacion('Abre un chat primero', 'error');
-        return;
-      }
-      if (!grabando) await iniciarGrabacion();
-      else detenerGrabacion();
-    }
-
-    async function iniciarGrabacion() {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          mostrarNotificacion('Tu navegador no soporta grabación de audio', 'error');
-          return;
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          } 
-        });
-        let mimeType = 'audio/webm';
-        const tipos = [
-          'audio/webm;codecs=opus',
-          'audio/webm',
-          'audio/ogg;codecs=opus',
-          'audio/ogg',
-          'audio/mp4',
-          'audio/mpeg',
-          'audio/wav'
-        ];
-        for (const tipo of tipos) {
-          if (MediaRecorder.isTypeSupported(tipo)) {
-            mimeType = tipo;
-            console.log('✅ Formato soportado:', tipo);
-            break;
-          }
-        }
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
-        audioChunks = [];
-        mediaRecorder.ondataavailable = (event) => { 
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-            console.log('📦 Chunk recibido:', event.data.size, 'bytes');
-          }
-        };
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
-          console.log('🎵 Audio completo:', audioBlob.size, 'bytes, tipo:', audioBlob.type);
-          await subirAudio(audioBlob, mimeType);
-          stream.getTracks().forEach(track => track.stop());
-        };
-        mediaRecorder.start();
-        grabando = true;
-        const btnVoz = document.getElementById('btnVoz');
-        btnVoz.style.background = '#ff4444';
-        btnVoz.innerHTML = '⏹️';
-        mostrarNotificacion('🎤 Grabando...');
-      } catch (error) {
-        console.error('❌ Error al iniciar grabación:', error);
-        mostrarNotificacion('Error al acceder al micrófono', 'error');
-      }
-    }
-
-    function detenerGrabacion() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        grabando = false;
-        const btnVoz = document.getElementById('btnVoz');
-        btnVoz.style.background = 'var(--gris-medio)';
-        btnVoz.innerHTML = '🎤';
-      }
-    }
-
-    async function subirAudio(audioBlob, mimeType) {
-      if (!chatActivo) return;
-      try {
-        mostrarNotificacion('Subiendo audio...');
-        let extension = 'webm';
-        if (mimeType.includes('ogg')) extension = 'ogg';
-        else if (mimeType.includes('mp4')) extension = 'mp4';
-        else if (mimeType.includes('mpeg')) extension = 'mp3';
-        else if (mimeType.includes('wav')) extension = 'wav';
-        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
-        console.log('⬆️ Subiendo:', nombreArchivo, 'tamaño:', audioBlob.size, 'tipo:', mimeType);
-        const { error: uploadError } = await window.supabaseClient.storage.from('arnexu-files').upload(`chat/voice/${nombreArchivo}`, audioBlob, {cacheControl: '3600', upsert: false, contentType: mimeType});
-        if (uploadError) {
-          console.error('❌ Error subiendo:', uploadError);
-          throw uploadError;
-        }
-        const { data: urlData } = window.supabaseClient.storage.from('arnexu-files').getPublicUrl(`chat/voice/${nombreArchivo}`);
-        console.log('✅ URL pública:', urlData.publicUrl);
-        const duracion = Math.round(audioBlob.size / 16000);
-        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: `Mensaje de voz (${duracion}s)`, tipo: 'audio', archivo_url: urlData.publicUrl, archivo_nombre: `audio_${duracion}s.${extension}`, archivo_tipo: mimeType}]);
-        if (error) throw error;
-        await window.supabaseClient.from('chats').update({ultimo_mensaje: '🎤 Mensaje de voz', ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
-        mostrarNotificacion('Audio enviado ✅');
-        await cargarMensajes(chatActivo.id);
-        await cargarChats();
-      } catch (error) {
-        console.error('❌ Error subiendo audio:', error);
-        mostrarNotificacion('Error al subir el audio', 'error');
-      }
-    }
-
-    async function eliminarMensaje(mensajeId, tipoEliminacion) {
-      if (!confirm(tipoEliminacion === 'para_todos' ? '¿Eliminar este mensaje para todos?' : '¿Eliminar este mensaje para ti?')) return;
-      try {
-        if (tipoEliminacion === 'para_todos') {
-          const { error } = await window.supabaseClient.from('mensajes').delete().eq('id', mensajeId);
-          if (error) throw error;
-          mostrarNotificacion('Mensaje eliminado para todos');
-        } else {
-          const { error } = await window.supabaseClient.from('mensajes').delete().eq('id', mensajeId).eq('remitente_id', usuarioActual.id);
-          if (error) throw error;
-          mostrarNotificacion('Mensaje eliminado');
-        }
-        await cargarMensajes(chatActivo.id);
-      } catch (error) {
-        console.error('Error eliminando mensaje:', error);
-        mostrarNotificacion('Error al eliminar el mensaje', 'error');
-      }
-    }
-
-    function verPerfilActivo() {
-      if (usuarioActivoChat) window.location.href = `perfil.html?id=${usuarioActivoChat.id}`;
-    }
-
-    function volverALista() {
-      if (intervalActualizacion) {
-        clearInterval(intervalActualizacion);
-        intervalActualizacion = null;
-      }
-      ultimosMensajesIds = [];
-      document.getElementById('chatListaContenedor').style.display = 'block';
-      document.getElementById('chatVentanaContenedor').style.display = 'none';
-      document.getElementById('btnVolverLista').style.display = 'none';
-      document.getElementById('chatActivo').style.display = 'none';
-      document.getElementById('chatVacio').style.display = 'flex';
-      chatActivo = null;
-      usuarioActivoChat = null;
-    }
-
-    window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) {
-        document.getElementById('chatListaContenedor').style.display = 'block';
-        document.getElementById('chatVentanaContenedor').style.display = 'flex';
-        document.getElementById('btnVolverLista').style.display = 'none';
-      } else {
-        if (chatActivo) {
-          document.getElementById('chatListaContenedor').style.display = 'none';
-          document.getElementById('chatVentanaContenedor').style.display = 'flex';
-          document.getElementById('btnVolverLista').style.display = 'block';
-        } else {
-          document.getElementById('chatListaContenedor').style.display = 'block';
-          document.getElementById('chatVentanaContenedor').style.display = 'none';
-          document.getElementById('btnVolverLista').style.display = 'none';
-        }
-      }
-    });
-
-    window.addEventListener('beforeunload', () => {
-      if (intervalActualizacion) clearInterval(intervalActualizacion);
-      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-    });
-
-    inicializar();
+    let usuarioActual=null,chatActivo=null,usuarioActivoChat=null,intervalActualizacion=null,ultimosMensajesIds=[],mediaRecorder=null,audioChunks=[],grabando=false,audioPlayers={};function createCustomAudioPlayer(e,t,a){return`<div class="custom-audio-player"><div class="audio-header"><span style="font-size: 24px;">🎤</span><span>${a}</span></div><div class="audio-controls-wrapper"><button class="play-btn" onclick="playAudio('${t}','${e}')" id="btn-${t}">▶</button><div class="progress-wrapper"><div class="progress-track" onclick="seekAudio(event,'${t}')"><div class="progress-bar" id="bar-${t}"></div></div><div class="time-info" id="time-${t}">0:00</div></div></div><audio id="audio-${t}" preload="auto" style="display:none"><source src="${e}" type="audio/webm"><source src="${e}" type="audio/ogg"><source src="${e}" type="audio/mpeg"><source src="${e}" type="audio/mp4"></audio></div>`}function playAudio(e,t){let a=document.getElementById("audio-"+e),o=document.getElementById("btn-"+e);if(a){if(a.paused){Object.keys(audioPlayers).forEach(e=>{let t=document.getElementById("audio-"+e),a=document.getElementById("btn-"+e);t&&!t.paused&&(t.pause(),a&&(a.textContent="▶"))});a.play().then(()=>{o.textContent="⏸",audioPlayers[e]||(audioPlayers[e]=!0,a.ontimeupdate=()=>{let t=document.getElementById("audio-"+e),a=document.getElementById("bar-"+e),o=document.getElementById("time-"+e);if(t&&a&&o){let i=t.currentTime/t.duration*100;a.style.width=i+"%";let n=Math.floor(t.currentTime),r=Math.floor(n/60),s=n%60;o.textContent=r+":"+s.toString().padStart(2,"0")}},a.onended=()=>{o.textContent="▶",document.getElementById("bar-"+e).style.width="0%"})}).catch(e=>{console.error("Error:",e),alert("No se pudo reproducir. Intenta de nuevo.")})}else a.pause(),o.textContent="▶"}}function seekAudio(e,t){let a=document.getElementById("audio-"+t),o=e.currentTarget,i=e.offsetX/o.offsetWidth;a.currentTime=a.duration*i}async function inicializar(){await protegerPagina(),usuarioActual=await getCurrentUser();let e=new URLSearchParams(window.location.search).get("nuevo");e&&await crearOAbrirChat(e),await cargarChats()}async function cargarChats(){try{let{data:e,error:t}=await window.supabaseClient.from("chats").select("*,participante1:usuarios!chats_participante1_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil),participante2:usuarios!chats_participante2_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil)").or(`participante1_id.eq.${usuarioActual.id},participante2_id.eq.${usuarioActual.id}`).order("ultimo_mensaje_fecha",{ascending:!1,nullsFirst:!1});if(t)throw t;let a=document.getElementById("listaChats");if(!e||0===e.length){a.innerHTML='<div class="empty-state" style="padding: 40px 20px;"><p style="font-size: 14px;">No tienes conversaciones</p><p style="font-size: 12px; margin-top: 10px;">Inicia una desde el perfil de un usuario</p></div>';return}a.innerHTML=e.map(e=>{let t=e.participante1_id===usuarioActual.id?e.participante2:e.participante1;return`<div class="chat-item ${(null==chatActivo?void 0:chatActivo.id)===e.id?"active":""}" onclick="abrirChat('${e.id}', '${t.id}')"><img src="${t.foto_perfil||"https://via.placeholder.com/40"}" alt="${t.nombre_completo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"><div style="flex: 1; overflow: hidden;"><h4 style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">${t.nombre_completo}</h4><p style="font-size: 12px; color: var(--gris-neon); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${e.ultimo_mensaje||"Sin mensajes"}</p></div></div>`}).join("")}catch(e){console.error("Error cargando chats:",e)}}async function crearOAbrirChat(e){try{let{data:t}=await window.supabaseClient.from("chats").select("id").or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${e}),and(participante1_id.eq.${e},participante2_id.eq.${usuarioActual.id})`).single();if(t){await abrirChat(t.id,e);return}let{data:a,error:o}=await window.supabaseClient.from("chats").insert([{participante1_id:usuarioActual.id,participante2_id:e}]).select().single();if(o)throw o;await abrirChat(a.id,e)}catch(e){console.error("Error creando/abriendo chat:",e),mostrarNotificacion("Error al crear la conversación","error")}}async function abrirChat(e,t){try{chatActivo={id:e};let{data:a,error:o}=await window.supabaseClient.from("usuarios").select("*").eq("id",t).single();if(o)throw o;usuarioActivoChat=a,window.innerWidth<=768&&(document.getElementById("chatListaContenedor").style.display="none",document.getElementById("chatVentanaContenedor").style.display="flex",document.getElementById("btnVolverLista").style.display="block"),document.getElementById("chatVacio").style.display="none",document.getElementById("chatActivo").style.display="flex",document.getElementById("chatAvatarActivo").src=a.foto_perfil||"https://via.placeholder.com/48",document.getElementById("chatNombreActivo").textContent=a.nombre_completo,document.getElementById("chatUsernameActivo").textContent="@"+a.nombre_usuario,ultimosMensajesIds=[],audioPlayers={},await cargarMensajes(e),await cargarChats(),intervalActualizacion&&clearInterval(intervalActualizacion),intervalActualizacion=setInterval(()=>cargarMensajes(e,!0),3e3)}catch(e){console.error("Error abriendo chat:",e)}}async function cargarMensajes(e,t=!1){try{let{data:a,error:o}=await window.supabaseClient.from("mensajes").select("*").eq("chat_id",e).order("created_at",{ascending:!0});if(o)throw o;let i=document.getElementById("chatMensajes");if(!t&&(!a||0===a.length)){i.innerHTML='<div class="empty-state"><p>No hay mensajes aún</p><p style="font-size: 12px; margin-top: 10px;">Envía el primer mensaje</p></div>',ultimosMensajesIds=[];return}let n=a.map(e=>e.id);if(t&&JSON.stringify(n)===JSON.stringify(ultimosMensajesIds))return;ultimosMensajesIds=n;let r=i.scrollHeight-i.scrollTop<=i.clientHeight+100;i.innerHTML=a.map(e=>{let t="",a="ia"===e.tipo,o=e.remitente_id===usuarioActual.id;return"imagen"===e.tipo?t=`<img src="${e.archivo_url}" alt="Imagen" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer;" onclick="window.open('${e.archivo_url}', '_blank')"><p style="margin: 5px 0;">${e.contenido||""}</p>`:"video"===e.tipo?t=`<video controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;"><source src="${e.archivo_url}" type="${e.archivo_tipo}"></video><p style="margin: 5px 0;">${e.contenido||""}</p>`:"audio"===e.tipo?t=createCustomAudioPlayer(e.archivo_url,e.id,e.contenido||"Mensaje de voz"):"archivo"===e.tipo?t=`<a href="${e.archivo_url}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; text-decoration: none; color: inherit; margin-bottom: 5px;"><span style="font-size: 24px;">📄</span><div><div style="font-weight: 600;">${e.archivo_nombre}</div><div style="font-size: 12px; opacity: 0.7;">Clic para descargar</div></div></a><p style="margin: 5px 0;">${e.contenido||""}</p>`:t=`<p style="margin-bottom: 5px; white-space: pre-wrap;">${e.contenido}</p>`,`<div class="mensaje ${o?"propio":""} ${a?"mensaje-ia":""}">${a?'<div style="font-size: 20px; margin-bottom: 5px;">🤖</div>':""}<div class="mensaje-contenido">${t}<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;"><small style="font-size: 11px; opacity: 0.7;">${formatearFecha(e.created_at)}</small>${o?`<div style="display: flex; gap: 5px;"><button onclick="eliminarMensaje('${e.id}', 'solo_yo')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;">🗑️</button><button onclick="eliminarMensaje('${e.id}', 'para_todos')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;">❌</button></div>`:""}</div></div></div>`}).join(""),(r||!t)&&(i.scrollTop=i.scrollHeight)}catch(e){console.error("Error cargando mensajes:",e)}}async function enviarMensaje(){let e=document.getElementById("mensajeInput"),t=e.value.trim();if(!t||!chatActivo)return;try{let{error:a}=await window.supabaseClient.from("mensajes").insert([{chat_id:chatActivo.id,remitente_id:usuarioActual.id,contenido:t,tipo:"texto"}]);if(a)throw a;if(await window.supabaseClient.from("chats").update({ultimo_mensaje:t,ultimo_mensaje_fecha:new Date().toISOString()}).eq("id",chatActivo.id),usuarioActivoChat){let{data:e}=await window.supabaseClient.from("publicaciones").select("id").eq("usuario_id",usuarioActivoChat.id).limit(1);e&&e.length>0&&await window.supabaseClient.from("contactos_proyectos").insert([{publicacion_id:e[0].id,contacto_por:usuarioActual.id}]).then(()=>{window.supabaseClient.rpc("verificar_emprendedor_serial",{pub_id:e[0].id}),window.supabaseClient.rpc("verificar_inversor_interesado",{inv_id:usuarioActual.id})})}e.value="",await cargarMensajes(chatActivo.id),await cargarChats()}catch(e){console.error("Error enviando mensaje:",e),mostrarNotificacion("Error al enviar el mensaje","error")}}async function subirArchivo(){let e=document.getElementById("archivoInput").files[0];if(!e||!chatActivo)return;try{mostrarNotificacion("Subiendo archivo...");let t="archivo";e.type.startsWith("image/")&&(t="imagen"),e.type.startsWith("video/")&&(t="video");let a=`${usuarioActual.id}_${Date.now()}.${e.name.split(".").pop()}`,{error:o}=await window.supabaseClient.storage.from("arnexu-files").upload(`chat/${a}`,e,{cacheControl:"3600",upsert:!1});if(o)throw o;let{data:i}=window.supabaseClient.storage.from("arnexu-files").getPublicUrl(`chat/${a}`),{error:n}=await window.supabaseClient.from("mensajes").insert([{chat_id:chatActivo.id,remitente_id:usuarioActual.id,contenido:"",tipo:t,archivo_url:i.publicUrl,archivo_nombre:e.name,archivo_tipo:e.type}]);if(n)throw n;await window.supabaseClient.from("chats").update({ultimo_mensaje:"imagen"===t?"📷 Imagen":"video"===t?"🎥 Video":`📄 ${e.name}`,ultimo_mensaje_fecha:new Date().toISOString()}).eq("id",chatActivo.id),mostrarNotificacion("Archivo enviado"),document.getElementById("archivoInput").value="",await cargarMensajes(chatActivo.id),await cargarChats()}catch(e){console.error("Error subiendo archivo:",e),mostrarNotificacion("Error al subir el archivo","error")}}async function toggleGrabacion(){chatActivo?grabando?detenerGrabacion():await iniciarGrabacion():mostrarNotificacion("Abre un chat primero","error")}async function iniciarGrabacion(){try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){mostrarNotificacion("Tu navegador no soporta grabación de audio","error");return}let e=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:!0,noiseSuppression:!0}}),t="audio/webm",a=["audio/webm;codecs=opus","audio/webm","audio/ogg","audio/mp4"];for(let e of a)if(MediaRecorder.isTypeSupported(e)){t=e;break}mediaRecorder=new MediaRecorder(e,{mimeType:t}),audioChunks=[],mediaRecorder.ondataavailable=e=>{e.data.size>0&&audioChunks.push(e.data)},mediaRecorder.onstop=async()=>{let a=new Blob(audioChunks,{type:t});await subirAudio(a,t),e.getTracks().forEach(e=>e.stop())},mediaRecorder.start(),grabando=!0;let o=document.getElementById("btnVoz");o.style.background="#ff4444",o.innerHTML="⏹️",mostrarNotificacion("🎤 Grabando...")}catch(e){console.error("Error al iniciar grabación:",e),mostrarNotificacion("Error al acceder al micrófono","error")}}function detenerGrabacion(){if(mediaRecorder&&"recording"===mediaRecorder.state){mediaRecorder.stop(),grabando=!1;let e=document.getElementById("btnVoz");e.style.background="var(--gris-medio)",e.innerHTML="🎤"}}async function subirAudio(e,t){if(!chatActivo)return;try{mostrarNotificacion("Subiendo audio...");let a="webm";t.includes("ogg")?a="ogg":t.includes("mp4")?a="mp4":t.includes("mpeg")&&(a="mp3");let o=`${usuarioActual.id}_${Date.now()}.${a}`,{error:i}=await window.supabaseClient.storage.from("arnexu-files").upload(`chat/voice/${o}`,e,{cacheControl:"3600",upsert:!1,contentType:t});if(i)throw i;let{data:n}=window.supabaseClient.storage.from("arnexu-files").getPublicUrl(`chat/voice/${o}`),r=Math.round(e.size/16e3),{error:s}=await window.supabaseClient.from("mensajes").insert([{chat_id:chatActivo.id,remitente_id:usuarioActual.id,contenido:`Mensaje de voz (${r}s)`,tipo:"audio",archivo_url:n.publicUrl,archivo_nombre:`audio_${r}s.${a}`,archivo_tipo:t}]);if(s)throw s;await window.supabaseClient.from("chats").update({ultimo_mensaje:"🎤 Mensaje de voz",ultimo_mensaje_fecha:new Date().toISOString()}).eq("id",chatActivo.id),mostrarNotificacion("Audio enviado ✅"),await cargarMensajes(chatActivo.id),await cargarChats()}catch(e){console.error("Error subiendo audio:",e),mostrarNotificacion("Error al subir el audio","error")}}async function eliminarMensaje(e,t){if(!confirm("para_todos"===t?"¿Eliminar este mensaje para todos?":"¿Eliminar este mensaje para ti?"))return;try{if("para_todos"===t){let{error:t}=await window.supabaseClient.from("mensajes").delete().eq("id",e);if(t)throw t;mostrarNotificacion("Mensaje eliminado para todos")}else{let{error:t}=await window.supabaseClient.from("mensajes").delete().eq("id",e).eq("remitente_id",usuarioActual.id);if(t)throw t;mostrarNotificacion("Mensaje eliminado")}await cargarMensajes(chatActivo.id)}catch(e){console.error("Error eliminando mensaje:",e),mostrarNotificacion("Error al eliminar el mensaje","error")}}function verPerfilActivo(){usuarioActivoChat&&(window.location.href=`perfil.html?id=${usuarioActivoChat.id}`)}function volverALista(){intervalActualizacion&&(clearInterval(intervalActualizacion),intervalActualizacion=null),ultimosMensajesIds=[],audioPlayers={},document.getElementById("chatListaContenedor").style.display="block",document.getElementById("chatVentanaContenedor").style.display="none",document.getElementById("btnVolverLista").style.display="none",document.getElementById("chatActivo").style.display="none",document.getElementById("chatVacio").style.display="flex",chatActivo=null,usuarioActivoChat=null}window.addEventListener("resize",()=>{window.innerWidth>768?(document.getElementById("chatListaContenedor").style.display="block",document.getElementById("chatVentanaContenedor").style.display="flex",document.getElementById("btnVolverLista").style.display="none"):chatActivo?(document.getElementById("chatListaContenedor").style.display="none",document.getElementById("chatVentanaContenedor").style.display="flex",document.getElementById("btnVolverLista").style.display="block"):(document.getElementById("chatListaContenedor").style.display="block",document.getElementById("chatVentanaContenedor").style.display="none",document.getElementById("btnVolverLista").style.display="none")}),window.addEventListener("beforeunload",()=>{intervalActualizacion&&clearInterval(intervalActualizacion),mediaRecorder&&"recording"===mediaRecorder.state&&mediaRecorder.stop()}),inicializar();
   </script>
 
   <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
