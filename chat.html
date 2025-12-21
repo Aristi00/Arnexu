@@ -11,7 +11,6 @@
   <script src="js/app.js?v=1.0.1"></script>
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -51,29 +50,19 @@
     </div>
   </nav>
 
-  <!-- Contenedor del Chat -->
   <div class="container-wide" style="margin-top: 30px;">
-    <!-- Botón para volver a la lista en móvil -->
-    <button 
-      id="btnVolverLista" 
-      onclick="volverALista()" 
-      style="display: none; margin-bottom: 15px; background: var(--gris-medio); border: none; padding: 10px 20px; border-radius: 8px; color: var(--blanco); font-family: 'Montserrat'; cursor: pointer;"
-    >
+    <button id="btnVolverLista" onclick="volverALista()" style="display: none; margin-bottom: 15px; background: var(--gris-medio); border: none; padding: 10px 20px; border-radius: 8px; color: var(--blanco); font-family: 'Montserrat'; cursor: pointer;">
       ← Volver a conversaciones
     </button>
 
     <div class="chat-container">
-      <!-- Lista de Conversaciones -->
       <div class="chat-lista" id="chatListaContenedor">
         <h3 style="margin-bottom: 20px; font-size: 20px;">Conversaciones</h3>
         <div id="listaChats">
-          <div class="loading" style="text-align: center; padding: 20px;">
-            Cargando chats...
-          </div>
+          <div class="loading" style="text-align: center; padding: 20px;">Cargando chats...</div>
         </div>
       </div>
 
-      <!-- Ventana de Chat -->
       <div class="chat-ventana" id="chatVentanaContenedor">
         <div id="chatVacio" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gris-neon); text-align: center;">
           <div>
@@ -83,59 +72,25 @@
         </div>
 
         <div id="chatActivo" style="display: none; height: 100%; flex-direction: column;">
-          <!-- Header del Chat -->
           <div style="padding: 20px; border-bottom: 1px solid var(--gris-medio); display: flex; align-items: center; gap: 12px;">
             <img id="chatAvatarActivo" src="" alt="" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;">
             <div style="flex: 1;">
               <h3 id="chatNombreActivo" style="font-size: 16px; font-weight: 600;"></h3>
               <p id="chatUsernameActivo" style="font-size: 12px; color: var(--gris-neon);"></p>
             </div>
-            <button class="btn-icon" onclick="verPerfilActivo()" title="Ver perfil">
-              👤
-            </button>
+            <button class="btn-icon" onclick="verPerfilActivo()" title="Ver perfil">👤</button>
           </div>
 
-          <!-- Mensajes -->
           <div class="chat-mensajes" id="chatMensajes">
             <div class="loading">Cargando mensajes...</div>
           </div>
 
-          <!-- Input de Mensaje -->
           <div class="chat-input-container">
-            <input 
-              type="file" 
-              id="archivoInput" 
-              style="display: none;"
-              accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-              onchange="subirArchivo()"
-            >
-            <button 
-              class="btn-icon" 
-              onclick="document.getElementById('archivoInput').click()"
-              title="Adjuntar archivo"
-              style="background: var(--gris-medio);"
-            >
-              📎
-            </button>
-            <button 
-              class="btn-icon" 
-              id="btnVoz"
-              onclick="toggleGrabacion()"
-              title="Grabar mensaje de voz"
-              style="background: var(--gris-medio);"
-            >
-              🎤
-            </button>
-            <input 
-              type="text" 
-              id="mensajeInput" 
-              class="chat-input" 
-              placeholder="Escribe un mensaje..."
-              onkeypress="if(event.key === 'Enter') enviarMensaje()"
-            >
-            <button class="btn btn-primary" onclick="enviarMensaje()">
-              Enviar
-            </button>
+            <input type="file" id="archivoInput" style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="subirArchivo()">
+            <button class="btn-icon" onclick="document.getElementById('archivoInput').click()" title="Adjuntar archivo" style="background: var(--gris-medio);">📎</button>
+            <button class="btn-icon" id="btnVoz" onclick="toggleGrabacion()" title="Grabar mensaje de voz" style="background: var(--gris-medio);">🎤</button>
+            <input type="text" id="mensajeInput" class="chat-input" placeholder="Escribe un mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()">
+            <button class="btn btn-primary" onclick="enviarMensaje()">Enviar</button>
           </div>
         </div>
       </div>
@@ -152,489 +107,280 @@
     let audioChunks = [];
     let grabando = false;
 
-    // ============================================
-    // PROTEGER PÁGINA Y CARGAR CHATS
-    // ============================================
     async function inicializar() {
       await protegerPagina();
       usuarioActual = await getCurrentUser();
-      
       const urlParams = new URLSearchParams(window.location.search);
       const nuevoUsuarioId = urlParams.get('nuevo');
-      
-      if (nuevoUsuarioId) {
-        await crearOAbrirChat(nuevoUsuarioId);
-      }
-      
+      if (nuevoUsuarioId) await crearOAbrirChat(nuevoUsuarioId);
       await cargarChats();
     }
 
-    // ============================================
-    // CARGAR LISTA DE CHATS
-    // ============================================
     async function cargarChats() {
       try {
-        const { data: chats, error } = await window.supabaseClient
-          .from('chats')
-          .select(`
-            *,
-            participante1:usuarios!chats_participante1_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil),
-            participante2:usuarios!chats_participante2_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil)
-          `)
-          .or(`participante1_id.eq.${usuarioActual.id},participante2_id.eq.${usuarioActual.id}`)
-          .order('ultimo_mensaje_fecha', { ascending: false, nullsFirst: false });
-
+        const { data: chats, error } = await window.supabaseClient.from('chats').select(`*,participante1:usuarios!chats_participante1_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil),participante2:usuarios!chats_participante2_id_fkey(id, nombre_completo, nombre_usuario, foto_perfil)`).or(`participante1_id.eq.${usuarioActual.id},participante2_id.eq.${usuarioActual.id}`).order('ultimo_mensaje_fecha', { ascending: false, nullsFirst: false });
         if (error) throw error;
-
         const listaDiv = document.getElementById('listaChats');
-        
         if (!chats || chats.length === 0) {
-          listaDiv.innerHTML = `
-            <div class="empty-state" style="padding: 40px 20px;">
-              <p style="font-size: 14px;">No tienes conversaciones</p>
-              <p style="font-size: 12px; margin-top: 10px;">Inicia una desde el perfil de un usuario</p>
-            </div>
-          `;
+          listaDiv.innerHTML = `<div class="empty-state" style="padding: 40px 20px;"><p style="font-size: 14px;">No tienes conversaciones</p><p style="font-size: 12px; margin-top: 10px;">Inicia una desde el perfil de un usuario</p></div>`;
           return;
         }
-
         listaDiv.innerHTML = chats.map(chat => {
-          const otroUsuario = chat.participante1_id === usuarioActual.id 
-            ? chat.participante2 
-            : chat.participante1;
-
-          return `
-            <div 
-              class="chat-item ${chatActivo?.id === chat.id ? 'active' : ''}" 
-              onclick="abrirChat('${chat.id}', '${otroUsuario.id}')"
-            >
-              <img 
-                src="${otroUsuario.foto_perfil || 'https://via.placeholder.com/40'}" 
-                alt="${otroUsuario.nombre_completo}"
-                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"
-              >
-              <div style="flex: 1; overflow: hidden;">
-                <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">${otroUsuario.nombre_completo}</h4>
-                <p style="font-size: 12px; color: var(--gris-neon); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  ${chat.ultimo_mensaje || 'Sin mensajes'}
-                </p>
-              </div>
-            </div>
-          `;
+          const otroUsuario = chat.participante1_id === usuarioActual.id ? chat.participante2 : chat.participante1;
+          return `<div class="chat-item ${chatActivo?.id === chat.id ? 'active' : ''}" onclick="abrirChat('${chat.id}', '${otroUsuario.id}')"><img src="${otroUsuario.foto_perfil || 'https://via.placeholder.com/40'}" alt="${otroUsuario.nombre_completo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"><div style="flex: 1; overflow: hidden;"><h4 style="font-size: 14px; font-weight: 600; margin-bottom: 2px;">${otroUsuario.nombre_completo}</h4><p style="font-size: 12px; color: var(--gris-neon); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${chat.ultimo_mensaje || 'Sin mensajes'}</p></div></div>`;
         }).join('');
-
       } catch (error) {
         console.error('Error cargando chats:', error);
       }
     }
 
-    // ============================================
-    // CREAR O ABRIR CHAT
-    // ============================================
     async function crearOAbrirChat(otroUsuarioId) {
       try {
-        const { data: chatExistente, error: errorBuscar } = await window.supabaseClient
-          .from('chats')
-          .select('id')
-          .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${otroUsuarioId}),and(participante1_id.eq.${otroUsuarioId},participante2_id.eq.${usuarioActual.id})`)
-          .single();
-
+        const { data: chatExistente } = await window.supabaseClient.from('chats').select('id').or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${otroUsuarioId}),and(participante1_id.eq.${otroUsuarioId},participante2_id.eq.${usuarioActual.id})`).single();
         if (chatExistente) {
           await abrirChat(chatExistente.id, otroUsuarioId);
           return;
         }
-
-        const { data: nuevoChat, error: errorCrear } = await window.supabaseClient
-          .from('chats')
-          .insert([{
-            participante1_id: usuarioActual.id,
-            participante2_id: otroUsuarioId
-          }])
-          .select()
-          .single();
-
+        const { data: nuevoChat, error: errorCrear } = await window.supabaseClient.from('chats').insert([{participante1_id: usuarioActual.id, participante2_id: otroUsuarioId}]).select().single();
         if (errorCrear) throw errorCrear;
-
         await abrirChat(nuevoChat.id, otroUsuarioId);
-
       } catch (error) {
         console.error('Error creando/abriendo chat:', error);
         mostrarNotificacion('Error al crear la conversación', 'error');
       }
     }
 
-    // ============================================
-    // ABRIR CHAT
-    // ============================================
     async function abrirChat(chatId, otroUsuarioId) {
       try {
         chatActivo = { id: chatId };
-
-        const { data: otroUsuario, error } = await window.supabaseClient
-          .from('usuarios')
-          .select('*')
-          .eq('id', otroUsuarioId)
-          .single();
-
+        const { data: otroUsuario, error } = await window.supabaseClient.from('usuarios').select('*').eq('id', otroUsuarioId).single();
         if (error) throw error;
-
         usuarioActivoChat = otroUsuario;
-
         if (window.innerWidth <= 768) {
           document.getElementById('chatListaContenedor').style.display = 'none';
           document.getElementById('chatVentanaContenedor').style.display = 'flex';
           document.getElementById('btnVolverLista').style.display = 'block';
         }
-
         document.getElementById('chatVacio').style.display = 'none';
         document.getElementById('chatActivo').style.display = 'flex';
-
         document.getElementById('chatAvatarActivo').src = otroUsuario.foto_perfil || 'https://via.placeholder.com/48';
         document.getElementById('chatNombreActivo').textContent = otroUsuario.nombre_completo;
         document.getElementById('chatUsernameActivo').textContent = `@${otroUsuario.nombre_usuario}`;
-
         ultimosMensajesIds = [];
-
         await cargarMensajes(chatId);
         await cargarChats();
-
-        if (intervalActualizacion) {
-          clearInterval(intervalActualizacion);
-        }
+        if (intervalActualizacion) clearInterval(intervalActualizacion);
         intervalActualizacion = setInterval(() => cargarMensajes(chatId, true), 3000);
-
       } catch (error) {
         console.error('Error abriendo chat:', error);
       }
     }
 
-    // ============================================
-    // CARGAR MENSAJES - VERSIÓN CORREGIDA
-    // ============================================
     async function cargarMensajes(chatId, silencioso = false) {
       try {
-        const { data: mensajes, error } = await window.supabaseClient
-          .from('mensajes')
-          .select('*')
-          .eq('chat_id', chatId)
-          .order('created_at', { ascending: true });
-
+        const { data: mensajes, error } = await window.supabaseClient.from('mensajes').select('*').eq('chat_id', chatId).order('created_at', { ascending: true });
         if (error) throw error;
-
         const mensajesDiv = document.getElementById('chatMensajes');
-        
-        if (!silencioso) {
-          if (!mensajes || mensajes.length === 0) {
-            mensajesDiv.innerHTML = `
-              <div class="empty-state">
-                <p>No hay mensajes aún</p>
-                <p style="font-size: 12px; margin-top: 10px;">Envía el primer mensaje</p>
-              </div>
-            `;
-            ultimosMensajesIds = [];
-            return;
-          }
-        }
-
-        const nuevosIds = mensajes.map(m => m.id);
-        const hayDiferencias = JSON.stringify(nuevosIds) !== JSON.stringify(ultimosMensajesIds);
-        
-        if (silencioso && !hayDiferencias) {
+        if (!silencioso && (!mensajes || mensajes.length === 0)) {
+          mensajesDiv.innerHTML = `<div class="empty-state"><p>No hay mensajes aún</p><p style="font-size: 12px; margin-top: 10px;">Envía el primer mensaje</p></div>`;
+          ultimosMensajesIds = [];
           return;
         }
-
+        const nuevosIds = mensajes.map(m => m.id);
+        if (silencioso && JSON.stringify(nuevosIds) === JSON.stringify(ultimosMensajesIds)) return;
         ultimosMensajesIds = nuevosIds;
-
         const scrollBottom = mensajesDiv.scrollHeight - mensajesDiv.scrollTop <= mensajesDiv.clientHeight + 100;
-
         mensajesDiv.innerHTML = mensajes.map(msg => {
-          let contenidoHTML = '';
-          
+          let contenido = '';
           const esIA = msg.tipo === 'ia';
-          const claseExtra = esIA ? 'mensaje-ia' : '';
           const esMio = msg.remitente_id === usuarioActual.id;
-          
           if (msg.tipo === 'imagen') {
-            contenidoHTML = `
-              <img src="${msg.archivo_url}" alt="Imagen" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer;" onclick="window.open('${msg.archivo_url}', '_blank')">
-              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
-            `;
+            contenido = `<img src="${msg.archivo_url}" alt="Imagen" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px; cursor: pointer;" onclick="window.open('${msg.archivo_url}', '_blank')"><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
           } else if (msg.tipo === 'video') {
-            contenidoHTML = `
-              <video controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;">
-                <source src="${msg.archivo_url}" type="${msg.archivo_tipo}">
-              </video>
-              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
-            `;
+            contenido = `<video controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;"><source src="${msg.archivo_url}" type="${msg.archivo_tipo}"></video><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
           } else if (msg.tipo === 'audio') {
-            contenidoHTML = `
-              <div style="width: 100%; min-width: 250px; max-width: 100%;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                  <span style="font-size: 20px;">🎤</span>
-                  <span style="font-size: 12px; opacity: 0.8;">${msg.contenido || 'Mensaje de voz'}</span>
-                </div>
-                <audio controls preload="metadata" style="width: 100%; height: 50px; outline: none;">
-                  <source src="${msg.archivo_url}" type="audio/webm">
-                  <source src="${msg.archivo_url}" type="audio/ogg">
-                  <source src="${msg.archivo_url}" type="audio/mpeg">
-                  <source src="${msg.archivo_url}" type="audio/mp4">
-                  Tu navegador no soporta la reproducción de audio.
-                </audio>
-              </div>
-            `;
+            contenido = `<div style="width: 100%; min-width: 250px;"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;"><span style="font-size: 20px;">🎤</span><span style="font-size: 12px; opacity: 0.8;">${msg.contenido || 'Mensaje de voz'}</span></div><audio controls preload="metadata" style="width: 100%; height: 50px;"><source src="${msg.archivo_url}" type="audio/webm"><source src="${msg.archivo_url}" type="audio/ogg"><source src="${msg.archivo_url}" type="audio/mpeg"><source src="${msg.archivo_url}" type="audio/mp4">Tu navegador no soporta audio.</audio></div>`;
           } else if (msg.tipo === 'archivo') {
-            contenidoHTML = `
-              <a href="${msg.archivo_url}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; text-decoration: none; color: inherit; margin-bottom: 5px;">
-                <span style="font-size: 24px;">📄</span>
-                <div>
-                  <div style="font-weight: 600;">${msg.archivo_nombre}</div>
-                  <div style="font-size: 12px; opacity: 0.7;">Clic para descargar</div>
-                </div>
-              </a>
-              <p style="margin: 5px 0;">${msg.contenido || ''}</p>
-            `;
+            contenido = `<a href="${msg.archivo_url}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; text-decoration: none; color: inherit; margin-bottom: 5px;"><span style="font-size: 24px;">📄</span><div><div style="font-weight: 600;">${msg.archivo_nombre}</div><div style="font-size: 12px; opacity: 0.7;">Clic para descargar</div></div></a><p style="margin: 5px 0;">${msg.contenido || ''}</p>`;
           } else {
-            contenidoHTML = `<p style="margin-bottom: 5px; white-space: pre-wrap;">${msg.contenido}</p>`;
+            contenido = `<p style="margin-bottom: 5px; white-space: pre-wrap;">${msg.contenido}</p>`;
           }
-
-          return `
-            <div class="mensaje ${esMio ? 'propio' : ''} ${claseExtra}" style="position: relative;">
-              ${esIA ? '<div style="font-size: 20px; margin-bottom: 5px;">🤖</div>' : ''}
-              <div class="mensaje-contenido">
-                ${contenidoHTML}
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-                  <small style="font-size: 11px; opacity: 0.7;">
-                    ${formatearFecha(msg.created_at)}
-                  </small>
-                  ${esMio ? `
-                    <div style="display: flex; gap: 5px;">
-                      <button 
-                        onclick="eliminarMensaje('${msg.id}', 'solo_yo')" 
-                        style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;"
-                        title="Eliminar para mí"
-                      >
-                        🗑️
-                      </button>
-                      <button 
-                        onclick="eliminarMensaje('${msg.id}', 'para_todos')" 
-                        style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;"
-                        title="Eliminar para todos"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            </div>
-          `;
+          return `<div class="mensaje ${esMio ? 'propio' : ''} ${esIA ? 'mensaje-ia' : ''}">${esIA ? '<div style="font-size: 20px; margin-bottom: 5px;">🤖</div>' : ''}<div class="mensaje-contenido">${contenido}<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;"><small style="font-size: 11px; opacity: 0.7;">${formatearFecha(msg.created_at)}</small>${esMio ? `<div style="display: flex; gap: 5px;"><button onclick="eliminarMensaje('${msg.id}', 'solo_yo')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;" title="Eliminar para mí">🗑️</button><button onclick="eliminarMensaje('${msg.id}', 'para_todos')" style="background: none; border: none; cursor: pointer; opacity: 0.7; font-size: 12px; padding: 2px 5px;" title="Eliminar para todos">❌</button></div>` : ''}</div></div></div>`;
         }).join('');
-
-        if (scrollBottom || !silencioso) {
-          mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
-        }
-
+        if (scrollBottom || !silencioso) mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
       } catch (error) {
         console.error('Error cargando mensajes:', error);
       }
     }
 
-    // ============================================
-    // ENVIAR MENSAJE
-    // ============================================
     async function enviarMensaje() {
       const input = document.getElementById('mensajeInput');
       const contenido = input.value.trim();
-
       if (!contenido || !chatActivo) return;
-
       try {
-        const { error } = await window.supabaseClient
-          .from('mensajes')
-          .insert([{
-            chat_id: chatActivo.id,
-            remitente_id: usuarioActual.id,
-            contenido: contenido,
-            tipo: 'texto'
-          }]);
-
+        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: contenido, tipo: 'texto'}]);
         if (error) throw error;
+        await window.supabaseClient.from('chats').update({ultimo_mensaje: contenido, ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
+        if (usuarioActivoChat) {
+          const { data: publicaciones } = await window.supabaseClient.from('publicaciones').select('id').eq('usuario_id', usuarioActivoChat.id).limit(1);
+          if (publicaciones && publicaciones.length > 0) {
+            await window.supabaseClient.from('contactos_proyectos').insert([{publicacion_id: publicaciones[0].id, contacto_por: usuarioActual.id}]).then(() => {
+              window.supabaseClient.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
+              window.supabaseClient.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
+            });
+          }
+        }
+        input.value = '';
+        await cargarMensajes(chatActivo.id);
+        await cargarChats();
+      } catch (error) {
+        console.error('Error enviando mensaje:', error);
+        mostrarNotificacion('Error al enviar el mensaje', 'error');
+      }
+    }
 
-        await window.supabaseClient
-          .from('chats')
-          .update({
-            ultimo_mensaje: '🎤 Mensaje de voz',
-            ultimo_mensaje_fecha: new Date().toISOString()
-          })
-          .eq('id', chatActivo.id);
+    async function subirArchivo() {
+      const fileInput = document.getElementById('archivoInput');
+      const file = fileInput.files[0];
+      if (!file || !chatActivo) return;
+      try {
+        mostrarNotificacion('Subiendo archivo...');
+        let tipoMensaje = 'archivo';
+        if (file.type.startsWith('image/')) tipoMensaje = 'imagen';
+        if (file.type.startsWith('video/')) tipoMensaje = 'video';
+        const extension = file.name.split('.').pop();
+        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
+        const { error: uploadError } = await window.supabaseClient.storage.from('arnexu-files').upload(`chat/${nombreArchivo}`, file, {cacheControl: '3600', upsert: false});
+        if (uploadError) throw uploadError;
+        const { data: urlData } = window.supabaseClient.storage.from('arnexu-files').getPublicUrl(`chat/${nombreArchivo}`);
+        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: '', tipo: tipoMensaje, archivo_url: urlData.publicUrl, archivo_nombre: file.name, archivo_tipo: file.type}]);
+        if (error) throw error;
+        const mensajePreview = tipoMensaje === 'imagen' ? '📷 Imagen' : tipoMensaje === 'video' ? '🎥 Video' : `📄 ${file.name}`;
+        await window.supabaseClient.from('chats').update({ultimo_mensaje: mensajePreview, ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
+        mostrarNotificacion('Archivo enviado');
+        fileInput.value = '';
+        await cargarMensajes(chatActivo.id);
+        await cargarChats();
+      } catch (error) {
+        console.error('Error subiendo archivo:', error);
+        mostrarNotificacion('Error al subir el archivo', 'error');
+      }
+    }
 
+    async function toggleGrabacion() {
+      if (!chatActivo) {
+        mostrarNotificacion('Abre un chat primero', 'error');
+        return;
+      }
+      if (!grabando) await iniciarGrabacion();
+      else detenerGrabacion();
+    }
+
+    async function iniciarGrabacion() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          mostrarNotificacion('Tu navegador no soporta grabación de audio', 'error');
+          return;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: {echoCancellation: true, noiseSuppression: true, sampleRate: 44100} });
+        let mimeType = 'audio/webm';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+        else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mimeType = 'audio/ogg;codecs=opus';
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+        else if (MediaRecorder.isTypeSupported('audio/mpeg')) mimeType = 'audio/mpeg';
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        audioChunks = [];
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunks.push(event.data); };
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          await subirAudio(audioBlob, mimeType);
+          stream.getTracks().forEach(track => track.stop());
+        };
+        mediaRecorder.start();
+        grabando = true;
+        const btnVoz = document.getElementById('btnVoz');
+        btnVoz.style.background = '#ff4444';
+        btnVoz.innerHTML = '⏹️';
+        mostrarNotificacion('🎤 Grabando...');
+      } catch (error) {
+        console.error('Error al iniciar grabación:', error);
+        mostrarNotificacion('Error al acceder al micrófono', 'error');
+      }
+    }
+
+    function detenerGrabacion() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        grabando = false;
+        const btnVoz = document.getElementById('btnVoz');
+        btnVoz.style.background = 'var(--gris-medio)';
+        btnVoz.innerHTML = '🎤';
+      }
+    }
+
+    async function subirAudio(audioBlob, mimeType) {
+      if (!chatActivo) return;
+      try {
+        mostrarNotificacion('Subiendo audio...');
+        let extension = 'webm';
+        if (mimeType.includes('ogg')) extension = 'ogg';
+        else if (mimeType.includes('mp4')) extension = 'mp4';
+        else if (mimeType.includes('mpeg')) extension = 'mp3';
+        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
+        const { error: uploadError } = await window.supabaseClient.storage.from('arnexu-files').upload(`chat/voice/${nombreArchivo}`, audioBlob, {cacheControl: '3600', upsert: false, contentType: mimeType});
+        if (uploadError) throw uploadError;
+        const { data: urlData } = window.supabaseClient.storage.from('arnexu-files').getPublicUrl(`chat/voice/${nombreArchivo}`);
+        const duracion = Math.round(audioBlob.size / 16000);
+        const { error } = await window.supabaseClient.from('mensajes').insert([{chat_id: chatActivo.id, remitente_id: usuarioActual.id, contenido: `Mensaje de voz (${duracion}s)`, tipo: 'audio', archivo_url: urlData.publicUrl, archivo_nombre: `audio_${duracion}s.${extension}`, archivo_tipo: mimeType}]);
+        if (error) throw error;
+        await window.supabaseClient.from('chats').update({ultimo_mensaje: '🎤 Mensaje de voz', ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
         mostrarNotificacion('Audio enviado ✅');
         await cargarMensajes(chatActivo.id);
         await cargarChats();
-
       } catch (error) {
         console.error('Error subiendo audio:', error);
         mostrarNotificacion('Error al subir el audio', 'error');
       }
     }
 
-    // ============================================
-    // ELIMINAR MENSAJE
-    // ============================================
     async function eliminarMensaje(mensajeId, tipoEliminacion) {
-      const confirmText = tipoEliminacion === 'para_todos' 
-        ? '¿Eliminar este mensaje para todos?' 
-        : '¿Eliminar este mensaje para ti?';
-      
-      if (!confirm(confirmText)) return;
-
+      if (!confirm(tipoEliminacion === 'para_todos' ? '¿Eliminar este mensaje para todos?' : '¿Eliminar este mensaje para ti?')) return;
       try {
         if (tipoEliminacion === 'para_todos') {
-          const { error } = await window.supabaseClient
-            .from('mensajes')
-            .delete()
-            .eq('id', mensajeId);
-
+          const { error } = await window.supabaseClient.from('mensajes').delete().eq('id', mensajeId);
           if (error) throw error;
           mostrarNotificacion('Mensaje eliminado para todos');
         } else {
-          const { error } = await window.supabaseClient
-            .from('mensajes')
-            .delete()
-            .eq('id', mensajeId)
-            .eq('remitente_id', usuarioActual.id);
-
+          const { error } = await window.supabaseClient.from('mensajes').delete().eq('id', mensajeId).eq('remitente_id', usuarioActual.id);
           if (error) throw error;
           mostrarNotificacion('Mensaje eliminado');
         }
-
         await cargarMensajes(chatActivo.id);
-
       } catch (error) {
         console.error('Error eliminando mensaje:', error);
         mostrarNotificacion('Error al eliminar el mensaje', 'error');
       }
     }
 
-    // ============================================
-    // ABRIR CHAT CON IA
-    // ============================================
-    async function abrirChatIA() {
-      try {
-        const IA_USER_ID = '00000000-0000-0000-0000-000000000000';
-
-        const { data: chatExistente } = await window.supabaseClient
-          .from('chats')
-          .select('id')
-          .or(`and(participante1_id.eq.${usuarioActual.id},participante2_id.eq.${IA_USER_ID}),and(participante1_id.eq.${IA_USER_ID},participante2_id.eq.${usuarioActual.id})`)
-          .single();
-
-        if (chatExistente) {
-          usuarioActivoChat = {
-            id: IA_USER_ID,
-            nombre_completo: 'Asistente IA de Arnexu',
-            nombre_usuario: 'arnexu_ia',
-            foto_perfil: 'https://via.placeholder.com/48/00ff88/000000?text=AI'
-          };
-          
-          chatActivo = { id: chatExistente.id };
-          
-          document.getElementById('chatVacio').style.display = 'none';
-          document.getElementById('chatActivo').style.display = 'flex';
-          document.getElementById('chatAvatarActivo').src = usuarioActivoChat.foto_perfil;
-          document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
-          document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
-          
-          await cargarMensajes(chatExistente.id);
-        } else {
-          const { data: nuevoChat, error } = await window.supabaseClient
-            .from('chats')
-            .insert([{
-              participante1_id: usuarioActual.id,
-              participante2_id: IA_USER_ID,
-              ultimo_mensaje: 'Chat con IA iniciado',
-              ultimo_mensaje_fecha: new Date().toISOString()
-            }])
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          await window.supabaseClient
-            .from('mensajes')
-            .insert([{
-              chat_id: nuevoChat.id,
-              remitente_id: IA_USER_ID,
-              contenido: '¡Hola! 👋 Soy tu asistente de IA de Arnexu. Puedo ayudarte con:\n\n• Crear resúmenes ejecutivos\n• Diseñar estrategias de negocio\n• Generar ideas de logos\n• Análisis de mercado\n• Pitch decks\n• Y mucho más sobre emprendimiento\n\n¿En qué puedo ayudarte hoy?',
-              tipo: 'ia'
-            }]);
-
-          usuarioActivoChat = {
-            id: IA_USER_ID,
-            nombre_completo: 'Asistente IA de Arnexu',
-            nombre_usuario: 'arnexu_ia',
-            foto_perfil: 'https://via.placeholder.com/48/00ff88/000000?text=AI'
-          };
-          
-          chatActivo = { id: nuevoChat.id };
-          
-          document.getElementById('chatVacio').style.display = 'none';
-          document.getElementById('chatActivo').style.display = 'flex';
-          document.getElementById('chatAvatarActivo').src = usuarioActivoChat.foto_perfil;
-          document.getElementById('chatNombreActivo').textContent = usuarioActivoChat.nombre_completo;
-          document.getElementById('chatUsernameActivo').textContent = '@' + usuarioActivoChat.nombre_usuario;
-          
-          await cargarMensajes(nuevoChat.id);
-        }
-
-        await cargarChats();
-
-        if (window.innerWidth <= 768) {
-          document.getElementById('chatListaContenedor').style.display = 'none';
-          document.getElementById('chatVentanaContenedor').style.display = 'flex';
-          document.getElementById('btnVolverLista').style.display = 'block';
-        }
-
-      } catch (error) {
-        console.error('Error abriendo chat IA:', error);
-        mostrarNotificacion('Error al abrir chat con IA', 'error');
-      }
-    }
-
-    // ============================================
-    // VER PERFIL DEL USUARIO ACTIVO
-    // ============================================
     function verPerfilActivo() {
-      if (usuarioActivoChat) {
-        window.location.href = `perfil.html?id=${usuarioActivoChat.id}`;
-      }
+      if (usuarioActivoChat) window.location.href = `perfil.html?id=${usuarioActivoChat.id}`;
     }
 
-    // ============================================
-    // VOLVER A LA LISTA (PARA MÓVIL)
-    // ============================================
     function volverALista() {
       if (intervalActualizacion) {
         clearInterval(intervalActualizacion);
         intervalActualizacion = null;
       }
-
       ultimosMensajesIds = [];
-
       document.getElementById('chatListaContenedor').style.display = 'block';
       document.getElementById('chatVentanaContenedor').style.display = 'none';
       document.getElementById('btnVolverLista').style.display = 'none';
-
       document.getElementById('chatActivo').style.display = 'none';
       document.getElementById('chatVacio').style.display = 'flex';
-
       chatActivo = null;
       usuarioActivoChat = null;
     }
 
-    // ============================================
-    // MANEJAR CAMBIO DE TAMAÑO DE PANTALLA
-    // ============================================
     window.addEventListener('resize', () => {
       if (window.innerWidth > 768) {
         document.getElementById('chatListaContenedor').style.display = 'block';
@@ -653,21 +399,11 @@
       }
     });
 
-    // ============================================
-    // LIMPIAR INTERVALO AL SALIR
-    // ============================================
     window.addEventListener('beforeunload', () => {
-      if (intervalActualizacion) {
-        clearInterval(intervalActualizacion);
-      }
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
+      if (intervalActualizacion) clearInterval(intervalActualizacion);
+      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
     });
 
-    // ============================================
-    // INICIALIZAR
-    // ============================================
     inicializar();
   </script>
 
@@ -683,240 +419,3 @@
   </footer>
 </body>
 </html>
-            ultimo_mensaje: contenido,
-            ultimo_mensaje_fecha: new Date().toISOString()
-          })
-          .eq('id', chatActivo.id);
-
-        if (usuarioActivoChat) {
-          const { data: publicaciones } = await window.supabaseClient
-            .from('publicaciones')
-            .select('id')
-            .eq('usuario_id', usuarioActivoChat.id)
-            .limit(1);
-
-          if (publicaciones && publicaciones.length > 0) {
-            await window.supabaseClient
-              .from('contactos_proyectos')
-              .insert([{
-                publicacion_id: publicaciones[0].id,
-                contacto_por: usuarioActual.id
-              }])
-              .then(() => {
-                window.supabaseClient.rpc('verificar_emprendedor_serial', { pub_id: publicaciones[0].id });
-                window.supabaseClient.rpc('verificar_inversor_interesado', { inv_id: usuarioActual.id });
-              });
-          }
-        }
-
-        input.value = '';
-        await cargarMensajes(chatActivo.id);
-        await cargarChats();
-
-      } catch (error) {
-        console.error('Error enviando mensaje:', error);
-        mostrarNotificacion('Error al enviar el mensaje', 'error');
-      }
-    }
-
-    // ============================================
-    // SUBIR ARCHIVO
-    // ============================================
-    async function subirArchivo() {
-      const fileInput = document.getElementById('archivoInput');
-      const file = fileInput.files[0];
-      
-      if (!file || !chatActivo) return;
-
-      try {
-        mostrarNotificacion('Subiendo archivo...');
-
-        let tipoMensaje = 'archivo';
-        if (file.type.startsWith('image/')) tipoMensaje = 'imagen';
-        if (file.type.startsWith('video/')) tipoMensaje = 'video';
-
-        const extension = file.name.split('.').pop();
-        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
-        
-        const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-          .from('arnexu-files')
-          .upload(`chat/${nombreArchivo}`, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = window.supabaseClient.storage
-          .from('arnexu-files')
-          .getPublicUrl(`chat/${nombreArchivo}`);
-
-        const { error } = await window.supabaseClient
-          .from('mensajes')
-          .insert([{
-            chat_id: chatActivo.id,
-            remitente_id: usuarioActual.id,
-            contenido: '',
-            tipo: tipoMensaje,
-            archivo_url: urlData.publicUrl,
-            archivo_nombre: file.name,
-            archivo_tipo: file.type
-          }]);
-
-        if (error) throw error;
-
-        const mensajePreview = tipoMensaje === 'imagen' ? '📷 Imagen' : 
-                               tipoMensaje === 'video' ? '🎥 Video' : 
-                               `📄 ${file.name}`;
-        
-        await window.supabaseClient
-          .from('chats')
-          .update({
-            ultimo_mensaje: mensajePreview,
-            ultimo_mensaje_fecha: new Date().toISOString()
-          })
-          .eq('id', chatActivo.id);
-
-        mostrarNotificacion('Archivo enviado');
-        fileInput.value = '';
-        await cargarMensajes(chatActivo.id);
-        await cargarChats();
-
-      } catch (error) {
-        console.error('Error subiendo archivo:', error);
-        mostrarNotificacion('Error al subir el archivo', 'error');
-      }
-    }
-
-    // ============================================
-    // SISTEMA DE GRABACIÓN DE VOZ
-    // ============================================
-    async function toggleGrabacion() {
-      if (!chatActivo) {
-        mostrarNotificacion('Abre un chat primero', 'error');
-        return;
-      }
-
-      if (!grabando) {
-        await iniciarGrabacion();
-      } else {
-        detenerGrabacion();
-      }
-    }
-
-    async function iniciarGrabacion() {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          mostrarNotificacion('Tu navegador no soporta grabación de audio', 'error');
-          return;
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 44100
-          } 
-        });
-        
-        let mimeType = 'audio/webm';
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-          mimeType = 'audio/webm;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-          mimeType = 'audio/ogg;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          mimeType = 'audio/mp4';
-        } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
-          mimeType = 'audio/mpeg';
-        }
-        
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
-        audioChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
-          await subirAudio(audioBlob, mimeType);
-          
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        grabando = true;
-
-        const btnVoz = document.getElementById('btnVoz');
-        btnVoz.style.background = '#ff4444';
-        btnVoz.innerHTML = '⏹️';
-        btnVoz.title = 'Detener grabación';
-
-        mostrarNotificacion('🎤 Grabando...');
-
-      } catch (error) {
-        console.error('Error al iniciar grabación:', error);
-        mostrarNotificacion('Error al acceder al micrófono. Por favor permite el acceso.', 'error');
-      }
-    }
-
-    function detenerGrabacion() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        grabando = false;
-
-        const btnVoz = document.getElementById('btnVoz');
-        btnVoz.style.background = 'var(--gris-medio)';
-        btnVoz.innerHTML = '🎤';
-        btnVoz.title = 'Grabar mensaje de voz';
-      }
-    }
-
-    async function subirAudio(audioBlob, mimeType = 'audio/webm') {
-      if (!chatActivo) return;
-
-      try {
-        mostrarNotificacion('Subiendo audio...');
-
-        let extension = 'webm';
-        if (mimeType.includes('ogg')) extension = 'ogg';
-        else if (mimeType.includes('mp4')) extension = 'mp4';
-        else if (mimeType.includes('mpeg')) extension = 'mp3';
-
-        const nombreArchivo = `${usuarioActual.id}_${Date.now()}.${extension}`;
-        
-        const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-          .from('arnexu-files')
-          .upload(`chat/voice/${nombreArchivo}`, audioBlob, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: mimeType
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = window.supabaseClient.storage
-          .from('arnexu-files')
-          .getPublicUrl(`chat/voice/${nombreArchivo}`);
-
-        const duracion = Math.round(audioBlob.size / 16000);
-
-        const { error } = await window.supabaseClient
-          .from('mensajes')
-          .insert([{
-            chat_id: chatActivo.id,
-            remitente_id: usuarioActual.id,
-            contenido: `Mensaje de voz (${duracion}s)`,
-            tipo: 'audio',
-            archivo_url: urlData.publicUrl,
-            archivo_nombre: `audio_${duracion}s.${extension}`,
-            archivo_tipo: mimeType
-          }]);
-
-        if (error) throw error;
-
-        await window.supabaseClient
-          .from('chats')
-          .update({
