@@ -3,26 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inicio| Arnexu</title>
+  <title>Inicio | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.1"></script>
-<script src="js/app.js?v=1.0.1"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.1"></script>
+  <script src="js/app.js?v=1.0.1"></script>
+  <style>
+    .comentario-item {
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 3px solid var(--acento);
+    }
+    .comentario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .comentario-autor {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .comentario-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .comentario-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--gris-medio);
+    }
+    .comentarios-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--gris-medio);
+    }
+  </style>
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
-            <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
+      <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
       <ul class="navbar-menu">
         <li><a href="inicio.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          
         </a></li>
         <li><a href="crear.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -30,20 +65,17 @@
             <line x1="12" y1="8" x2="12" y2="16"></line>
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
-          
         </a></li>
         <li><a href="chat.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          
         </a></li>
         <li><a href="perfil.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          
         </a></li>
         <li><a href="#" onclick="logout()" style="color: var(--error);">
           <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -56,54 +88,42 @@
     </div>
   </nav>
 
-  <!-- Contenido Principal -->
   <div class="container" style="margin-top: 30px;">
-    <h2 style="margin-bottom: 25px; font-size: 28px;">
-      Descubre Proyectos
-    </h2>
-
-    <!-- Área de publicaciones -->
-    <div id="feedPublicaciones">
-      <div class="loading">Cargando publicaciones...</div>
-    </div>
-
-    <!-- Mensaje cuando no hay publicaciones -->
+    <h2 style="margin-bottom: 25px; font-size: 28px;">Descubre Proyectos</h2>
+    <div id="feedPublicaciones"><div class="loading">Cargando publicaciones...</div></div>
     <div id="emptyState" class="empty-state" style="display: none;">
       <h3>No hay publicaciones aún</h3>
       <p>Sé el primero en compartir tu proyecto</p>
-      <a href="crear.html" class="btn btn-primary" style="margin-top: 20px;">
-        Crear Publicación
-      </a>
+      <a href="crear.html" class="btn btn-primary" style="margin-top: 20px;">Crear Publicación</a>
     </div>
   </div>
 
-  <script src="js/config.js"></script>
   <script>
-    // ============================================
-    // PROTEGER PÁGINA Y CARGAR USUARIO
-    // ============================================
     let usuarioActual = null;
 
     async function inicializar() {
       await protegerPagina();
       usuarioActual = await getCurrentUser();
       if (usuarioActual) {
-        cargarPublicaciones();
+        const hash = window.location.hash;
+        if (hash.startsWith('#pub-')) {
+          const pubId = hash.substring(5);
+          await cargarPublicaciones();
+          setTimeout(() => {
+            const element = document.getElementById('pub-' + pubId);
+            if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 500);
+        } else {
+          await cargarPublicaciones();
+        }
       }
     }
 
-    // ============================================
-    // CARGAR PUBLICACIONES
-    // ============================================
     async function cargarPublicaciones() {
       try {
-        // Obtener todas las publicaciones con información del autor
         const { data: publicaciones, error } = await window.supabaseClient
           .from('publicaciones')
-          .select(`
-            *,
-            usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)
-          `)
+          .select('*, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -117,7 +137,6 @@
           return;
         }
 
-        // Para cada publicación, verificar si el usuario actual le dio like
         const publicacionesConLikes = await Promise.all(
           publicaciones.map(async (pub) => {
             const { data: miLike } = await window.supabaseClient
@@ -126,250 +145,228 @@
               .eq('publicacion_id', pub.id)
               .eq('usuario_id', usuarioActual.id)
               .single();
-
             return { ...pub, usuarioLeDioLike: !!miLike };
           })
         );
 
         mostrarPublicaciones(publicacionesConLikes);
-
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
-        document.getElementById('feedPublicaciones').innerHTML = 
-          '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
+        document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
       }
     }
 
-    // ============================================
-    // GENERAR HTML PARA ARCHIVOS ADJUNTOS
-    // ============================================
     function generarHTMLArchivos(archivos) {
       if (!archivos || archivos.length === 0) return '';
-
       const archivosHTML = archivos.map(archivo => {
         const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
         const esVideo = archivo.tipo && archivo.tipo.startsWith('video/');
         const esPDF = archivo.tipo && archivo.tipo.includes('pdf');
-
         if (esImagen) {
-          return `
-            <div style="margin-bottom: 10px;">
-              <img src="${archivo.url}" alt="${archivo.nombre}" 
-                   style="max-width: 100%; border-radius: 8px; cursor: pointer;"
-                   onclick="window.open('${archivo.url}', '_blank')">
-            </div>
-          `;
+          return `<div style="margin-bottom: 10px;"><img src="${archivo.url}" alt="${archivo.nombre}" style="max-width: 100%; border-radius: 8px; cursor: pointer;" onclick="window.open('${archivo.url}', '_blank')"></div>`;
         } else if (esVideo) {
-          return `
-            <div style="margin-bottom: 10px;">
-              <video controls style="max-width: 100%; border-radius: 8px;">
-                <source src="${archivo.url}" type="${archivo.tipo}">
-                Tu navegador no soporta videos.
-              </video>
-            </div>
-          `;
+          return `<div style="margin-bottom: 10px;"><video controls style="max-width: 100%; border-radius: 8px;"><source src="${archivo.url}" type="${archivo.tipo}">Tu navegador no soporta videos.</video></div>`;
         } else {
-          // Documentos (PDF, DOC, etc)
           const icono = esPDF ? '📄' : '📎';
-          return `
-            <div style="background: var(--gris-medio); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 24px;">${icono}</span>
-              <div style="flex: 1;">
-                <a href="${archivo.url}" target="_blank" style="color: var(--acento); text-decoration: none; font-weight: 500;">
-                  ${archivo.nombre}
-                </a>
-              </div>
-              <a href="${archivo.url}" download style="color: var(--acento); text-decoration: none;">
-                ⬇️
-              </a>
-            </div>
-          `;
+          return `<div style="background: var(--gris-medio); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">${icono}</span><div style="flex: 1;"><a href="${archivo.url}" target="_blank" style="color: var(--acento); text-decoration: none; font-weight: 500;">${archivo.nombre}</a></div><a href="${archivo.url}" download style="color: var(--acento); text-decoration: none;">⬇️</a></div>`;
         }
       }).join('');
-
-      return `
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gris-medio);">
-          <strong style="color: var(--gris-neon); font-size: 14px; display: block; margin-bottom: 10px;">
-            📎 Archivos adjuntos:
-          </strong>
-          ${archivosHTML}
-        </div>
-      `;
+      return `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gris-medio);"><strong style="color: var(--gris-neon); font-size: 14px; display: block; margin-bottom: 10px;">📎 Archivos adjuntos:</strong>${archivosHTML}</div>`;
     }
 
-    // ============================================
-    // MOSTRAR PUBLICACIONES EN EL FEED
-    // ============================================
     function mostrarPublicaciones(publicaciones) {
       const feed = document.getElementById('feedPublicaciones');
-      
       feed.innerHTML = publicaciones.map(pub => {
-        const tipoEmoji = {
-          'idea': '💡',
-          'proyecto': '🚀',
-          'otro': '📌'
-        };
-
-        const tipoTexto = {
-          'idea': 'Solo una idea',
-          'proyecto': 'Proyecto en desarrollo',
-          'otro': 'Otro'
-        };
-
+        const tipoEmoji = { 'idea': '💡', 'proyecto': '🚀', 'otro': '📌' };
+        const tipoTexto = { 'idea': 'Solo una idea', 'proyecto': 'Proyecto en desarrollo', 'otro': 'Otro' };
         return `
-          <div class="publicacion-card">
+          <div class="publicacion-card" id="pub-${pub.id}">
             <div class="publicacion-header">
-              <img 
-                src="${pub.usuario.foto_perfil || 'https://via.placeholder.com/48'}" 
-                alt="${pub.usuario.nombre_completo}"
-                class="publicacion-avatar"
-                onclick="verPerfil('${pub.usuario_id}')"
-                style="cursor: pointer;"
-              >
+              <img src="${pub.usuario.foto_perfil || 'https://via.placeholder.com/48'}" alt="${pub.usuario.nombre_completo}" class="publicacion-avatar" onclick="verPerfil('${pub.usuario_id}')" style="cursor: pointer;">
               <div class="publicacion-info" style="flex: 1;">
-                <h3 onclick="verPerfil('${pub.usuario_id}')" style="cursor: pointer;">
-                  ${pub.usuario.nombre_completo}
-                </h3>
+                <h3 onclick="verPerfil('${pub.usuario_id}')" style="cursor: pointer;">${pub.usuario.nombre_completo}</h3>
                 <p>@${pub.usuario.nombre_usuario} • ${formatearFecha(pub.created_at)}</p>
               </div>
             </div>
-
-            <div class="publicacion-badge">
-              ${tipoEmoji[pub.tipo]} ${tipoTexto[pub.tipo]}
-            </div>
-
+            <div class="publicacion-badge">${tipoEmoji[pub.tipo]} ${tipoTexto[pub.tipo]}</div>
             <h2 class="publicacion-titulo">${pub.titulo}</h2>
-            
             <p class="publicacion-descripcion">${pub.descripcion}</p>
-
             <span class="publicacion-categoria">${pub.categoria}</span>
-
             ${generarHTMLArchivos(pub.archivos)}
-
             <div class="publicacion-acciones">
-              <button 
-                class="publicacion-accion ${pub.usuarioLeDioLike ? 'liked' : ''}" 
-                onclick="toggleLike('${pub.id}', ${pub.usuarioLeDioLike})"
-                id="like-${pub.id}"
-              >
-                ${pub.usuarioLeDioLike ? '❤️' : '🤍'} 
-                <span id="count-${pub.id}">${pub.likes_count || 0}</span>
+              <button class="publicacion-accion ${pub.usuarioLeDioLike ? 'liked' : ''}" onclick="toggleLike('${pub.id}', ${pub.usuarioLeDioLike})" id="like-${pub.id}">
+                ${pub.usuarioLeDioLike ? '❤️' : '🤍'} <span id="count-${pub.id}">${pub.likes_count || 0}</span>
               </button>
-
-              <button class="publicacion-accion" onclick="compartir('${pub.id}')">
-                🔗 Compartir
-              </button>
-
-              <button class="publicacion-accion" onclick="verPerfil('${pub.usuario_id}')">
-                👤 Ver perfil
-              </button>
+              <button class="publicacion-accion" onclick="compartir('${pub.id}', '${pub.titulo}')">🔗 Compartir</button>
+              <button class="publicacion-accion" onclick="verPerfil('${pub.usuario_id}')">👤 Ver perfil</button>
+              <button class="publicacion-accion" onclick="toggleComentarios('${pub.id}')">💬 Comentarios</button>
+            </div>
+            <div id="comentarios-${pub.id}" class="comentarios-section" style="display: none;">
+              <h4 style="margin-bottom: 15px; font-size: 16px;">💬 Comentarios</h4>
+              <div id="lista-comentarios-${pub.id}"></div>
+              <div class="comentario-form">
+                <input type="text" id="input-comentario-${pub.id}" placeholder="Escribe un comentario..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--gris-medio); background: var(--gris-oscuro); color: var(--blanco); font-family: 'Montserrat';" onkeypress="if(event.key === 'Enter') enviarComentario('${pub.id}')">
+                <button onclick="enviarComentario('${pub.id}')" class="btn btn-primary">Enviar</button>
+              </div>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // ============================================
-    // DAR/QUITAR LIKE
-    // ============================================
     async function toggleLike(publicacionId, yaLeDioLike) {
       try {
         if (yaLeDioLike) {
-          // Quitar like
-          await window.supabaseClient
-            .from('likes')
-            .delete()
-            .eq('publicacion_id', publicacionId)
-            .eq('usuario_id', usuarioActual.id);
-
-          // Actualizar contador
-          await window.supabaseClient.rpc('decrement_likes', { pub_id: publicacionId });
-          
+          await window.supabaseClient.from('likes').delete().eq('publicacion_id', publicacionId).eq('usuario_id', usuarioActual.id);
+          const { data: pub } = await window.supabaseClient.from('publicaciones').select('likes_count').eq('id', publicacionId).single();
+          const nuevoCount = Math.max(0, (pub.likes_count || 0) - 1);
+          await window.supabaseClient.from('publicaciones').update({ likes_count: nuevoCount }).eq('id', publicacionId);
+          document.getElementById('like-' + publicacionId).classList.remove('liked');
+          document.getElementById('like-' + publicacionId).innerHTML = `🤍 <span id="count-${publicacionId}">${nuevoCount}</span>`;
         } else {
-          // Dar like
-          await window.supabaseClient
-            .from('likes')
-            .insert([{
-              publicacion_id: publicacionId,
-              usuario_id: usuarioActual.id
-            }]);
-
-          // Actualizar contador
-          await window.supabaseClient.rpc('increment_likes', { pub_id: publicacionId });
+          await window.supabaseClient.from('likes').insert([{ publicacion_id: publicacionId, usuario_id: usuarioActual.id }]);
+          const { data: pub } = await window.supabaseClient.from('publicaciones').select('likes_count').eq('id', publicacionId).single();
+          const nuevoCount = (pub.likes_count || 0) + 1;
+          await window.supabaseClient.from('publicaciones').update({ likes_count: nuevoCount }).eq('id', publicacionId);
+          document.getElementById('like-' + publicacionId).classList.add('liked');
+          document.getElementById('like-' + publicacionId).innerHTML = `❤️ <span id="count-${publicacionId}">${nuevoCount}</span>`;
         }
-
-        // Recargar publicaciones para reflejar cambios
-        cargarPublicaciones();
-
       } catch (error) {
         console.error('Error al dar like:', error);
         mostrarNotificacion('Error al procesar el like', 'error');
       }
     }
 
-    // ============================================
-    // COMPARTIR PUBLICACIÓN
-    // ============================================
-    function compartir(publicacionId) {
+    function compartir(publicacionId, titulo) {
       const url = `${window.location.origin}/inicio.html#pub-${publicacionId}`;
-      
       if (navigator.share) {
-        navigator.share({
-          title: 'Publicación en Arnexu',
-          url: url
+        navigator.share({ title: 'Publicación en Arnexu: ' + titulo, url: url }).catch(() => {
+          navigator.clipboard.writeText(url);
+          mostrarNotificacion('✅ Enlace copiado al portapapeles');
         });
       } else {
         navigator.clipboard.writeText(url);
-        mostrarNotificacion('Enlace copiado al portapapeles');
+        mostrarNotificacion('✅ Enlace copiado al portapapeles');
       }
     }
 
-    // ============================================
-    // VER PERFIL DE USUARIO
-    // ============================================
+    async function toggleComentarios(publicacionId) {
+      const comentariosDiv = document.getElementById('comentarios-' + publicacionId);
+      if (comentariosDiv.style.display === 'none') {
+        comentariosDiv.style.display = 'block';
+        await cargarComentarios(publicacionId);
+      } else {
+        comentariosDiv.style.display = 'none';
+      }
+    }
+
+    async function cargarComentarios(publicacionId) {
+      try {
+        const { data: comentarios, error } = await window.supabaseClient
+          .from('comentarios')
+          .select('*, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)')
+          .eq('publicacion_id', publicacionId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const listaDiv = document.getElementById('lista-comentarios-' + publicacionId);
+        if (!comentarios || comentarios.length === 0) {
+          listaDiv.innerHTML = '<p style="color: var(--gris-neon); font-size: 14px; text-align: center; padding: 20px;">No hay comentarios aún. ¡Sé el primero!</p>';
+          return;
+        }
+
+        listaDiv.innerHTML = comentarios.map(com => `
+          <div class="comentario-item">
+            <div class="comentario-header">
+              <div class="comentario-autor">
+                <img src="${com.usuario.foto_perfil || 'https://via.placeholder.com/32'}" alt="${com.usuario.nombre_completo}" class="comentario-avatar" onclick="verPerfil('${com.usuario_id}')" style="cursor: pointer;">
+                <div>
+                  <strong style="font-size: 14px;" onclick="verPerfil('${com.usuario_id}')" style="cursor: pointer;">${com.usuario.nombre_completo}</strong>
+                  <p style="font-size: 12px; color: var(--gris-neon); margin-top: 2px;">${formatearFecha(com.created_at)}</p>
+                </div>
+              </div>
+              ${com.usuario_id === usuarioActual.id ? `<button onclick="eliminarComentario('${com.id}', '${publicacionId}')" style="background: none; border: none; color: var(--error); cursor: pointer; font-size: 18px;" title="Eliminar">🗑️</button>` : ''}
+            </div>
+            <p style="color: var(--blanco); font-size: 14px; margin-top: 8px;">${com.contenido}</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error cargando comentarios:', error);
+      }
+    }
+
+    async function enviarComentario(publicacionId) {
+      const input = document.getElementById('input-comentario-' + publicacionId);
+      const contenido = input.value.trim();
+      if (!contenido) return;
+
+      try {
+        const { error } = await window.supabaseClient.from('comentarios').insert([{
+          publicacion_id: publicacionId,
+          usuario_id: usuarioActual.id,
+          contenido: contenido
+        }]);
+
+        if (error) throw error;
+
+        input.value = '';
+        await cargarComentarios(publicacionId);
+        mostrarNotificacion('✅ Comentario publicado');
+      } catch (error) {
+        console.error('Error enviando comentario:', error);
+        mostrarNotificacion('Error al enviar comentario', 'error');
+      }
+    }
+
+    async function eliminarComentario(comentarioId, publicacionId) {
+      if (!confirm('¿Eliminar este comentario?')) return;
+
+      try {
+        const { error } = await window.supabaseClient.from('comentarios').delete().eq('id', comentarioId);
+        if (error) throw error;
+
+        await cargarComentarios(publicacionId);
+        mostrarNotificacion('✅ Comentario eliminado');
+      } catch (error) {
+        console.error('Error eliminando comentario:', error);
+        mostrarNotificacion('Error al eliminar comentario', 'error');
+      }
+    }
+
     function verPerfil(usuarioId) {
       window.location.href = `perfil.html?id=${usuarioId}`;
     }
 
-    // ============================================
-    // INICIALIZAR AL CARGAR LA PÁGINA
-    // ============================================
     inicializar();
   </script>
 
-  <!-- Agregar al final del body en todas las páginas -->
-<div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
-  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
-    <p style="color: var(--gris-neon); margin: 0;">
-      🍪 Usamos cookies para mejorar tu experiencia. 
-      <a href="cookies.html" style="color: var(--acento);">Más información</a>
-    </p>
-    <button onclick="aceptarCookies()" class="btn btn-primary">
-      Aceptar
-    </button>
+  <div id="cookieBanner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--gris-oscuro); padding: 20px; border-top: 2px solid var(--acento); z-index: 10000;">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+      <p style="color: var(--gris-neon); margin: 0;">🍪 Usamos cookies para mejorar tu experiencia. <a href="cookies.html" style="color: var(--acento);">Más información</a></p>
+      <button onclick="aceptarCookies()" class="btn btn-primary">Aceptar</button>
+    </div>
   </div>
-</div>
 
-<script>
-function aceptarCookies() {
-  localStorage.setItem('cookies_aceptadas', 'true');
-  document.getElementById('cookieBanner').style.display = 'none';
-}
+  <script>
+    function aceptarCookies() {
+      localStorage.setItem('cookies_aceptadas', 'true');
+      document.getElementById('cookieBanner').style.display = 'none';
+    }
+    if (!localStorage.getItem('cookies_aceptadas')) {
+      document.getElementById('cookieBanner').style.display = 'block';
+    }
+  </script>
 
-// Mostrar banner si no ha aceptado
-if (!localStorage.getItem('cookies_aceptadas')) {
-  document.getElementById('cookieBanner').style.display = 'block';
-}
-</script>
+  <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
+    <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+      <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
+      <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
+      <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
+      <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
+      <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
+    </div>
+  </footer>
 </body>
-<footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
-  <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-    <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
-    <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
-    <a href="privacidad.html" style="color: var(--gris-neon);">Privacidad</a>
-    <a href="cookies.html" style="color: var(--gris-neon);">Cookies</a>
-    <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
-  </div>
-</footer>
 </html>
