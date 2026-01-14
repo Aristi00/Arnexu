@@ -9,6 +9,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=1.0.1"></script>
   <script src="js/app.js?v=1.0.1"></script>
+  
+  <!-- Sistema de notificaciones global -->
+  <script src="js/badge-notifications.js?v=1.0.0"></script>
+  
   <style>
     .custom-audio-player {
       background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,150,255,0.1) 100%);
@@ -106,7 +110,7 @@
       <ul class="navbar-menu">
         <li><a href="inicio.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></a></li>
         <li><a href="crear.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></li>
-        <li style="position: relative;"><a href="chat.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a><span id="badgeGlobal" class="badge-contador" style="display: none; top: 5px; right: 5px;"></span></li>
+        <li style="position: relative;"><a href="chat.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></a><span id="badgeGlobal" class="badge-contador" style="display: none;"></span></li>
         <li><a href="perfil.html"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></a></li>
         <li><a href="#" onclick="logout()" style="color: var(--error);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></a></li>
       </ul>
@@ -156,7 +160,6 @@
     let audioChunks = [];
     let grabando = false;
     let audioPlayers = {};
-    let intervalNotificaciones = null;
 
     function createCustomAudioPlayer(audioUrl, audioId, duration) {
       return `<div class="custom-audio-player"><div class="audio-header"><span style="font-size: 24px;">🎤</span><span>${duration}</span></div><div class="audio-controls-wrapper"><button class="play-btn" onclick="playAudio('${audioId}','${audioUrl}')" id="btn-${audioId}">▶</button><div class="progress-wrapper"><div class="progress-track" onclick="seekAudio(event,'${audioId}')"><div class="progress-bar" id="bar-${audioId}"></div></div><div class="time-info" id="time-${audioId}">0:00</div></div></div><audio id="audio-${audioId}" preload="auto" style="display:none"><source src="${audioUrl}" type="audio/webm"><source src="${audioUrl}" type="audio/ogg"><source src="${audioUrl}" type="audio/mpeg"><source src="${audioUrl}" type="audio/mp4"></audio></div>`;
@@ -224,36 +227,7 @@
       const nuevoUsuarioId = urlParams.get('nuevo');
       if (nuevoUsuarioId) await crearOAbrirChat(nuevoUsuarioId);
       await cargarChats();
-      iniciarActualizacionNotificaciones();
-    }
-
-    function iniciarActualizacionNotificaciones() {
-      actualizarContadorGlobal();
-      if (intervalNotificaciones) clearInterval(intervalNotificaciones);
-      intervalNotificaciones = setInterval(actualizarContadorGlobal, 5000);
-    }
-
-    async function actualizarContadorGlobal() {
-      try {
-        const { data: noLeidos, error } = await window.supabaseClient
-          .from('mensajes_no_leidos')
-          .select('cantidad')
-          .eq('usuario_id', usuarioActual.id);
-
-        if (error) throw error;
-
-        const totalNoLeidos = (noLeidos || []).reduce((sum, item) => sum + (item.cantidad || 0), 0);
-        const badge = document.getElementById('badgeGlobal');
-
-        if (totalNoLeidos > 0) {
-          badge.textContent = totalNoLeidos > 99 ? '99+' : totalNoLeidos;
-          badge.style.display = 'flex';
-        } else {
-          badge.style.display = 'none';
-        }
-      } catch (error) {
-        console.error('Error actualizando contador global:', error);
-      }
+      // El badge se actualiza automáticamente con badge-notifications.js
     }
 
     async function cargarChats() {
@@ -341,7 +315,12 @@
         audioPlayers = {};
         await cargarMensajes(chatId);
         await cargarChats();
-        await actualizarContadorGlobal();
+        
+        // Actualizar badge después de leer mensajes
+        if (window.arnexuNotifications) {
+          window.arnexuNotifications.actualizar();
+        }
+        
         if (intervalActualizacion) clearInterval(intervalActualizacion);
         intervalActualizacion = setInterval(() => cargarMensajes(chatId, true), 3000);
       } catch (error) {
@@ -417,24 +396,28 @@
         await window.supabaseClient.from('chats').update({ultimo_mensaje: contenido, ultimo_mensaje_fecha: new Date().toISOString()}).eq('id', chatActivo.id);
 
         const otroParticipanteId = usuarioActivoChat.id;
-        await window.supabaseClient.from('mensajes_no_leidos').upsert({
-          chat_id: chatActivo.id,
-          usuario_id: otroParticipanteId,
-          cantidad: 1,
-          ultimo_mensaje_id: nuevoMensaje.id,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'chat_id,usuario_id',
-          ignoreDuplicates: false
-        }).then(async ({ data: existing }) => {
-          if (existing && existing.length > 0) {
-            await window.supabaseClient.from('mensajes_no_leidos').update({
-              cantidad: (existing[0].cantidad || 0) + 1,
-              ultimo_mensaje_id: nuevoMensaje.id,
-              updated_at: new Date().toISOString()
-            }).eq('chat_id', chatActivo.id).eq('usuario_id', otroParticipanteId);
-          }
-        });
+        const { data: existing } = await window.supabaseClient
+          .from('mensajes_no_leidos')
+          .select('cantidad')
+          .eq('chat_id', chatActivo.id)
+          .eq('usuario_id', otroParticipanteId)
+          .single();
+
+        if (existing) {
+          await window.supabaseClient.from('mensajes_no_leidos').update({
+            cantidad: (existing.cantidad || 0) + 1,
+            ultimo_mensaje_id: nuevoMensaje.id,
+            updated_at: new Date().toISOString()
+          }).eq('chat_id', chatActivo.id).eq('usuario_id', otroParticipanteId);
+        } else {
+          await window.supabaseClient.from('mensajes_no_leidos').insert({
+            chat_id: chatActivo.id,
+            usuario_id: otroParticipanteId,
+            cantidad: 1,
+            ultimo_mensaje_id: nuevoMensaje.id,
+            updated_at: new Date().toISOString()
+          });
+        }
 
         if (usuarioActivoChat) {
           const { data: publicaciones } = await window.supabaseClient.from('publicaciones').select('id').eq('usuario_id', usuarioActivoChat.id).limit(1);
@@ -656,7 +639,6 @@
 
     window.addEventListener('beforeunload', () => {
       if (intervalActualizacion) clearInterval(intervalActualizacion);
-      if (intervalNotificaciones) clearInterval(intervalNotificaciones);
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
     });
 

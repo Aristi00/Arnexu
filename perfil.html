@@ -3,27 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil| Arnexu</title>
+  <title>Perfil | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.1"></script>
-<script src="js/app.js?v=1.0.1"></script>
-
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.1"></script>
+  <script src="js/app.js?v=1.0.1"></script>
+  <script src="js/badge-notifications.js?v=1.0.0"></script>
+  <style>
+    .archivo-preview {
+      background: var(--gris-medio);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .archivo-preview img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .archivo-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .archivo-nombre {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .archivo-tipo {
+      font-size: 12px;
+      color: var(--gris-neon);
+    }
+    .btn-eliminar-archivo {
+      background: var(--error);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-family: 'Montserrat';
+      font-size: 12px;
+    }
+    .archivos-adjuntos {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0,255,136,0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(0,255,136,0.2);
+    }
+    .archivo-card {
+      background: var(--gris-medio);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .archivo-card img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
-            <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
+      <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
       <ul class="navbar-menu">
         <li><a href="inicio.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          
         </a></li>
         <li><a href="crear.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -31,20 +92,17 @@
             <line x1="12" y1="8" x2="12" y2="16"></line>
             <line x1="8" y1="12" x2="16" y2="12"></line>
           </svg>
-          
         </a></li>
         <li><a href="chat.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          
         </a></li>
         <li><a href="perfil.html">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          
         </a></li>
         <li><a href="#" onclick="logout()" style="color: var(--error);">
           <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -52,7 +110,6 @@
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
           </svg>
-          
         </a></li>
       </ul>
     </div>
@@ -215,6 +272,28 @@
           </select>
         </div>
 
+        <!-- Archivos Actuales -->
+        <div class="form-group" id="archivosActualesContainer" style="display: none;">
+          <label class="form-label">Archivos Adjuntos Actuales</label>
+          <div id="archivosActualesList"></div>
+        </div>
+
+        <!-- Agregar Nuevos Archivos -->
+        <div class="form-group">
+          <label class="form-label">Agregar Nuevos Archivos (Opcional)</label>
+          <input 
+            type="file" 
+            id="editNuevosArchivos" 
+            class="form-file" 
+            accept="image/*,video/*,.pdf,.doc,.docx"
+            multiple
+          >
+          <label for="editNuevosArchivos" class="form-file-label" style="width: 100%;">
+            📎 Seleccionar archivos
+          </label>
+          <div id="nuevosArchivosPreview" style="margin-top: 10px;"></div>
+        </div>
+
         <div style="display: flex; gap: 15px;">
           <button type="submit" class="btn btn-primary" style="flex: 1;">
             GUARDAR CAMBIOS
@@ -232,6 +311,8 @@
     let usuarioActual = null;
     let perfilUsuario = null;
     let esPerfilPropio = false;
+    let archivosAEliminar = [];
+    let publicacionActualArchivos = [];
 
     // ============================================
     // PROTEGER PÁGINA Y CARGAR PERFIL
@@ -240,7 +321,6 @@
       await protegerPagina();
       usuarioActual = await getCurrentUser();
       
-      // Obtener ID del usuario del perfil desde la URL
       const urlParams = new URLSearchParams(window.location.search);
       const perfilId = urlParams.get('id') || usuarioActual.id;
       
@@ -265,16 +345,13 @@
 
         perfilUsuario = data;
 
-        // Actualizar UI
         document.getElementById('perfilAvatar').src = data.foto_perfil || 'https://via.placeholder.com/120';
         document.getElementById('perfilNombre').textContent = data.nombre_completo;
         document.getElementById('perfilUsername').textContent = `@${data.nombre_usuario}`;
         document.getElementById('perfilBio').textContent = data.biografia || 'Sin biografía';
 
-        // Cargar badges
         await cargarBadges(userId);
 
-        // Mostrar botones apropiados
         const accionesDiv = document.getElementById('perfilAcciones');
         if (esPerfilPropio) {
           accionesDiv.innerHTML = `
@@ -376,7 +453,6 @@
       }
     }
 
-    // Helper function para convertir hex a rgb
     function hexToRgb(hex) {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result ? 
@@ -410,15 +486,53 @@
         }
 
         contenido.innerHTML = data.map(pub => {
-          const pubDataJson = JSON.stringify({
-            titulo: pub.titulo,
-            tipo: pub.tipo,
-            descripcion: pub.descripcion,
-            categoria: pub.categoria
-          });
+          const archivosHTML = pub.archivos && pub.archivos.length > 0 ? `
+            <div class="archivos-adjuntos">
+              <div style="font-weight: 600; margin-bottom: 10px; color: var(--acento);">📎 Archivos Adjuntos (${pub.archivos.length})</div>
+              ${pub.archivos.map(archivo => {
+                const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
+                const esVideo = archivo.tipo && archivo.tipo.startsWith('video/');
+                
+                if (esImagen) {
+                  return `
+                    <div class="archivo-card">
+                      <img src="${archivo.url}" alt="${archivo.nombre}" onclick="window.open('${archivo.url}', '_blank')" style="cursor: pointer;">
+                      <div style="flex: 1; overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-size: 12px; color: var(--gris-neon);">🖼️ Imagen</div>
+                      </div>
+                      <a href="${archivo.url}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                    </div>
+                  `;
+                } else if (esVideo) {
+                  return `
+                    <div class="archivo-card">
+                      <div style="width: 50px; height: 50px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🎥</div>
+                      <div style="flex: 1; overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-size: 12px; color: var(--gris-neon);">🎬 Video</div>
+                      </div>
+                      <a href="${archivo.url}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                    </div>
+                  `;
+                } else {
+                  return `
+                    <div class="archivo-card">
+                      <div style="width: 50px; height: 50px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📄</div>
+                      <div style="flex: 1; overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-size: 12px; color: var(--gris-neon);">📎 Documento</div>
+                      </div>
+                      <a href="${archivo.url}" download style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Descargar</a>
+                    </div>
+                  `;
+                }
+              }).join('')}
+            </div>
+          ` : '';
           
           return `
-          <div class="publicacion-card" data-pub-id="${pub.id}" data-pub-data='${pubDataJson}'>
+          <div class="publicacion-card" data-pub-id="${pub.id}">
             <div style="display: flex; justify-content: space-between; align-items: start;">
               <div>
                 <span class="publicacion-badge">
@@ -448,6 +562,7 @@
             </div>
             <p class="publicacion-descripcion">${pub.descripcion}</p>
             <span class="publicacion-categoria">${pub.categoria}</span>
+            ${archivosHTML}
             <div style="margin-top: 15px; color: var(--gris-neon); font-size: 14px;">
               ❤️ ${pub.likes_count || 0} likes • ${formatearFecha(pub.created_at)}
             </div>
@@ -522,13 +637,11 @@
     // CAMBIAR ENTRE PESTAÑAS
     // ============================================
     function cambiarTab(tab) {
-      // Actualizar estilos de pestañas
       document.getElementById('tabPublicaciones').style.borderColor = tab === 'publicaciones' ? 'var(--acento)' : 'transparent';
       document.getElementById('tabPublicaciones').style.color = tab === 'publicaciones' ? 'var(--blanco)' : 'var(--gris-neon)';
       document.getElementById('tabLikes').style.borderColor = tab === 'likes' ? 'var(--acento)' : 'transparent';
       document.getElementById('tabLikes').style.color = tab === 'likes' ? 'var(--blanco)' : 'var(--gris-neon)';
 
-      // Mostrar contenido correspondiente
       document.getElementById('contenidoPublicaciones').style.display = tab === 'publicaciones' ? 'block' : 'none';
       document.getElementById('contenidoLikes').style.display = tab === 'likes' ? 'block' : 'none';
 
@@ -551,7 +664,6 @@
       document.getElementById('modalEditar').style.display = 'none';
     }
 
-    // Contador de biografía
     document.addEventListener('DOMContentLoaded', () => {
       const editBio = document.getElementById('editBio');
       if (editBio) {
@@ -561,7 +673,6 @@
       }
     });
 
-    // Preview de nueva foto
     document.getElementById('editFoto').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -573,7 +684,6 @@
       }
     });
 
-    // Guardar cambios del perfil
     document.getElementById('editarPerfilForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -583,7 +693,6 @@
 
         let fotoUrl = perfilUsuario.foto_perfil;
 
-        // Subir nueva foto si se seleccionó
         if (foto) {
           const nombreArchivo = `${usuarioActual.id}_${Date.now()}.jpg`;
           const { error: uploadError } = await window.supabaseClient.storage
@@ -598,7 +707,6 @@
           }
         }
 
-        // Actualizar perfil
         const { error } = await window.supabaseClient
           .from('usuarios')
           .update({ biografia: bio, foto_perfil: fotoUrl })
@@ -642,20 +750,26 @@
     // ============================================
     // ABRIR MODAL PARA EDITAR PUBLICACIÓN
     // ============================================
-    function abrirModalEditarPub(pubId) {
+    async function abrirModalEditarPub(pubId) {
       try {
-        const card = document.querySelector(`[data-pub-id="${pubId}"]`);
-        if (!card) {
-          throw new Error('Publicación no encontrada');
-        }
-        
-        const pubData = JSON.parse(card.getAttribute('data-pub-data'));
+        const { data: pub, error } = await window.supabaseClient
+          .from('publicaciones')
+          .select('*')
+          .eq('id', pubId)
+          .single();
+
+        if (error) throw error;
+
+        publicacionActualArchivos = pub.archivos || [];
+        archivosAEliminar = [];
         
         document.getElementById('editPubId').value = pubId;
-        document.getElementById('editTitulo').value = pubData.titulo;
-        document.getElementById('editTipo').value = pubData.tipo;
-        document.getElementById('editDescripcion').value = pubData.descripcion;
-        document.getElementById('editCategoria').value = pubData.categoria;
+        document.getElementById('editTitulo').value = pub.titulo;
+        document.getElementById('editTipo').value = pub.tipo;
+        document.getElementById('editDescripcion').value = pub.descripcion;
+        document.getElementById('editCategoria').value = pub.categoria;
+        
+        mostrarArchivosActuales();
         
         document.getElementById('modalEditarPublicacion').style.display = 'block';
       } catch (error) {
@@ -665,10 +779,89 @@
     }
 
     // ============================================
+    // MOSTRAR ARCHIVOS ACTUALES EN EL MODAL
+    // ============================================
+    function mostrarArchivosActuales() {
+      const container = document.getElementById('archivosActualesContainer');
+      const lista = document.getElementById('archivosActualesList');
+      
+      if (!publicacionActualArchivos || publicacionActualArchivos.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      
+      lista.innerHTML = publicacionActualArchivos.map((archivo, index) => {
+        const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
+        const estaEliminado = archivosAEliminar.includes(index);
+        
+        return `
+          <div class="archivo-preview" style="${estaEliminado ? 'opacity: 0.5; text-decoration: line-through;' : ''}">
+            ${esImagen ? `<img src="${archivo.url}" alt="${archivo.nombre}">` : '<div style="width: 60px; height: 60px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>'}
+            <div class="archivo-info">
+              <div class="archivo-nombre">${archivo.nombre}</div>
+              <div class="archivo-tipo">${esImagen ? '🖼️ Imagen' : '📎 Documento'}</div>
+            </div>
+            <button 
+              type="button"
+              class="btn-eliminar-archivo" 
+              onclick="toggleEliminarArchivo(${index})"
+              ${estaEliminado ? 'style="background: var(--acento);"' : ''}
+            >
+              ${estaEliminado ? 'Restaurar' : 'Eliminar'}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // MARCAR/DESMARCAR ARCHIVO PARA ELIMINAR
+    // ============================================
+    function toggleEliminarArchivo(index) {
+      const indiceExistente = archivosAEliminar.indexOf(index);
+      
+      if (indiceExistente > -1) {
+        archivosAEliminar.splice(indiceExistente, 1);
+      } else {
+        archivosAEliminar.push(index);
+      }
+      
+      mostrarArchivosActuales();
+    }
+
+    // ============================================
+    // PREVIEW DE NUEVOS ARCHIVOS
+    // ============================================
+    document.getElementById('editNuevosArchivos').addEventListener('change', (e) => {
+      const archivos = Array.from(e.target.files);
+      const preview = document.getElementById('nuevosArchivosPreview');
+      
+      if (archivos.length === 0) {
+        preview.innerHTML = '';
+        return;
+      }
+
+      preview.innerHTML = `
+        <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
+          <strong style="color: var(--acento);">Nuevos archivos a agregar:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
+            ${archivos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    });
+
+    // ============================================
     // CERRAR MODAL DE EDITAR PUBLICACIÓN
     // ============================================
     function cerrarModalEditarPublicacion() {
       document.getElementById('modalEditarPublicacion').style.display = 'none';
+      document.getElementById('editNuevosArchivos').value = '';
+      document.getElementById('nuevosArchivosPreview').innerHTML = '';
+      archivosAEliminar = [];
+      publicacionActualArchivos = [];
     }
 
     // ============================================
@@ -685,6 +878,7 @@
           const tipo = document.getElementById('editTipo').value;
           const descripcion = document.getElementById('editDescripcion').value.trim();
           const categoria = document.getElementById('editCategoria').value;
+          const nuevosArchivosInput = document.getElementById('editNuevosArchivos').files;
 
           if (!titulo || !tipo || !descripcion || !categoria) {
             mostrarNotificacion('Completa todos los campos', 'error');
@@ -692,6 +886,36 @@
           }
 
           try {
+            mostrarNotificacion('Guardando cambios...');
+
+            // Filtrar archivos que NO están marcados para eliminar
+            let archivosFinales = publicacionActualArchivos.filter((_, index) => 
+              !archivosAEliminar.includes(index)
+            );
+
+            // Subir nuevos archivos si hay
+            if (nuevosArchivosInput.length > 0) {
+              for (const archivo of nuevosArchivosInput) {
+                const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
+                const { data, error } = await window.supabaseClient.storage
+                  .from('arnexu-files')
+                  .upload(`publicaciones/${nombreArchivo}`, archivo);
+
+                if (!error) {
+                  const { data: urlData } = window.supabaseClient.storage
+                    .from('arnexu-files')
+                    .getPublicUrl(`publicaciones/${nombreArchivo}`);
+                  
+                  archivosFinales.push({
+                    url: urlData.publicUrl,
+                    nombre: archivo.name,
+                    tipo: archivo.type
+                  });
+                }
+              }
+            }
+
+            // Actualizar publicación en la base de datos
             const { error } = await window.supabaseClient
               .from('publicaciones')
               .update({
@@ -699,13 +923,14 @@
                 tipo: tipo,
                 descripcion: descripcion,
                 categoria: categoria,
+                archivos: archivosFinales,
                 updated_at: new Date().toISOString()
               })
               .eq('id', pubId);
 
             if (error) throw error;
 
-            mostrarNotificacion('Publicación actualizada');
+            mostrarNotificacion('✅ Publicación actualizada exitosamente');
             cerrarModalEditarPublicacion();
             await cargarPublicaciones(usuarioActual.id);
 
