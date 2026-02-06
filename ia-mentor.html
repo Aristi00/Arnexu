@@ -356,13 +356,19 @@
     let procesando = false;
     let modoActual = 'base';
 
-    // ⚠️ CONFIGURA TU API KEY DE GROQ AQUÍ
-    // Opción 1: Directamente en el código (SOLO PARA DESARROLLO LOCAL)
-    // const GROQ_API_KEY = 'tu_api_key_aqui';
+    // ⚠️ CONFIGURACIÓN DE API KEY
+    // La API key se carga desde js/env.js (NO incluido en Git)
+    // Para configurar: copia js/env.example.js a js/env.js y agrega tu key
+    const GROQ_API_KEY = window.ENV?.GROQ_API_KEY || null;
     
-    // Opción 2: Desde variable de entorno o archivo de configuración (RECOMENDADO)
-    // Crea un archivo js/env.js con: window.ENV = { GROQ_API_KEY: 'tu_key' };
-    const GROQ_API_KEY = window.ENV?.GROQ_API_KEY || '';
+    // Verificar que la API key esté configurada
+    if (!GROQ_API_KEY) {
+      console.error('❌ API key de Groq no configurada');
+      console.log('📝 Para configurar:');
+      console.log('1. Copia js/env.example.js a js/env.js');
+      console.log('2. Edita js/env.js y agrega tu API key');
+      console.log('3. Obtén tu key en: https://console.groq.com/keys');
+    }
 
     // Sistema de prompts especializados
     const PROMPTS_SISTEMA = {
