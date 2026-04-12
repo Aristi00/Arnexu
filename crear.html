@@ -187,25 +187,96 @@
     });
 
     // ============================================
-    // PREVIEW DE ARCHIVOS
+    // PREVIEW DE ARCHIVOS CON VALIDACIÓN DE VIDEO
     // ============================================
-    document.getElementById('archivos').addEventListener('change', (e) => {
+    const MAX_DURACION_VIDEO = 120; // 2 minutos en segundos
+    let archivosValidos = []; // Archivos que pasaron validación
+
+    function validarDuracionVideo(archivo) {
+      return new Promise((resolve) => {
+        // Si no es video, pasa directo
+        if (!archivo.type.startsWith('video/')) {
+          resolve({ valido: true, archivo });
+          return;
+        }
+
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        const url = URL.createObjectURL(archivo);
+        video.src = url;
+
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(url);
+          if (video.duration > MAX_DURACION_VIDEO) {
+            const minutos = Math.floor(video.duration / 60);
+            const segundos = Math.round(video.duration % 60);
+            resolve({
+              valido: false,
+              archivo,
+              duracion: `${minutos}:${String(segundos).padStart(2, '0')}`
+            });
+          } else {
+            resolve({ valido: true, archivo });
+          }
+        };
+
+        video.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve({ valido: true, archivo }); // Si no puede leer, deja pasar y Supabase lo maneja
+        };
+      });
+    }
+
+    document.getElementById('archivos').addEventListener('change', async (e) => {
       const archivos = Array.from(e.target.files);
       const preview = document.getElementById('archivosPreview');
-      
+      archivosValidos = [];
+
       if (archivos.length === 0) {
         preview.innerHTML = '';
         return;
       }
 
-      preview.innerHTML = `
-        <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
-          <strong style="color: var(--acento);">Archivos seleccionados:</strong>
-          <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
-            ${archivos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
-          </ul>
-        </div>
-      `;
+      preview.innerHTML = `<p style="color: var(--gris-neon); font-size: 13px;">⏳ Validando archivos...</p>`;
+
+      const resultados = await Promise.all(archivos.map(validarDuracionVideo));
+
+      const validos = resultados.filter(r => r.valido);
+      const invalidos = resultados.filter(r => !r.valido);
+
+      // Guardar solo los válidos para subir
+      archivosValidos = validos.map(r => r.archivo);
+
+      // Mostrar errores si hay videos muy largos
+      if (invalidos.length > 0) {
+        invalidos.forEach(r => {
+          mostrarNotificacion(
+            `❌ "${r.archivo.name}" dura ${r.duracion} — máximo permitido: 2:00 minutos`,
+            'error'
+          );
+        });
+      }
+
+      // Mostrar preview de archivos válidos
+      if (archivosValidos.length > 0) {
+        preview.innerHTML = `
+          <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
+            <strong style="color: var(--acento);">Archivos seleccionados (${archivosValidos.length}):</strong>
+            <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
+              ${archivosValidos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
+            </ul>
+            ${invalidos.length > 0 ? `<p style="color: var(--error); font-size: 12px; margin-top: 10px;">⚠️ ${invalidos.length} video(s) eliminado(s) por superar los 2 minutos.</p>` : ''}
+          </div>
+        `;
+      } else if (invalidos.length > 0) {
+        preview.innerHTML = `
+          <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
+            <p style="color: var(--error); font-size: 13px;">❌ Todos los videos superan el límite de 2 minutos. Por favor selecciona otros archivos.</p>
+          </div>
+        `;
+      } else {
+        preview.innerHTML = '';
+      }
     });
 
     // ============================================
@@ -218,8 +289,6 @@
       const tipo = document.getElementById('tipo').value;
       const descripcion = document.getElementById('descripcion').value.trim();
       const categoria = document.getElementById('categoria').value;
-      const archivosInput = document.getElementById('archivos').files;
-
       // Validaciones
       if (!titulo || !tipo || !descripcion || !categoria) {
         mostrarNotificacion('Por favor completa todos los campos obligatorios', 'error');
@@ -227,10 +296,10 @@
       }
 
       try {
-        // Subir archivos (si hay)
+        // Subir solo archivos que pasaron validación de duración
         const archivosUrls = [];
-        if (archivosInput.length > 0) {
-          for (const archivo of archivosInput) {
+        if (archivosValidos.length > 0) {
+          for (const archivo of archivosValidos) {
             const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
             const { data, error } = await window.supabaseClient.storage
               .from('arnexu-files')
