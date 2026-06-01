@@ -106,6 +106,18 @@
       await protegerPagina();
       usuarioActual = await getCurrentUser();
       if (usuarioActual) {
+        // Verificar perfil completo (usuarios Google pueden no tener datos)
+        const { data: perfil } = await window.supabaseClient
+          .from('usuarios')
+          .select('nombre_usuario, rol, telefono')
+          .eq('id', usuarioActual.id)
+          .single();
+
+        if (!perfil || !perfil.nombre_usuario || !perfil.rol || !perfil.telefono) {
+          window.location.href = 'completar-perfil.html';
+          return;
+        }
+
         const hash = window.location.hash;
         if (hash.startsWith('#pub-')) {
           const pubId = hash.substring(5);

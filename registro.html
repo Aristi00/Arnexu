@@ -153,6 +153,42 @@
         </button>
       </form>
 
+      <!-- Separador -->
+      <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
+        <div style="flex: 1; height: 1px; background: var(--gris-medio);"></div>
+        <span style="color: var(--gris-neon); font-size: 13px;">o regístrate con</span>
+        <div style="flex: 1; height: 1px; background: var(--gris-medio);"></div>
+      </div>
+
+      <!-- Botón Google -->
+      <button id="btnGoogleRegistro" onclick="registrarseConGoogle()" style="
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #ffffff;
+        color: #3c3c3c;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: 'Montserrat', sans-serif;
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+      "
+      onmouseover="this.style.background='#f0f0f0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';"
+      onmouseout="this.style.background='#ffffff'; this.style.boxShadow='none';">
+        <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.86l6.07-6.07C34.46 3.09 29.5 1 24 1 14.82 1 7.07 6.48 3.72 14.28l7.07 5.5C12.52 13.77 17.82 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.14-3.14-.4-4.63H24v9.27h12.67c-.55 2.96-2.2 5.47-4.68 7.15l7.19 5.58C43.93 37.78 46.5 31.57 46.5 24.5z"/>
+          <path fill="#FBBC05" d="M10.79 28.22A14.5 14.5 0 0 1 9.5 24c0-1.48.26-2.91.72-4.24l-7.07-5.5A23.94 23.94 0 0 0 0 24c0 3.87.92 7.53 2.55 10.77l8.24-6.55z"/>
+          <path fill="#34A853" d="M24 47c5.5 0 10.12-1.82 13.5-4.95l-7.19-5.58c-1.89 1.27-4.3 2.03-6.31 2.03-6.18 0-11.42-4.17-13.25-9.78l-8.24 6.55C7.07 41.52 14.82 47 24 47z"/>
+        </svg>
+        Regístrate con Google
+      </button>
+
       <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--gris-medio);">
         <p style="color: var(--gris-neon); font-size: 14px;">
           ¿Ya tienes cuenta? 
@@ -166,6 +202,37 @@
 
   <script src="js/config.js"></script>
   <script>
+    // ============================================
+    // REGISTRO CON GOOGLE
+    // ============================================
+    async function registrarseConGoogle() {
+      const btn = document.getElementById('btnGoogleRegistro');
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = `<span style="display:inline-block;width:18px;height:18px;border:2px solid #3c3c3c;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;"></span> Conectando...`;
+
+      try {
+        const { error } = await window.supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + '/completar-perfil.html'
+          }
+        });
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error con Google:', error);
+        mostrarNotificacion('Error al conectar con Google. Intenta de nuevo.', 'error');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.86l6.07-6.07C34.46 3.09 29.5 1 24 1 14.82 1 7.07 6.48 3.72 14.28l7.07 5.5C12.52 13.77 17.82 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.14-3.14-.4-4.63H24v9.27h12.67c-.55 2.96-2.2 5.47-4.68 7.15l7.19 5.58C43.93 37.78 46.5 31.57 46.5 24.5z"/><path fill="#FBBC05" d="M10.79 28.22A14.5 14.5 0 0 1 9.5 24c0-1.48.26-2.91.72-4.24l-7.07-5.5A23.94 23.94 0 0 0 0 24c0 3.87.92 7.53 2.55 10.77l8.24-6.55z"/><path fill="#34A853" d="M24 47c5.5 0 10.12-1.82 13.5-4.95l-7.19-5.58c-1.89 1.27-4.3 2.03-6.31 2.03-6.18 0-11.42-4.17-13.25-9.78l-8.24 6.55C7.07 41.52 14.82 47 24 47z"/></svg> Regístrate con Google`;
+      }
+    }
+
+    // Spinner CSS
+    const styleSpinner = document.createElement('style');
+    styleSpinner.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+    document.head.appendChild(styleSpinner);
+
     // ============================================
     // PREVIEW DE FOTO DE PERFIL
     // ============================================

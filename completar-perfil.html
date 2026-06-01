@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completa tu perfil | Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.1"></script>
+  <script src="js/app.js?v=1.0.1"></script>
+</head>
+<body>
+  <div class="container" style="max-width: 500px; margin-top: 40px; margin-bottom: 60px;">
+
+    <!-- Header -->
+    <div class="text-center mb-20" style="margin-bottom: 30px;">
+      <img src="arnexu-64x (1).png" alt="Logo Arnexu" style="height: 48px; margin-bottom: 12px;">
+      <h1 style="font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #5f5f5f); background-clip: text; -webkit-text-fill-color: transparent;">
+        Completa tu perfil
+      </h1>
+      <p style="color: var(--gris-neon); font-size: 14px; margin-top: 6px;">
+        Falta poco para empezar a conectar en Arnexu
+      </p>
+    </div>
+
+    <!-- Card -->
+    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+
+      <!-- Foto de perfil (preview desde Google + opción de cambiar) -->
+      <div class="form-group" style="text-align: center; margin-bottom: 24px;">
+        <div style="position: relative; display: inline-block;">
+          <img
+            id="previewFoto"
+            src="https://via.placeholder.com/100"
+            alt="Foto de perfil"
+            style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gris-neon);"
+          >
+          <label for="fotoPerfil" style="
+            position: absolute;
+            bottom: 0; right: 0;
+            background: var(--acento);
+            color: #000;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            border: 2px solid var(--negro);
+          " title="Cambiar foto">✏️</label>
+        </div>
+        <input type="file" id="fotoPerfil" accept="image/*" style="display:none;">
+        <p style="color: var(--gris-neon); font-size: 12px; margin-top: 8px;">Foto tomada de Google · Puedes cambiarla</p>
+      </div>
+
+      <!-- Nombre de usuario -->
+      <div class="form-group">
+        <label class="form-label">Nombre de Usuario *</label>
+        <input
+          type="text"
+          id="nombreUsuario"
+          class="form-input"
+          placeholder="juanperez"
+          required
+          autocomplete="off"
+        >
+        <small style="color: var(--gris-neon); font-size: 12px;">Sin espacios ni caracteres especiales</small>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="form-group">
+        <label class="form-label">Teléfono *</label>
+        <input
+          type="tel"
+          id="telefono"
+          class="form-input"
+          placeholder="+57 300 123 4567"
+          required
+        >
+      </div>
+
+      <!-- Rol -->
+      <div class="form-group">
+        <label class="form-label">¿Qué te describe mejor? *</label>
+        <select id="rol" class="form-select" required>
+          <option value="">Selecciona una opción</option>
+          <option value="emprendedor">🚀 Emprendedor</option>
+          <option value="inversor">💼 Inversor</option>
+          <option value="ambos">⚡ Ambos</option>
+        </select>
+      </div>
+
+      <!-- Botón guardar -->
+      <button id="btnGuardar" onclick="guardarPerfil()" class="btn btn-primary btn-full" style="margin-top: 8px;">
+        GUARDAR Y ENTRAR A ARNEXU
+      </button>
+
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // ESTADO GLOBAL
+    // ============================================
+    let usuarioGoogle = null;
+    let fotoArchivoNuevo = null;
+
+    // ============================================
+    // INICIALIZAR: verificar sesión y pre-llenar
+    // ============================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      const session = await checkSession();
+      if (!session) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      usuarioGoogle = session.user;
+
+      // Verificar si ya tiene perfil completo — si sí, redirigir
+      const { data: perfilExistente } = await window.supabaseClient
+        .from('usuarios')
+        .select('id, nombre_usuario, rol')
+        .eq('id', usuarioGoogle.id)
+        .single();
+
+      if (perfilExistente && perfilExistente.nombre_usuario && perfilExistente.rol) {
+        window.location.href = 'inicio.html';
+        return;
+      }
+
+      // Pre-llenar foto desde Google
+      const fotoGoogle = usuarioGoogle.user_metadata?.avatar_url || usuarioGoogle.user_metadata?.picture;
+      if (fotoGoogle) {
+        document.getElementById('previewFoto').src = fotoGoogle;
+      }
+
+      // Pre-llenar nombre completo si viene de Google
+      const nombreGoogle = usuarioGoogle.user_metadata?.full_name || usuarioGoogle.user_metadata?.name || '';
+      // (lo usamos internamente al guardar, no hay campo visible para el nombre)
+
+      // Preview si cambian la foto
+      document.getElementById('fotoPerfil').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          fotoArchivoNuevo = file;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            document.getElementById('previewFoto').src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // ============================================
+    // GUARDAR PERFIL
+    // ============================================
+    async function guardarPerfil() {
+      const nombreUsuario = document.getElementById('nombreUsuario').value.trim().toLowerCase();
+      const telefono = document.getElementById('telefono').value.trim();
+      const rol = document.getElementById('rol').value;
+
+      // Validaciones
+      if (!nombreUsuario || !telefono || !rol) {
+        mostrarNotificacion('Completa todos los campos obligatorios', 'error');
+        return;
+      }
+
+      if (!/^[a-z0-9_]+$/.test(nombreUsuario)) {
+        mostrarNotificacion('El nombre de usuario solo puede tener letras, números y guiones bajos', 'error');
+        return;
+      }
+
+      // Deshabilitar botón
+      const btn = document.getElementById('btnGuardar');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        // 1. Resolver foto final
+        let fotoUrl = usuarioGoogle.user_metadata?.avatar_url || usuarioGoogle.user_metadata?.picture || null;
+
+        // Si eligió una foto nueva, subirla a Supabase Storage
+        if (fotoArchivoNuevo) {
+          const nombreArchivo = `${usuarioGoogle.id}_${Date.now()}.jpg`;
+          const { error: uploadError } = await window.supabaseClient.storage
+            .from('arnexu-files')
+            .upload(`avatars/${nombreArchivo}`, fotoArchivoNuevo);
+
+          if (!uploadError) {
+            const { data: urlData } = window.supabaseClient.storage
+              .from('arnexu-files')
+              .getPublicUrl(`avatars/${nombreArchivo}`);
+            fotoUrl = urlData.publicUrl;
+          }
+        }
+
+        // 2. Nombre completo desde Google metadata
+        const nombreCompleto = usuarioGoogle.user_metadata?.full_name
+          || usuarioGoogle.user_metadata?.name
+          || nombreUsuario;
+
+        // 3. Verificar si el registro ya existe (puede que se haya creado parcialmente)
+        const { data: existente } = await window.supabaseClient
+          .from('usuarios')
+          .select('id')
+          .eq('id', usuarioGoogle.id)
+          .single();
+
+        let error;
+
+        if (existente) {
+          // Actualizar
+          ({ error } = await window.supabaseClient
+            .from('usuarios')
+            .update({
+              nombre_usuario: nombreUsuario,
+              telefono: telefono,
+              rol: rol,
+              foto_perfil: fotoUrl,
+              nombre_completo: nombreCompleto,
+            })
+            .eq('id', usuarioGoogle.id));
+        } else {
+          // Insertar
+          ({ error } = await window.supabaseClient
+            .from('usuarios')
+            .insert([{
+              id: usuarioGoogle.id,
+              email: usuarioGoogle.email,
+              nombre_completo: nombreCompleto,
+              nombre_usuario: nombreUsuario,
+              telefono: telefono,
+              foto_perfil: fotoUrl,
+              rol: rol,
+              biografia: ''
+            }]));
+        }
+
+        if (error) throw error;
+
+        mostrarNotificacion('¡Perfil creado! Bienvenido a Arnexu 🎉');
+        setTimeout(() => {
+          window.location.href = 'inicio.html';
+        }, 1200);
+
+      } catch (error) {
+        console.error('Error al guardar perfil:', error);
+        if (error.message?.includes('duplicate') || error.code === '23505') {
+          mostrarNotificacion('Ese nombre de usuario ya está en uso, elige otro', 'error');
+        } else {
+          mostrarNotificacion('Error al guardar. Intenta de nuevo.', 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = 'GUARDAR Y ENTRAR A ARNEXU';
+      }
+    }
+  </script>
+</body>
+</html>
