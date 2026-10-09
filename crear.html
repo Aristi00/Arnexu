@@ -7,8 +7,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.1"></script>
-<script src="js/app.js?v=1.0.1"></script>
+<script src="js/config.js?v=1.0.2"></script>
+<script src="js/app.js?v=1.0.2"></script>
+  <script src="js/moderacion.js?v=1.0.0"></script>
 <script src="js/badge-notifications.js?v=1.0.0"></script>
 </head>
 <body>
@@ -96,6 +97,7 @@
           <label class="form-label">Describe tu idea *</label>
           <textarea 
             id="descripcion" 
+            maxlength="5000"
             class="form-textarea" 
             placeholder="Explica tu proyecto: ¿Qué problema resuelve? ¿Cómo funciona? ¿Qué lo hace único?"
             required
@@ -135,7 +137,7 @@
             type="file" 
             id="archivos" 
             class="form-file" 
-            accept="image/*,video/*,.pdf,.doc,.docx"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,.pdf,.docx,.xlsx,.pptx"
             multiple
           >
           <label for="archivos" class="form-file-label" style="width: 100%;">
@@ -239,7 +241,23 @@
 
       preview.innerHTML = `<p style="color: var(--gris-neon); font-size: 13px;">⏳ Validando archivos...</p>`;
 
-      const resultados = await Promise.all(archivos.map(validarDuracionVideo));
+      // Tipo, peso y cantidad máxima
+      archivos.forEach(f => {
+        const v = validarArchivo(f);
+        if (!v.ok) mostrarNotificacion(v.error, 'error');
+      });
+      let aceptados = archivos.filter(f => validarArchivo(f).ok);
+      if (aceptados.length > MAX_ADJUNTOS_PUBLICACION) {
+        mostrarNotificacion(`Máximo ${MAX_ADJUNTOS_PUBLICACION} archivos por publicación`, 'error');
+        aceptados = aceptados.slice(0, MAX_ADJUNTOS_PUBLICACION);
+      }
+      if (aceptados.length === 0) {
+        preview.innerHTML = '';
+        e.target.value = '';
+        return;
+      }
+
+      const resultados = await Promise.all(aceptados.map(validarDuracionVideo));
 
       const validos = resultados.filter(r => r.valido);
       const invalidos = resultados.filter(r => !r.valido);
@@ -263,7 +281,7 @@
           <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
             <strong style="color: var(--acento);">Archivos seleccionados (${archivosValidos.length}):</strong>
             <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
-              ${archivosValidos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
+              ${archivosValidos.map(f => `<li>${esc(f.name)} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
             </ul>
             ${invalidos.length > 0 ? `<p style="color: var(--error); font-size: 12px; margin-top: 10px;">⚠️ ${invalidos.length} video(s) eliminado(s) por superar los 2 minutos.</p>` : ''}
           </div>
@@ -296,27 +314,8 @@
       }
 
       try {
-        // Subir solo archivos que pasaron validación de duración
-        const archivosUrls = [];
-        if (archivosValidos.length > 0) {
-          for (const archivo of archivosValidos) {
-            const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
-            const { data, error } = await window.supabaseClient.storage
-              .from('arnexu-files')
-              .upload(`publicaciones/${nombreArchivo}`, archivo);
-
-            if (!error) {
-              const { data: urlData } = window.supabaseClient.storage
-                .from('arnexu-files')
-                .getPublicUrl(`publicaciones/${nombreArchivo}`);
-              archivosUrls.push({
-                url: urlData.publicUrl,
-                nombre: archivo.name,
-                tipo: archivo.type
-              });
-            }
-          }
-        }
+        // Subir solo archivos válidos (tipo, peso y duración), a tu carpeta personal
+        const archivosUrls = await subirAdjuntosPublicacion(archivosValidos, usuarioActual.id);
 
         // Crear publicación en la base de datos
         const { data, error } = await window.supabaseClient
@@ -327,8 +326,7 @@
             tipo: tipo,
             descripcion: descripcion,
             categoria: categoria,
-            archivos: archivosUrls,
-            likes_count: 0
+            archivos: archivosUrls
           }])
           .select();
 
@@ -341,7 +339,7 @@
 
       } catch (error) {
         console.error('Error creando publicación:', error);
-        mostrarNotificacion('Error al crear la publicación. Intenta de nuevo.', 'error');
+        mostrarNotificacion(error.validacion ? error.message : 'Error al crear la publicación. Intenta de nuevo.', 'error');
       }
     });
   </script>

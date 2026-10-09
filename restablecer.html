@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva contraseña | Arnexu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.2"></script>
+  <script src="js/app.js?v=1.0.2"></script>
+</head>
+<body>
+  <div class="container" style="max-width: 450px; margin-top: 80px;">
+    <div class="text-center mb-20">
+      <h1 style="font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #000000); background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">
+        ARNEXU
+      </h1>
+    </div>
+
+    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+
+      <!-- Estado 1: verificando el enlace -->
+      <div id="estadoCargando" class="loading">Verificando tu enlace...</div>
+
+      <!-- Estado 2: formulario -->
+      <div id="estadoFormulario" style="display: none;">
+        <h2 style="margin-bottom: 10px; font-size: 24px;">Crea tu nueva contraseña</h2>
+        <p style="color: var(--gris-neon); font-size: 14px; margin-bottom: 25px;">Mínimo 8 caracteres, con letras y números.</p>
+
+        <form id="restablecerForm">
+          <div class="form-group">
+            <label class="form-label" for="nuevaPassword">Nueva contraseña</label>
+            <input type="password" id="nuevaPassword" class="form-input" placeholder="••••••••" autocomplete="new-password" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirmarPassword">Confirmar contraseña</label>
+            <input type="password" id="confirmarPassword" class="form-input" placeholder="Repite tu contraseña" autocomplete="new-password" required>
+          </div>
+          <button type="submit" id="btnGuardar" class="btn btn-primary btn-full">GUARDAR CONTRASEÑA</button>
+        </form>
+      </div>
+
+      <!-- Estado 3: enlace inválido o vencido -->
+      <div id="estadoInvalido" style="display: none; text-align: center;">
+        <h2 style="margin-bottom: 10px; font-size: 22px;">Este enlace ya no sirve</h2>
+        <p style="color: var(--gris-neon); font-size: 14px; margin-bottom: 25px;">
+          Los enlaces vencen pronto y solo se pueden usar una vez. Pide uno nuevo para continuar.
+        </p>
+        <a href="recuperar.html" class="btn btn-primary btn-full" style="display: block; text-decoration: none;">PEDIR UN ENLACE NUEVO</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let formularioMostrado = false;
+
+    function mostrar(estado) {
+      ['estadoCargando', 'estadoFormulario', 'estadoInvalido'].forEach(id => {
+        document.getElementById(id).style.display = (id === estado) ? 'block' : 'none';
+      });
+    }
+
+    // Supabase lee el enlace del correo y avisa con este evento
+    window.supabaseClient.auth.onAuthStateChange((evento) => {
+      if (evento === 'PASSWORD_RECOVERY') {
+        formularioMostrado = true;
+        mostrar('estadoFormulario');
+        document.getElementById('nuevaPassword').focus();
+      }
+    });
+
+    // Si el enlace viene con error (vencido, ya usado) o no llega el evento, lo avisamos
+    setTimeout(() => {
+      if (!formularioMostrado) mostrar('estadoInvalido');
+    }, 3000);
+
+    document.getElementById('restablecerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('nuevaPassword').value;
+      const confirmar = document.getElementById('confirmarPassword').value;
+      const btn = document.getElementById('btnGuardar');
+
+      const errorPassword = validarPassword(password);
+      if (errorPassword) {
+        mostrarNotificacion(errorPassword, 'error');
+        return;
+      }
+      if (password !== confirmar) {
+        mostrarNotificacion('Las contraseñas no coinciden', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'GUARDANDO...';
+
+      const { error } = await window.supabaseClient.auth.updateUser({ password });
+
+      if (error) {
+        console.error('Error cambiando contraseña:', error);
+        const mensaje = (error.code === 'same_password' || /different from the old/i.test(error.message || ''))
+          ? 'La nueva contraseña debe ser diferente a la anterior'
+          : (error.code === 'weak_password' ? 'Esa contraseña es muy débil. Prueba con otra.' : 'No se pudo cambiar la contraseña. Pide un enlace nuevo e inténtalo otra vez.');
+        mostrarNotificacion(mensaje, 'error');
+        btn.disabled = false;
+        btn.textContent = 'GUARDAR CONTRASEÑA';
+        return;
+      }
+
+      // Cerramos la sesión de recuperación y mandamos a iniciar sesión con la clave nueva
+      await window.supabaseClient.auth.signOut();
+      mostrarNotificacion('Contraseña actualizada. Ya puedes iniciar sesión.');
+      setTimeout(() => { window.location.href = 'index.html?msg=clave_actualizada'; }, 1500);
+    });
+  </script>
+</body>
+</html>

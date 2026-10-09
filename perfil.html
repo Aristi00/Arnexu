@@ -7,9 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.1"></script>
-  <script src="js/app.js?v=1.0.1"></script>
+  <script src="js/config.js?v=1.0.2"></script>
+  <script src="js/app.js?v=1.0.2"></script>
   <script src="js/badge-notifications.js?v=1.0.0"></script>
+  <script src="js/moderacion.js?v=1.0.0"></script>
   <style>
     .archivo-preview {
       background: var(--gris-medio);
@@ -182,7 +183,7 @@
           <div style="text-align: center; margin-bottom: 15px;">
             <img id="editPreviewFoto" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
           </div>
-          <input type="file" id="editFoto" class="form-file" accept="image/*">
+          <input type="file" id="editFoto" class="form-file" accept="image/jpeg,image/png,image/webp,image/gif">
           <label for="editFoto" class="form-file-label" style="width: 100%;">
             📷 Cambiar Foto
           </label>
@@ -246,6 +247,7 @@
           <label class="form-label">Descripción</label>
           <textarea 
             id="editDescripcion" 
+            maxlength="5000"
             class="form-textarea" 
             required
             style="min-height: 150px;"
@@ -285,7 +287,7 @@
             type="file" 
             id="editNuevosArchivos" 
             class="form-file" 
-            accept="image/*,video/*,.pdf,.doc,.docx"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,.pdf,.docx,.xlsx,.pptx"
             multiple
           >
           <label for="editNuevosArchivos" class="form-file-label" style="width: 100%;">
@@ -323,6 +325,10 @@
       
       const urlParams = new URLSearchParams(window.location.search);
       const perfilId = urlParams.get('id') || usuarioActual.id;
+      if (!esUUID(perfilId)) {
+        window.location.href = 'inicio.html';
+        return;
+      }
       
       esPerfilPropio = perfilId === usuarioActual.id;
       
@@ -337,7 +343,7 @@
       try {
         const { data, error } = await window.supabaseClient
           .from('usuarios')
-          .select('*')
+          .select('id, nombre_completo, nombre_usuario, foto_perfil, rol, biografia')
           .eq('id', userId)
           .single();
 
@@ -345,7 +351,7 @@
 
         perfilUsuario = data;
 
-        document.getElementById('perfilAvatar').src = data.foto_perfil || 'https://via.placeholder.com/120';
+        document.getElementById('perfilAvatar').src = urlImagenCruda(data.foto_perfil);
         document.getElementById('perfilNombre').textContent = data.nombre_completo;
         document.getElementById('perfilUsername').textContent = `@${data.nombre_usuario}`;
         document.getElementById('perfilBio').textContent = data.biografia || 'Sin biografía';
@@ -367,13 +373,39 @@
             <button class="btn btn-primary" onclick="iniciarChat('${userId}')">
               💬 Enviar Mensaje
             </button>
+            <button class="btn btn-secondary" onclick="reportarContenido('usuario', '${userId}')">
+              🚩 Reportar
+            </button>
+            <button class="btn btn-secondary" id="btnBloquear">
+              🚫 Bloquear
+            </button>
           `;
+          actualizarBotonBloqueo(userId);
         }
 
       } catch (error) {
         console.error('Error cargando perfil:', error);
         mostrarNotificacion('Error al cargar el perfil', 'error');
       }
+    }
+
+    // ============================================
+    // BLOQUEAR / DESBLOQUEAR (perfil ajeno)
+    // ============================================
+    async function actualizarBotonBloqueo(userId) {
+      const btn = document.getElementById('btnBloquear');
+      if (!btn) return;
+      const bloqueado = await estaBloqueado(userId);
+      btn.textContent = bloqueado ? '✅ Desbloquear' : '🚫 Bloquear';
+      btn.onclick = async () => {
+        const ok = bloqueado
+          ? await desbloquearUsuario(userId)
+          : await bloquearUsuario(userId, perfilUsuario ? perfilUsuario.nombre_completo : '');
+        if (ok) {
+          await actualizarBotonBloqueo(userId);
+          await cargarPublicaciones(userId);
+        }
+      };
     }
 
     // ============================================
@@ -490,18 +522,18 @@
             <div class="archivos-adjuntos">
               <div style="font-weight: 600; margin-bottom: 10px; color: var(--acento);">📎 Archivos Adjuntos (${pub.archivos.length})</div>
               ${pub.archivos.map(archivo => {
-                const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
-                const esVideo = archivo.tipo && archivo.tipo.startsWith('video/');
+                const esImagen = String(archivo.tipo || '').startsWith('image/');
+                const esVideo = String(archivo.tipo || '').startsWith('video/');
                 
                 if (esImagen) {
                   return `
                     <div class="archivo-card">
-                      <img src="${archivo.url}" alt="${archivo.nombre}" onclick="window.open('${archivo.url}', '_blank')" style="cursor: pointer;">
+                      <img src="${urlSegura(archivo.url)}" alt="${esc(archivo.nombre)}" data-abrir-url="${urlSegura(archivo.url)}" style="cursor: pointer;">
                       <div style="flex: 1; overflow: hidden;">
-                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">🖼️ Imagen</div>
                       </div>
-                      <a href="${archivo.url}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
                     </div>
                   `;
                 } else if (esVideo) {
@@ -509,10 +541,10 @@
                     <div class="archivo-card">
                       <div style="width: 50px; height: 50px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🎥</div>
                       <div style="flex: 1; overflow: hidden;">
-                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">🎬 Video</div>
                       </div>
-                      <a href="${archivo.url}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
                     </div>
                   `;
                 } else {
@@ -520,10 +552,10 @@
                     <div class="archivo-card">
                       <div style="width: 50px; height: 50px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">📄</div>
                       <div style="flex: 1; overflow: hidden;">
-                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${archivo.nombre}</div>
+                        <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">📎 Documento</div>
                       </div>
-                      <a href="${archivo.url}" download style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Descargar</a>
+                      <a href="${urlSegura(archivo.url)}" download style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Descargar</a>
                     </div>
                   `;
                 }
@@ -538,7 +570,7 @@
                 <span class="publicacion-badge">
                   ${pub.tipo === 'idea' ? '💡' : pub.tipo === 'proyecto' ? '🚀' : '📌'}
                 </span>
-                <h2 class="publicacion-titulo">${pub.titulo}</h2>
+                <h2 class="publicacion-titulo">${esc(pub.titulo)}</h2>
               </div>
               ${esPerfilPropio ? `
                 <div style="display: flex; gap: 10px;">
@@ -560,8 +592,8 @@
                 </div>
               ` : ''}
             </div>
-            <p class="publicacion-descripcion">${pub.descripcion}</p>
-            <span class="publicacion-categoria">${pub.categoria}</span>
+            <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
+            <span class="publicacion-categoria">${esc(pub.categoria)}</span>
             ${archivosHTML}
             <div style="margin-top: 15px; color: var(--gris-neon); font-size: 14px;">
               ❤️ ${pub.likes_count || 0} likes • ${formatearFecha(pub.created_at)}
@@ -611,16 +643,16 @@
           return;
         }
 
-        contenido.innerHTML = data.map(like => {
+        contenido.innerHTML = data.filter(like => like.publicacion).map(like => {
           const pub = like.publicacion;
           return `
             <div class="publicacion-card">
               <span class="publicacion-badge">
                 ${pub.tipo === 'idea' ? '💡' : pub.tipo === 'proyecto' ? '🚀' : '📌'}
               </span>
-              <h2 class="publicacion-titulo">${pub.titulo}</h2>
-              <p class="publicacion-descripcion">${pub.descripcion}</p>
-              <span class="publicacion-categoria">${pub.categoria}</span>
+              <h2 class="publicacion-titulo">${esc(pub.titulo)}</h2>
+              <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
+              <span class="publicacion-categoria">${esc(pub.categoria)}</span>
               <div style="margin-top: 15px; color: var(--gris-neon); font-size: 14px;">
                 ❤️ ${pub.likes_count || 0} likes • Like dado ${formatearFecha(like.created_at)}
               </div>
@@ -655,7 +687,7 @@
     // ============================================
     function abrirModal() {
       document.getElementById('modalEditar').style.display = 'block';
-      document.getElementById('editPreviewFoto').src = perfilUsuario.foto_perfil || 'https://via.placeholder.com/100';
+      document.getElementById('editPreviewFoto').src = urlImagenCruda(perfilUsuario.foto_perfil);
       document.getElementById('editBio').value = perfilUsuario.biografia || '';
       document.getElementById('bioCount').textContent = (perfilUsuario.biografia || '').length;
     }
@@ -676,6 +708,12 @@
     document.getElementById('editFoto').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
+        const v = validarArchivo(file, ['imagen'], 2);
+        if (!v.ok) {
+          mostrarNotificacion(v.error, 'error');
+          e.target.value = '';
+          return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
           document.getElementById('editPreviewFoto').src = e.target.result;
@@ -688,23 +726,14 @@
       e.preventDefault();
 
       try {
-        const bio = document.getElementById('editBio').value;
+        const bio = document.getElementById('editBio').value.trim().slice(0, 200);
         const foto = document.getElementById('editFoto').files[0];
 
         let fotoUrl = perfilUsuario.foto_perfil;
 
         if (foto) {
-          const nombreArchivo = `${usuarioActual.id}_${Date.now()}.jpg`;
-          const { error: uploadError } = await window.supabaseClient.storage
-            .from('arnexu-files')
-            .upload(`avatars/${nombreArchivo}`, foto, { upsert: true });
-
-          if (!uploadError) {
-            const { data: urlData } = window.supabaseClient.storage
-              .from('arnexu-files')
-              .getPublicUrl(`avatars/${nombreArchivo}`);
-            fotoUrl = urlData.publicUrl;
-          }
+          const subida = await subirArchivoPublico(foto, 'avatars', usuarioActual.id, ['imagen'], 2);
+          fotoUrl = subida.url;
         }
 
         const { error } = await window.supabaseClient
@@ -720,7 +749,7 @@
 
       } catch (error) {
         console.error('Error actualizando perfil:', error);
-        mostrarNotificacion('Error al actualizar el perfil', 'error');
+        mostrarNotificacion(error.validacion ? error.message : 'Error al actualizar el perfil', 'error');
       }
     });
 
@@ -793,14 +822,14 @@
       container.style.display = 'block';
       
       lista.innerHTML = publicacionActualArchivos.map((archivo, index) => {
-        const esImagen = archivo.tipo && archivo.tipo.startsWith('image/');
+        const esImagen = String(archivo.tipo || '').startsWith('image/');
         const estaEliminado = archivosAEliminar.includes(index);
         
         return `
           <div class="archivo-preview" style="${estaEliminado ? 'opacity: 0.5; text-decoration: line-through;' : ''}">
-            ${esImagen ? `<img src="${archivo.url}" alt="${archivo.nombre}">` : '<div style="width: 60px; height: 60px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>'}
+            ${esImagen ? `<img src="${urlSegura(archivo.url)}" alt="${esc(archivo.nombre)}">` : '<div style="width: 60px; height: 60px; background: var(--gris-oscuro); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>'}
             <div class="archivo-info">
-              <div class="archivo-nombre">${archivo.nombre}</div>
+              <div class="archivo-nombre">${esc(archivo.nombre)}</div>
               <div class="archivo-tipo">${esImagen ? '🖼️ Imagen' : '📎 Documento'}</div>
             </div>
             <button 
@@ -837,6 +866,14 @@
     document.getElementById('editNuevosArchivos').addEventListener('change', (e) => {
       const archivos = Array.from(e.target.files);
       const preview = document.getElementById('nuevosArchivosPreview');
+
+      const invalido = archivos.map(f => validarArchivo(f)).find(v => !v.ok);
+      if (invalido) {
+        mostrarNotificacion(invalido.error, 'error');
+        e.target.value = '';
+        preview.innerHTML = '';
+        return;
+      }
       
       if (archivos.length === 0) {
         preview.innerHTML = '';
@@ -847,7 +884,7 @@
         <div style="background: var(--gris-medio); padding: 15px; border-radius: 8px;">
           <strong style="color: var(--acento);">Nuevos archivos a agregar:</strong>
           <ul style="margin-top: 10px; padding-left: 20px; color: var(--gris-neon);">
-            ${archivos.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
+            ${archivos.map(f => `<li>${esc(f.name)} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
           </ul>
         </div>
       `;
@@ -893,26 +930,10 @@
               !archivosAEliminar.includes(index)
             );
 
-            // Subir nuevos archivos si hay
+            // Subir nuevos archivos (se validan todos antes de subir)
             if (nuevosArchivosInput.length > 0) {
-              for (const archivo of nuevosArchivosInput) {
-                const nombreArchivo = `${usuarioActual.id}_${Date.now()}_${archivo.name}`;
-                const { data, error } = await window.supabaseClient.storage
-                  .from('arnexu-files')
-                  .upload(`publicaciones/${nombreArchivo}`, archivo);
-
-                if (!error) {
-                  const { data: urlData } = window.supabaseClient.storage
-                    .from('arnexu-files')
-                    .getPublicUrl(`publicaciones/${nombreArchivo}`);
-                  
-                  archivosFinales.push({
-                    url: urlData.publicUrl,
-                    nombre: archivo.name,
-                    tipo: archivo.type
-                  });
-                }
-              }
+              const nuevos = await subirAdjuntosPublicacion(nuevosArchivosInput, usuarioActual.id, archivosFinales.length);
+              archivosFinales.push(...nuevos);
             }
 
             // Actualizar publicación en la base de datos
@@ -936,7 +957,7 @@
 
           } catch (error) {
             console.error('Error actualizando publicación:', error);
-            mostrarNotificacion('Error al actualizar la publicación', 'error');
+            mostrarNotificacion(error.validacion ? error.message : 'Error al actualizar la publicación', 'error');
           }
         });
       }

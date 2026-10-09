@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Moderación | Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=1.0.2"></script>
+  <script src="js/app.js?v=1.0.2"></script>
+  <script src="js/moderacion.js?v=1.0.0"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
+      <ul class="navbar-menu">
+        <li><a href="inicio.html" style="font-size: 15px; font-weight: 600;">← Volver al inicio</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 900px;">
+    <h1 style="margin: 30px 0 6px; font-size: 28px;">🛡️ Moderación</h1>
+    <p style="color: var(--gris-neon); font-size: 14px; margin-bottom: 20px;">Revisa los reportes de la comunidad. Cada acción cierra todos los reportes pendientes sobre ese mismo contenido.</p>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;" role="tablist">
+      <button class="btn btn-primary" data-estado="pendiente" role="tab">Pendientes</button>
+      <button class="btn btn-secondary" data-estado="accion_tomada" role="tab">Con acción</button>
+      <button class="btn btn-secondary" data-estado="descartado" role="tab">Descartados</button>
+    </div>
+
+    <div id="lista" aria-live="polite"><div class="loading">Cargando reportes...</div></div>
+  </div>
+
+  <script>
+    const MOTIVOS = { spam: 'Spam', estafa: 'Posible estafa', ofensivo: 'Ofensivo o acoso', falso: 'Información falsa', suplantacion: 'Suplantación', otro: 'Otro' };
+    const TIPOS = { publicacion: 'Publicación', comentario: 'Comentario', usuario: 'Usuario', mensaje: 'Mensaje' };
+    let estadoActual = 'pendiente';
+
+    function el(tag, estilos, texto) {
+      const n = document.createElement(tag);
+      if (estilos) n.style.cssText = estilos;
+      if (texto !== undefined) n.textContent = texto;
+      return n;
+    }
+
+    async function inicializar() {
+      await protegerPagina();
+      // Doble candado: aunque alguien abra esta página, el servidor rechaza todo si no es admin
+      if (!(await arnexuEsAdmin())) {
+        window.location.href = 'inicio.html';
+        return;
+      }
+      document.querySelectorAll('[data-estado]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          estadoActual = btn.dataset.estado;
+          document.querySelectorAll('[data-estado]').forEach(b => b.className = 'btn ' + (b === btn ? 'btn-primary' : 'btn-secondary'));
+          cargar();
+        });
+      });
+      cargar();
+    }
+
+    async function cargar() {
+      const lista = document.getElementById('lista');
+      lista.replaceChildren(el('div', '', 'Cargando reportes...'));
+      lista.firstChild.className = 'loading';
+
+      const { data, error } = await window.supabaseClient.rpc('admin_listar_reportes', { p_estado: estadoActual });
+      if (error) {
+        console.error(error);
+        lista.replaceChildren(el('p', 'color: var(--error);', 'No se pudieron cargar los reportes.'));
+        return;
+      }
+      if (!data || data.length === 0) {
+        const vacio = el('div');
+        vacio.className = 'empty-state';
+        vacio.append(el('h3', '', 'Sin reportes'), el('p', '', 'No hay reportes en esta lista.'));
+        lista.replaceChildren(vacio);
+        return;
+      }
+      lista.replaceChildren(...data.map(tarjeta));
+    }
+
+    function acciones(r) {
+      const a = [];
+      if (r.tipo_contenido === 'publicacion') a.push(['ocultar_publicacion', 'Ocultar publicación']);
+      if (r.tipo_contenido === 'comentario') a.push(['eliminar_comentario', 'Eliminar comentario']);
+      if (r.tipo_contenido === 'mensaje') a.push(['eliminar_mensaje', 'Eliminar mensaje']);
+      if (r.reportado_usuario_id && !r.reportado_suspendido) a.push(['suspender_usuario', 'Suspender usuario']);
+      a.push(['descartar', 'Descartar']);
+      return a;
+    }
+
+    function tarjeta(r) {
+      const card = el('div', 'background: var(--gris-oscuro); border: 1px solid var(--gris-medio); border-radius: 12px; padding: 20px; margin-bottom: 15px;');
+
+      const cab = el('div', 'display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;');
+      cab.append(
+        el('strong', '', `${TIPOS[r.tipo_contenido] || r.tipo_contenido} · ${MOTIVOS[r.motivo] || r.motivo}`),
+        el('span', 'color: var(--gris-neon); font-size: 13px;', new Date(r.created_at).toLocaleString('es-CO'))
+      );
+
+      const quien = el('p', 'color: var(--gris-neon); font-size: 13px; margin-bottom: 10px;',
+        `Reportado por @${r.reportante_usuario || '—'} · Autor: @${r.reportado_usuario || 'eliminado'}${r.reportado_suspendido ? ' (suspendido)' : ''} · ${r.reportes_mismo_contenido} reporte(s) sobre esto`);
+
+      const copia = el('div', 'background: var(--negro); border-radius: 8px; padding: 12px; font-size: 14px; white-space: pre-wrap; word-break: break-word; margin-bottom: 10px;', r.copia_contenido || '(sin copia)');
+
+      card.append(cab, quien, copia);
+      if (r.detalle) card.append(el('p', 'font-size: 14px; margin-bottom: 10px;', 'Detalle: ' + r.detalle));
+
+      if (r.estado === 'pendiente') {
+        const fila = el('div', 'display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;');
+        acciones(r).forEach(([accion, texto]) => {
+          const b = el('button', '', texto);
+          b.className = 'btn ' + (accion === 'descartar' ? 'btn-secondary' : 'btn-primary');
+          b.addEventListener('click', () => resolver(r, accion, texto, b));
+          fila.appendChild(b);
+        });
+        card.appendChild(fila);
+      }
+      return card;
+    }
+
+    async function resolver(r, accion, texto, boton) {
+      if (accion !== 'descartar' && !confirm(`¿Confirmas: ${texto}?`)) return;
+      boton.disabled = true;
+      const { error } = await window.supabaseClient.rpc('admin_resolver_reporte', { p_reporte: r.id, p_accion: accion });
+      if (error) {
+        mostrarNotificacion(error.message || 'No se pudo aplicar la acción', 'error');
+        boton.disabled = false;
+        return;
+      }
+      mostrarNotificacion('Listo');
+      cargar();
+    }
+
+    inicializar();
+  </script>
+</body>
+</html>
