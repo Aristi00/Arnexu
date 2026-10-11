@@ -3,14 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Perfil | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.2"></script>
-  <script src="js/app.js?v=1.0.2"></script>
-  <script src="js/badge-notifications.js?v=1.0.0"></script>
-  <script src="js/moderacion.js?v=1.0.0"></script>
+  <script src="js/config.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+  <script src="js/badge-notifications.js?v=2.0.0"></script>
+  <script src="js/moderacion.js?v=2.0.0"></script>
+  <script src="js/proyectos.js?v=2.0.0"></script>
   <style>
     .archivo-preview {
       background: var(--gris-medio);
@@ -54,9 +65,9 @@
     .archivos-adjuntos {
       margin-top: 15px;
       padding: 15px;
-      background: rgba(0,255,136,0.05);
+      background: rgba(45,245,176,0.05);
       border-radius: 8px;
-      border: 1px solid rgba(0,255,136,0.2);
+      border: 1px solid rgba(45,245,176,0.2);
     }
     .archivo-card {
       background: var(--gris-medio);
@@ -75,7 +86,7 @@
     }
   </style>
 </head>
-<body>
+<body data-requiere="config,moderacion,proyectos">
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
@@ -153,11 +164,19 @@
       </button>
       <button 
         class="tab-btn" 
-        onclick="cambiarTab('likes')"
-        id="tabLikes"
+        onclick="cambiarTab('bitacoras')"
+        id="tabBitacoras"
         style="background: none; border: none; color: var(--gris-neon); padding: 15px 20px; cursor: pointer; font-family: 'Montserrat'; font-weight: 600; border-bottom: 3px solid transparent;"
       >
-        ❤️ Likes
+        📓 Bitácoras
+      </button>
+      <button 
+        class="tab-btn" 
+        onclick="cambiarTab('senales')"
+        id="tabSenales"
+        style="background: none; border: none; color: var(--gris-neon); padding: 15px 20px; cursor: pointer; font-family: 'Montserrat'; font-weight: 600; border-bottom: 3px solid transparent;"
+      >
+        💰 Mis señales
       </button>
     </div>
 
@@ -166,9 +185,14 @@
       <div class="loading">Cargando publicaciones...</div>
     </div>
 
-    <!-- Contenido de Likes -->
-    <div id="contenidoLikes" style="display: none;">
-      <div class="loading">Cargando likes...</div>
+    <!-- Contenido de Bitácoras -->
+    <div id="contenidoBitacoras" style="display: none;">
+      <div class="loading">Cargando bitácoras...</div>
+    </div>
+
+    <!-- Contenido de Señales -->
+    <div id="contenidoSenales" style="display: none;">
+      <div class="loading">Cargando señales...</div>
     </div>
   </div>
 
@@ -274,6 +298,28 @@
           </select>
         </div>
 
+        <!-- Etapa -->
+        <div class="form-group">
+          <label class="form-label" for="editEtapa">Etapa del proyecto</label>
+          <select id="editEtapa" class="form-select">
+            <option value="">Sin especificar</option>
+          </select>
+        </div>
+
+        <!-- Ciudad -->
+        <div class="form-group">
+          <label class="form-label" for="editCiudad">Ciudad</label>
+          <input type="text" id="editCiudad" class="form-input" list="listaCiudadesPerfil" maxlength="80" autocomplete="off" placeholder="Ej: Medellín">
+          <datalist id="listaCiudadesPerfil"></datalist>
+        </div>
+
+        <!-- Monto que busca -->
+        <div class="form-group">
+          <label class="form-label" for="editMonto">Monto que buscas (en dólares USD)</label>
+          <input type="text" id="editMonto" class="form-input" inputmode="numeric" maxlength="11" autocomplete="off" placeholder="Ej: 25000">
+          <small style="color: var(--gris-neon); font-size: 12px;">Solo el número en dólares, sin símbolos, puntos ni comas.</small>
+        </div>
+
         <!-- Archivos Actuales -->
         <div class="form-group" id="archivosActualesContainer" style="display: none;">
           <label class="form-label">Archivos Adjuntos Actuales</label>
@@ -308,7 +354,6 @@
     </div>
   </div>
 
-  <script src="js/config.js"></script>
   <script>
     let usuarioActual = null;
     let perfilUsuario = null;
@@ -331,6 +376,7 @@
       }
       
       esPerfilPropio = perfilId === usuarioActual.id;
+      document.getElementById('tabSenales').style.display = esPerfilPropio ? '' : 'none';
       
       await cargarPerfil(perfilId);
       await cargarPublicaciones(perfilId);
@@ -437,7 +483,7 @@
           'inversor_interesado': {
             emoji: '💼',
             nombre: 'Inversor Activo',
-            color: '#00ff88',
+            color: '#2df5b0',
             descripcion: 'Ha contactado 15+ proyectos diferentes'
           },
           'verificado': {
@@ -517,7 +563,13 @@
           return;
         }
 
+        const mapaBit = {};
+        const { data: bits } = await window.supabaseClient
+          .from('bitacoras').select('id, publicacion_id, publica').in('publicacion_id', data.map(p => p.id));
+        (bits || []).forEach(b => { mapaBit[b.publicacion_id] = b; });
+
         contenido.innerHTML = data.map(pub => {
+          const bit = mapaBit[pub.id];
           const archivosHTML = pub.archivos && pub.archivos.length > 0 ? `
             <div class="archivos-adjuntos">
               <div style="font-weight: 600; margin-bottom: 10px; color: var(--acento);">📎 Archivos Adjuntos (${pub.archivos.length})</div>
@@ -533,7 +585,7 @@
                         <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">🖼️ Imagen</div>
                       </div>
-                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: #04130d; font-weight: 700; font-size: 12px;">Ver</a>
                     </div>
                   `;
                 } else if (esVideo) {
@@ -544,7 +596,7 @@
                         <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">🎬 Video</div>
                       </div>
-                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Ver</a>
+                      <a href="${urlSegura(archivo.url)}" target="_blank" style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: #04130d; font-weight: 700; font-size: 12px;">Ver</a>
                     </div>
                   `;
                 } else {
@@ -555,7 +607,7 @@
                         <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(archivo.nombre)}</div>
                         <div style="font-size: 12px; color: var(--gris-neon);">📎 Documento</div>
                       </div>
-                      <a href="${urlSegura(archivo.url)}" download style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: white; font-size: 12px;">Descargar</a>
+                      <a href="${urlSegura(archivo.url)}" download style="padding: 8px 12px; background: var(--acento); border-radius: 6px; text-decoration: none; color: #04130d; font-weight: 700; font-size: 12px;">Descargar</a>
                     </div>
                   `;
                 }
@@ -594,9 +646,17 @@
             </div>
             <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
             <span class="publicacion-categoria">${esc(pub.categoria)}</span>
+            ${Proyectos.chipsProyecto(pub)}
             ${archivosHTML}
             <div style="margin-top: 15px; color: var(--gris-neon); font-size: 14px;">
-              ❤️ ${pub.likes_count || 0} likes • ${formatearFecha(pub.created_at)}
+              💰 ${pub.senales_count || 0} señal(es) de interés • ${formatearFecha(pub.created_at)}
+            </div>
+            <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+              ${esPerfilPropio ? `
+                <a class="btn btn-secondary" style="padding: 8px 14px; text-decoration: none;" href="lab.html">🧪 Lab · pronto</a>
+                <button class="btn btn-secondary" style="padding: 8px 14px;" onclick="Proyectos.abrirModalSenalesRecibidas('${pub.id}', this.dataset.titulo)" data-titulo="${esc(pub.titulo)}">💰 Ver señales</button>
+              ` : ''}
+              ${bit && (bit.publica || esPerfilPropio) ? `<a class="btn btn-secondary" style="padding: 8px 14px; text-decoration: none;" href="bitacora.html?id=${bit.id}">📓 Bitácora${esPerfilPropio && !bit.publica ? ' (privada)' : ''}</a>` : ''}
             </div>
           </div>
         `;
@@ -608,80 +668,102 @@
     }
 
     // ============================================
-    // CARGAR LIKES DEL USUARIO
+    // MIS SEÑALES DE INTERÉS
     // ============================================
-    async function cargarLikes(userId) {
+    async function cargarSenales(userId) {
+      const contenido = document.getElementById('contenidoSenales');
       try {
         const { data, error } = await window.supabaseClient
-          .from('likes')
-          .select(`
-            created_at,
-            publicacion:publicaciones(
-              id,
-              titulo,
-              tipo,
-              descripcion,
-              categoria,
-              likes_count,
-              created_at
-            )
-          `)
+          .from('senales_interes')
+          .select('monto, nota, created_at, publicacion:publicaciones(id, titulo, categoria, tipo)')
           .eq('usuario_id', userId)
           .order('created_at', { ascending: false });
-
         if (error) throw error;
 
-        const contenido = document.getElementById('contenidoLikes');
-        
-        if (!data || data.length === 0) {
+        const filas = (data || []).filter(x => x.publicacion);
+        if (filas.length === 0) {
           contenido.innerHTML = `
             <div class="empty-state">
-              <h3>No hay likes</h3>
-              <p>${esPerfilPropio ? 'Aún no has dado like a ningún proyecto' : 'Este usuario no ha dado like a proyectos'}</p>
-            </div>
-          `;
+              <h3>Aún no has enviado señales</h3>
+              <p>Cuando un proyecto te interese, toca 💰 y cuéntale al emprendedor cuánto podrías invertir.</p>
+            </div>`;
           return;
         }
-
-        contenido.innerHTML = data.filter(like => like.publicacion).map(like => {
-          const pub = like.publicacion;
-          return `
-            <div class="publicacion-card">
-              <span class="publicacion-badge">
-                ${pub.tipo === 'idea' ? '💡' : pub.tipo === 'proyecto' ? '🚀' : '📌'}
-              </span>
-              <h2 class="publicacion-titulo">${esc(pub.titulo)}</h2>
-              <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
-              <span class="publicacion-categoria">${esc(pub.categoria)}</span>
-              <div style="margin-top: 15px; color: var(--gris-neon); font-size: 14px;">
-                ❤️ ${pub.likes_count || 0} likes • Like dado ${formatearFecha(like.created_at)}
-              </div>
+        contenido.innerHTML = filas.map(x => `
+          <div class="publicacion-card">
+            <span class="publicacion-badge">${x.publicacion.tipo === 'idea' ? '💡' : x.publicacion.tipo === 'proyecto' ? '🚀' : '📌'}</span>
+            <h2 class="publicacion-titulo">${esc(x.publicacion.titulo)}</h2>
+            <span class="publicacion-categoria">${esc(x.publicacion.categoria)}</span>
+            <div class="chips"><span class="chip chip-dinero">💰 Tu señal: ${esc(Proyectos.formatoUSD(x.monto))}</span></div>
+            ${x.nota ? `<p style="color: var(--gris-neon); font-size: 14px; white-space: pre-wrap; word-break: break-word;">${esc(x.nota)}</p>` : ''}
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="color: var(--gris-neon); font-size: 14px;">Enviada ${formatearFecha(x.created_at)}</span>
+              <a class="btn btn-secondary" style="padding: 8px 14px; text-decoration: none;" href="inicio.html#pub-${esc(x.publicacion.id)}">Ver proyecto</a>
             </div>
-          `;
-        }).join('');
-
+          </div>`).join('');
       } catch (error) {
-        console.error('Error cargando likes:', error);
+        console.error('Error cargando señales:', error);
+        contenido.innerHTML = '<div class="empty-state"><p>Error al cargar tus señales</p></div>';
       }
     }
 
     // ============================================
-    // CAMBIAR ENTRE PESTAÑAS
+    // BITÁCORAS DEL USUARIO (las ajenas: solo las públicas, lo filtra la base de datos)
     // ============================================
+    async function cargarBitacoras(userId) {
+      const contenido = document.getElementById('contenidoBitacoras');
+      try {
+        const { data, error } = await window.supabaseClient
+          .from('bitacoras')
+          .select('id, publica, created_at, publicacion:publicaciones(titulo, categoria), entradas:bitacora_entradas(count)')
+          .eq('usuario_id', userId)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        const filas = (data || []).filter(b => b.publicacion);
+        if (filas.length === 0) {
+          contenido.innerHTML = `
+            <div class="empty-state">
+              <h3>Sin bitácoras</h3>
+              <p>${esPerfilPropio ? 'Cada proyecto que publiques tendrá su bitácora, privada hasta que tú decidas compartirla.' : 'Este usuario no tiene bitácoras públicas.'}</p>
+            </div>`;
+          return;
+        }
+        const intro = esPerfilPropio
+          ? '<p style="color: var(--gris-neon); font-size: 14px; margin-bottom: 15px;">Tu cuaderno de avances por proyecto. Son privadas hasta que las hagas públicas.</p>' : '';
+        contenido.innerHTML = intro + filas.map(b => {
+          const n = (b.entradas && b.entradas[0] && b.entradas[0].count) || 0;
+          return `
+          <div class="publicacion-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <h2 class="publicacion-titulo" style="margin: 0;">📓 ${esc(b.publicacion.titulo)}</h2>
+              <span class="chip ${b.publica ? 'chip-lab' : ''}">${b.publica ? '🌐 Pública' : '🔒 Privada'}</span>
+            </div>
+            <div style="margin: 12px 0; color: var(--gris-neon); font-size: 14px;">${n} entrada(s) • ${esc(b.publicacion.categoria)}</div>
+            <a class="btn btn-primary" style="padding: 10px 18px; text-decoration: none;" href="bitacora.html?id=${esc(b.id)}">${esPerfilPropio ? 'Abrir y escribir' : 'Leer bitácora'}</a>
+          </div>`;
+        }).join('');
+      } catch (error) {
+        console.error('Error cargando bitácoras:', error);
+        contenido.innerHTML = '<div class="empty-state"><p>Error al cargar las bitácoras</p></div>';
+      }
+    }
+
     function cambiarTab(tab) {
-      document.getElementById('tabPublicaciones').style.borderColor = tab === 'publicaciones' ? 'var(--acento)' : 'transparent';
-      document.getElementById('tabPublicaciones').style.color = tab === 'publicaciones' ? 'var(--blanco)' : 'var(--gris-neon)';
-      document.getElementById('tabLikes').style.borderColor = tab === 'likes' ? 'var(--acento)' : 'transparent';
-      document.getElementById('tabLikes').style.color = tab === 'likes' ? 'var(--blanco)' : 'var(--gris-neon)';
-
-      document.getElementById('contenidoPublicaciones').style.display = tab === 'publicaciones' ? 'block' : 'none';
-      document.getElementById('contenidoLikes').style.display = tab === 'likes' ? 'block' : 'none';
-
-      if (tab === 'likes' && document.getElementById('contenidoLikes').innerHTML.includes('Cargando')) {
-        cargarLikes(perfilUsuario.id);
+      const tabs = { publicaciones: ['tabPublicaciones', 'contenidoPublicaciones'], bitacoras: ['tabBitacoras', 'contenidoBitacoras'], senales: ['tabSenales', 'contenidoSenales'] };
+      Object.entries(tabs).forEach(([nombre, [idTab, idContenido]]) => {
+        const activa = nombre === tab;
+        document.getElementById(idTab).style.borderColor = activa ? 'var(--acento)' : 'transparent';
+        document.getElementById(idTab).style.color = activa ? 'var(--blanco)' : 'var(--gris-neon)';
+        document.getElementById(idContenido).style.display = activa ? 'block' : 'none';
+      });
+      if (tab === 'bitacoras' && document.getElementById('contenidoBitacoras').innerHTML.includes('Cargando')) {
+        cargarBitacoras(perfilUsuario.id);
+      }
+      if (tab === 'senales' && document.getElementById('contenidoSenales').innerHTML.includes('Cargando')) {
+        cargarSenales(perfilUsuario.id);
       }
     }
-
     // ============================================
     // MODAL EDITAR PERFIL
     // ============================================
@@ -757,7 +839,7 @@
     // ELIMINAR PUBLICACIÓN
     // ============================================
     async function eliminarPublicacion(pubId) {
-      if (!confirm('¿Estás seguro de que quieres eliminar esta publicación?')) return;
+      if (!confirm('¿Estás seguro de que quieres eliminar esta publicación?\n\nTambién se borrarán su bitácora, sus señales de interés y su evaluación del Lab.')) return;
 
       try {
         const { error } = await window.supabaseClient
@@ -797,6 +879,9 @@
         document.getElementById('editTipo').value = pub.tipo;
         document.getElementById('editDescripcion').value = pub.descripcion;
         document.getElementById('editCategoria').value = pub.categoria;
+        document.getElementById('editEtapa').value = pub.etapa || '';
+        document.getElementById('editCiudad').value = pub.ciudad || '';
+        document.getElementById('editMonto').value = pub.monto_busca !== null && pub.monto_busca !== undefined ? String(pub.monto_busca) : '';
         
         mostrarArchivosActuales();
         
@@ -905,6 +990,12 @@
     // GUARDAR CAMBIOS DE PUBLICACIÓN
     // ============================================
     document.addEventListener('DOMContentLoaded', () => {
+      const selEtapa = document.getElementById('editEtapa');
+      Object.entries(Proyectos.ETAPAS).forEach(([v, t]) => selEtapa.appendChild(new Option(t, v)));
+      const listaCiu = document.getElementById('listaCiudadesPerfil');
+      Proyectos.CIUDADES.forEach(c => listaCiu.appendChild(new Option(c, c)));
+      Proyectos.campoSoloNumeros(document.getElementById('editMonto'));
+
       const form = document.getElementById('editarPublicacionForm');
       if (form) {
         form.addEventListener('submit', async (e) => {
@@ -915,6 +1006,15 @@
           const tipo = document.getElementById('editTipo').value;
           const descripcion = document.getElementById('editDescripcion').value.trim();
           const categoria = document.getElementById('editCategoria').value;
+          const etapa = document.getElementById('editEtapa').value || null;
+          let ciudad, montoBusca;
+          try {
+            ciudad = Proyectos.limpiarCiudad(document.getElementById('editCiudad').value);
+            montoBusca = Proyectos.leerMonto(document.getElementById('editMonto').value, false);
+          } catch (errorFicha) {
+            mostrarNotificacion(errorFicha.message, 'error');
+            return;
+          }
           const nuevosArchivosInput = document.getElementById('editNuevosArchivos').files;
 
           if (!titulo || !tipo || !descripcion || !categoria) {
@@ -944,6 +1044,9 @@
                 tipo: tipo,
                 descripcion: descripcion,
                 categoria: categoria,
+                etapa: etapa,
+                ciudad: ciudad,
+                monto_busca: montoBusca,
                 archivos: archivosFinales,
                 updated_at: new Date().toISOString()
               })
@@ -981,7 +1084,7 @@
   </script>
 </body>
 <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2026 Arnexu. Todos los derechos reservados.</p>
   <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
     <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
     <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>

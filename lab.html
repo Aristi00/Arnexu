@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
+  <title>Arnexu Lab | Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=2.0.0"></script>
+<script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+</head>
+<body data-requiere="config">
+  <nav class="navbar">
+    <div class="navbar-content">
+            <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
+      <ul class="navbar-menu">
+        <li><a href="inicio.html">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          
+        </a></li>
+        <li><a href="crear.html">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          
+        </a></li>
+        <li><a href="chat.html">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          
+        </a></li>
+        <li><a href="perfil.html">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          
+        </a></li>
+        <li><a href="#" onclick="logout()" style="color: var(--error);">
+          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          
+        </a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width: 760px; margin-bottom: 60px;">
+    <span class="chip chip-lab" style="margin-bottom: 14px;">⏳ Próximamente</span>
+    <h1 class="titulo-pagina">🧪 Arnexu <span class="grad-texto">Lab</span></h1>
+    <p class="sub-pagina">Un comité de inversión virtual que prepara tu proyecto antes de hablar con inversores.</p>
+
+    <div class="lab-caja">
+      <h2 style="font-size: 20px; margin-bottom: 14px;">Cómo va a funcionar</h2>
+      <ul class="auth-puntos" style="max-width: none;">
+        <li><span class="ico">1</span> Responde 6 preguntas sobre tu propuesta, mercado, finanzas, tracción, equipo y riesgos.</li>
+        <li><span class="ico">2</span> Recibe un puntaje de preparación de 0 a 100 con tus fortalezas.</li>
+        <li><span class="ico">3</span> Cierra las brechas con un plan de mejora que se guarda en tu bitácora.</li>
+      </ul>
+    </div>
+
+    <div class="lab-caja" aria-label="Ejemplo ilustrativo">
+      <div style="font-size: 12px; color: var(--gris-neon); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .08em;">Ejemplo ilustrativo · no es un resultado real</div>
+      <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;">
+        <svg viewBox="0 0 120 120" width="140" height="140" role="img" aria-label="Puntaje de ejemplo: 72 de 100">
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2df5b0"/><stop offset="1" stop-color="#19c7ff"/></linearGradient></defs>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#1f2538" stroke-width="10"/>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-dasharray="235 327" transform="rotate(-90 60 60)"/>
+          <text x="60" y="70" text-anchor="middle" font-size="32" font-weight="800" fill="#f5f7fb">72</text>
+        </svg>
+        <div style="flex: 1; min-width: 200px;">
+          <div style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Buen camino: ajusta unos detalles</div>
+          <div style="color: var(--gris-neon); line-height: 1.5;">Tu propuesta es clara y el mercado está bien definido. Falta respaldar tus finanzas con números.</div>
+        </div>
+      </div>
+      <div class="lab-barra"><span class="nombre">Propuesta</span><div class="pista"><div style="width: 85%"></div></div><span class="valor">85</span></div>
+      <div class="lab-barra"><span class="nombre">Mercado</span><div class="pista"><div style="width: 76%"></div></div><span class="valor">76</span></div>
+      <div class="lab-barra"><span class="nombre">Finanzas</span><div class="pista"><div style="width: 52%"></div></div><span class="valor">52</span></div>
+      <div class="lab-barra"><span class="nombre">Tracción</span><div class="pista"><div style="width: 68%"></div></div><span class="valor">68</span></div>
+      <div class="lab-barra"><span class="nombre">Equipo</span><div class="pista"><div style="width: 80%"></div></div><span class="valor">80</span></div>
+      <div class="lab-barra"><span class="nombre">Riesgos</span><div class="pista"><div style="width: 71%"></div></div><span class="valor">71</span></div>
+      <div class="lab-aviso">Cuando esté disponible será una guía de preparación; no es asesoría financiera ni garantiza inversión.</div>
+    </div>
+
+    <a href="inicio.html" class="btn btn-primary">← Volver al inicio</a>
+  </div>
+
+  <script>
+    protegerPagina();
+  </script>
+</body>
+</html>

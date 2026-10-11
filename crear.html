@@ -3,16 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Crear| Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.2"></script>
-<script src="js/app.js?v=1.0.2"></script>
-  <script src="js/moderacion.js?v=1.0.0"></script>
-<script src="js/badge-notifications.js?v=1.0.0"></script>
+<script src="js/config.js?v=2.0.0"></script>
+<script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+  <script src="js/moderacion.js?v=2.0.0"></script>
+  <script src="js/proyectos.js?v=2.0.0"></script>
+<script src="js/badge-notifications.js?v=2.0.0"></script>
 </head>
-<body>
+<body data-requiere="config,moderacion,proyectos">
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
@@ -59,7 +70,7 @@
   </nav>
   <!-- Contenido Principal -->
   <div class="container" style="margin-top: 30px;">
-    <h2 style="margin-bottom: 25px; font-size: 28px;">
+    <h2 class="titulo-pagina" style="margin-bottom: 20px;">
       Comparte tu Proyecto
     </h2>
 
@@ -130,6 +141,29 @@
           </select>
         </div>
 
+        <!-- Etapa -->
+        <div class="form-group">
+          <label class="form-label" for="etapa">Etapa del proyecto *</label>
+          <select id="etapa" class="form-select" required>
+            <option value="">Selecciona la etapa</option>
+          </select>
+        </div>
+
+        <!-- Ciudad -->
+        <div class="form-group">
+          <label class="form-label" for="ciudad">Ciudad *</label>
+          <input type="text" id="ciudad" class="form-input" list="listaCiudades" placeholder="Ej: Medellín" maxlength="80" autocomplete="off" required>
+          <datalist id="listaCiudades"></datalist>
+          <small style="color: var(--gris-neon); font-size: 12px;">Elige una de la lista o escribe la tuya. Ayuda a que inversores de tu zona te encuentren.</small>
+        </div>
+
+        <!-- Monto que busca -->
+        <div class="form-group">
+          <label class="form-label" for="montoBusca">Monto que buscas (en dólares USD)</label>
+          <input type="text" id="montoBusca" class="form-input" inputmode="numeric" placeholder="Ej: 25000" maxlength="11" autocomplete="off">
+          <small style="color: var(--gris-neon); font-size: 12px;">Escribe solo el número en dólares, sin símbolos, puntos ni comas. Déjalo vacío si aún no lo sabes.</small>
+        </div>
+
         <!-- Adjuntar Archivos -->
         <div class="form-group">
           <label class="form-label">Adjuntar archivos (Opcional)</label>
@@ -167,7 +201,6 @@
     </div>
   </div>
 
-  <script src="js/config.js"></script>
   <script>
     let usuarioActual = null;
 
@@ -300,6 +333,14 @@
     // ============================================
     // CREAR PUBLICACIÓN
     // ============================================
+    (function prepararFicha() {
+      const eta = document.getElementById('etapa');
+      Object.entries(Proyectos.ETAPAS).forEach(([v, t]) => eta.appendChild(new Option(t, v)));
+      const lista = document.getElementById('listaCiudades');
+      Proyectos.CIUDADES.forEach(c => lista.appendChild(new Option(c, c)));
+      Proyectos.campoSoloNumeros(document.getElementById('montoBusca'));
+    })();
+
     document.getElementById('crearPublicacionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -307,9 +348,20 @@
       const tipo = document.getElementById('tipo').value;
       const descripcion = document.getElementById('descripcion').value.trim();
       const categoria = document.getElementById('categoria').value;
+      const etapa = document.getElementById('etapa').value;
       // Validaciones
-      if (!titulo || !tipo || !descripcion || !categoria) {
+      if (!titulo || !tipo || !descripcion || !categoria || !etapa) {
         mostrarNotificacion('Por favor completa todos los campos obligatorios', 'error');
+        return;
+      }
+
+      let ciudad, montoBusca;
+      try {
+        ciudad = Proyectos.limpiarCiudad(document.getElementById('ciudad').value);
+        montoBusca = Proyectos.leerMonto(document.getElementById('montoBusca').value, false);
+        if (!ciudad) throw errorValidacion('Escribe la ciudad de tu proyecto');
+      } catch (errorFicha) {
+        mostrarNotificacion(errorFicha.message, 'error');
         return;
       }
 
@@ -326,16 +378,20 @@
             tipo: tipo,
             descripcion: descripcion,
             categoria: categoria,
+            etapa: etapa,
+            ciudad: ciudad,
+            monto_busca: montoBusca,
             archivos: archivosUrls
           }])
-          .select();
+          .select('id')
+          .single();
 
         if (error) throw error;
 
         mostrarNotificacion('¡Publicación creada exitosamente!');
         setTimeout(() => {
           window.location.href = 'inicio.html';
-        }, 1500);
+        }, 1200);
 
       } catch (error) {
         console.error('Error creando publicación:', error);
@@ -370,7 +426,7 @@ if (!localStorage.getItem('cookies_aceptadas')) {
 </script>
 </body>
 <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2026 Arnexu. Todos los derechos reservados.</p>
   <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
     <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
     <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>

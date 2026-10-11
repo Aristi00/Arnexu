@@ -3,30 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Arnexu - Conecta Emprendedores e Inversores</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.2"></script>
-<script src="js/app.js?v=1.0.2"></script>
-<script src="js/badge-notifications.js?v=1.0.0"></script>
+<script src="js/config.js?v=2.0.0"></script>
+<script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+<script src="js/badge-notifications.js?v=2.0.0"></script>
 </head>
-<body>
-  <div class="container" style="max-width: 450px; margin-top: 80px;">
-    <!-- Logo -->
-    <div class="text-center mb-20">
-      <h1 style="font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #000000); background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">
-        ARNEXU
-      </h1>
-      <p style="color: var(--gris-neon); font-size: 16px;">
-        Conecta tu proyecto con el mundo
-      </p>
-    </div>
+<body data-requiere="config">
+  <div class="auth-layout">
+    <section class="auth-hero">
+      <img class="auth-logo" src="icons/icon-192.png" alt="Logo Arnexu">
+      <div class="auth-marca">ARNEXU</div>
+      <h1 class="auth-lema">Donde tu proyecto encuentra <span class="grad-texto">inversión</span></h1>
+      <p class="auth-sub">La red que conecta emprendedores con inversores. Publica tu idea, recibe señales de interés y conversa en privado.</p>
+      <ul class="auth-puntos">
+        <li><span class="ico">🚀</span> Publica tu proyecto en minutos</li>
+        <li><span class="ico">💰</span> Recibe señales de interés de inversores</li>
+        <li><span class="ico">🔒</span> Chatea en privado y comparte tu avance</li>
+      </ul>
+    </section>
 
     <!-- Formulario de Login -->
-    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
-      <h2 style="margin-bottom: 25px; font-size: 24px;">Iniciar Sesión</h2>
+    <div class="auth-card">
+      <h2>Bienvenido de nuevo</h2>
+      <p class="auth-ayuda">Inicia sesión para ver los proyectos.</p>
       
       <form id="loginForm">
         <div class="form-group">
@@ -69,14 +82,7 @@
       </div>
     </div>
 
-    <!-- Información adicional -->
-    <div style="text-align: center; margin-top: 40px; color: var(--gris-neon); font-size: 14px;">
-      <p>🚀 Emprendedores | 💼 Inversores | 🌟 Oportunidades</p>
-    </div>
   </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=1.0.2"></script>
-<script src="js/app.js?v=1.0.2"></script>
   <script>
     // ============================================
     // VERIFICAR SI YA HAY SESIÓN ACTIVA
@@ -142,9 +148,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   </script>
-</body>
 <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+  <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2026 Arnexu. Todos los derechos reservados.</p>
   <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
     <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
     <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>
@@ -153,4 +158,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
   </div>
 </footer>
+</body>
 </html>

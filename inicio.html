@@ -3,14 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Inicio | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.2"></script>
-  <script src="js/app.js?v=1.0.2"></script>
-  <script src="js/badge-notifications.js?v=1.0.0"></script>
-  <script src="js/moderacion.js?v=1.0.0"></script>
+  <script src="js/config.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+  <script src="js/badge-notifications.js?v=2.0.0"></script>
+  <script src="js/moderacion.js?v=2.0.0"></script>
+  <script src="js/proyectos.js?v=2.0.0"></script>
   <style>
     .comentario-item {
       background: rgba(255,255,255,0.03);
@@ -50,7 +61,7 @@
     }
   </style>
 </head>
-<body>
+<body data-requiere="config,moderacion,proyectos">
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -91,71 +102,236 @@
   </nav>
 
   <div class="container" style="margin-top: 30px;">
-    <h2 style="margin-bottom: 25px; font-size: 28px;">Descubre Proyectos</h2>
-    <div id="feedPublicaciones"><div class="loading">Cargando publicaciones...</div></div>
+    <h2 class="titulo-pagina">Descubre <span class="grad-texto">proyectos</span></h2>
+    <p class="sub-pagina">Ideas reales buscando impulso. Filtra, comenta y envía tu señal de interés.</p>
+
+    <div class="tabs-feed" role="tablist" aria-label="Vista del feed">
+      <button class="tab-feed activa" id="tabTodos" role="tab" onclick="cambiarVista('todos')">🌐 Todos</button>
+      <button class="tab-feed" id="tabParaTi" role="tab" onclick="cambiarVista('parati')">⭐ Para ti</button>
+      <button class="tab-feed" onclick="Proyectos.abrirModalTesis(function () { cambiarVista('parati'); })">🎯 Mi tesis de inversión</button>
+    </div>
+
+    <div class="filtros-bar" id="barraFiltros">
+      <input type="search" id="filtroBusqueda" placeholder="🔍 Buscar por título o descripción..." maxlength="60" aria-label="Buscar proyectos">
+      <div class="filtros-grid">
+        <select id="filtroCategoria" aria-label="Categoría"><option value="">Todas las categorías</option></select>
+        <select id="filtroEtapa" aria-label="Etapa"><option value="">Todas las etapas</option></select>
+        <input type="text" id="filtroCiudad" list="listaCiudades" placeholder="📍 Ciudad" maxlength="80" aria-label="Ciudad" autocomplete="off">
+        <datalist id="listaCiudades"></datalist>
+        <input type="text" id="filtroMontoMin" inputmode="numeric" placeholder="Monto mín. (USD)" maxlength="11" aria-label="Monto mínimo que busca, en dólares">
+        <input type="text" id="filtroMontoMax" inputmode="numeric" placeholder="Monto máx. (USD)" maxlength="11" aria-label="Monto máximo que busca, en dólares">
+      </div>
+      <div style="text-align: right; margin-top: 12px;">
+        <button class="btn btn-secondary" onclick="limpiarFiltros()" style="padding: 8px 14px;">Limpiar filtros</button>
+      </div>
+    </div>
+
+    <div id="feedPublicaciones" aria-live="polite"><div class="loading">Cargando publicaciones...</div></div>
+    <div id="masContainer" style="text-align: center; margin: 20px 0 40px; display: none;">
+      <button class="btn btn-secondary" id="btnMas" onclick="cargarMas()">Cargar más proyectos</button>
+    </div>
     <div id="emptyState" class="empty-state" style="display: none;">
-      <h3>No hay publicaciones aún</h3>
-      <p>Sé el primero en compartir tu proyecto</p>
-      <a href="crear.html" class="btn btn-primary" style="margin-top: 20px;">Crear Publicación</a>
+      <h3 id="emptyTitulo">No hay publicaciones aún</h3>
+      <p id="emptyTexto">Sé el primero en compartir tu proyecto</p>
+      <a href="crear.html" class="btn btn-primary" id="emptyAccion" style="margin-top: 20px;">Crear Publicación</a>
     </div>
   </div>
 
   <script>
     let usuarioActual = null;
+    const POR_PAGINA = 12;
+    let vista = 'todos';              // 'todos' | 'parati'
+    let pagina = 0;
+    let ordenToken = 0;               // si llega una respuesta vieja, se descarta
+    let pubFijadaId = null;           // proyecto al que apunta un enlace compartido (#pub-...)
+    const vistos = new Set();
+    window.__pubs = {};
+    window.__senales = {};
+    window.__bitacoras = {};
 
     async function inicializar() {
       await protegerPagina();
       usuarioActual = await getCurrentUser();
-      if (usuarioActual) {
-        const hash = window.location.hash;
-        if (hash.startsWith('#pub-')) {
-          const pubId = hash.substring(5);
-          await cargarPublicaciones();
-          setTimeout(() => {
-            const element = document.getElementById('pub-' + pubId);
-            if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 500);
-        } else {
-          await cargarPublicaciones();
-        }
-      }
+      if (!usuarioActual) return;
+      prepararFiltros();
+      const hash = window.location.hash;
+      if (/^#pub-[0-9a-f-]{36}$/i.test(hash)) pubFijadaId = hash.substring(5);
+      await recargar();
     }
 
-    async function cargarPublicaciones() {
-      try {
-        const { data: publicaciones, error } = await window.supabaseClient
-          .from('publicaciones')
-          .select('*, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)')
-          .order('created_at', { ascending: false });
+    // ---------- filtros ----------
+    function prepararFiltros() {
+      const cat = document.getElementById('filtroCategoria');
+      Proyectos.CATEGORIAS.forEach(c => cat.appendChild(new Option(c, c)));
+      const eta = document.getElementById('filtroEtapa');
+      Object.entries(Proyectos.ETAPAS).forEach(([v, t]) => eta.appendChild(new Option(t, v)));
+      const lista = document.getElementById('listaCiudades');
+      Proyectos.CIUDADES.forEach(c => lista.appendChild(new Option(c, c)));
 
+      Proyectos.campoSoloNumeros(document.getElementById('filtroMontoMin'));
+      Proyectos.campoSoloNumeros(document.getElementById('filtroMontoMax'));
+
+      let temporizador = null;
+      const diferido = () => { clearTimeout(temporizador); temporizador = setTimeout(recargar, 400); };
+      ['filtroBusqueda', 'filtroCiudad', 'filtroMontoMin', 'filtroMontoMax'].forEach(id =>
+        document.getElementById(id).addEventListener('input', diferido));
+      ['filtroCategoria', 'filtroEtapa'].forEach(id =>
+        document.getElementById(id).addEventListener('change', recargar));
+    }
+
+    function filtrosActuales() {
+      const monto = (id) => { const d = Proyectos.soloDigitos(document.getElementById(id).value); return d ? parseInt(d, 10) : null; };
+      return {
+        q: Proyectos.terminoBusqueda(document.getElementById('filtroBusqueda').value),
+        categoria: document.getElementById('filtroCategoria').value,
+        etapa: document.getElementById('filtroEtapa').value,
+        ciudad: Proyectos.terminoBusqueda(document.getElementById('filtroCiudad').value),
+        min: monto('filtroMontoMin'),
+        max: monto('filtroMontoMax')
+      };
+    }
+
+    function hayFiltros(f) {
+      return !!(f.q || f.categoria || f.etapa || f.ciudad || f.min !== null || f.max !== null);
+    }
+
+    function limpiarFiltros() {
+      ['filtroBusqueda', 'filtroCategoria', 'filtroEtapa', 'filtroCiudad', 'filtroMontoMin', 'filtroMontoMax']
+        .forEach(id => { document.getElementById(id).value = ''; });
+      recargar();
+    }
+
+    function cambiarVista(nueva) {
+      vista = nueva;
+      document.getElementById('tabTodos').classList.toggle('activa', nueva === 'todos');
+      document.getElementById('tabParaTi').classList.toggle('activa', nueva === 'parati');
+      document.getElementById('barraFiltros').style.display = nueva === 'todos' ? 'block' : 'none';
+      recargar();
+    }
+
+    // ---------- carga ----------
+    const SELECT_PUB = '*, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)';
+
+    function mostrarVacio(titulo, texto, accionTexto, accionHref) {
+      document.getElementById('feedPublicaciones').innerHTML = '';
+      document.getElementById('masContainer').style.display = 'none';
+      document.getElementById('emptyTitulo').textContent = titulo;
+      document.getElementById('emptyTexto').textContent = texto;
+      const a = document.getElementById('emptyAccion');
+      a.style.display = accionTexto ? 'inline-block' : 'none';
+      if (accionTexto) { a.textContent = accionTexto; a.href = accionHref; }
+      document.getElementById('emptyState').style.display = 'block';
+    }
+
+    async function recargar() {
+      const token = ++ordenToken;
+      pagina = 0;
+      vistos.clear();
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('masContainer').style.display = 'none';
+      document.getElementById('feedPublicaciones').innerHTML = '<div class="loading">Cargando proyectos...</div>';
+      if (vista === 'parati') await cargarParaTi(token);
+      else await cargarPagina(token, true);
+    }
+
+    function cargarMas() {
+      const btn = document.getElementById('btnMas');
+      btn.disabled = true;
+      cargarPagina(ordenToken, false).finally(() => { btn.disabled = false; });
+    }
+
+    async function cargarPagina(token, primera) {
+      const f = filtrosActuales();
+      try {
+        let q = window.supabaseClient.from('publicaciones').select(SELECT_PUB);
+        if (f.categoria) q = q.eq('categoria', f.categoria);
+        if (f.etapa) q = q.eq('etapa', f.etapa);
+        if (f.ciudad) q = q.ilike('ciudad', `%${f.ciudad}%`);
+        if (f.min !== null) q = q.gte('monto_busca', f.min);
+        if (f.max !== null) q = q.lte('monto_busca', f.max);
+        if (f.q) q = q.or(`titulo.ilike.%${f.q}%,descripcion.ilike.%${f.q}%`);
+
+        const desde = pagina * POR_PAGINA;
+        const { data, error } = await q.order('created_at', { ascending: false }).range(desde, desde + POR_PAGINA);
+        if (token !== ordenToken) return;
         if (error) throw error;
 
-        const feed = document.getElementById('feedPublicaciones');
-        const emptyState = document.getElementById('emptyState');
+        const hayMas = data.length > POR_PAGINA;
+        let lista = data.slice(0, POR_PAGINA).filter(p => !vistos.has(p.id));
+        pagina++;
 
-        if (!publicaciones || publicaciones.length === 0) {
-          feed.style.display = 'none';
-          emptyState.style.display = 'block';
+        if (primera && pubFijadaId && !lista.some(p => p.id === pubFijadaId) && !hayFiltros(f)) {
+          const { data: fijada } = await window.supabaseClient.from('publicaciones').select(SELECT_PUB).eq('id', pubFijadaId).maybeSingle();
+          if (token !== ordenToken) return;
+          if (fijada) lista.unshift(fijada);
+        }
+
+        if (primera && lista.length === 0) {
+          if (hayFiltros(f)) mostrarVacio('Sin resultados', 'No encontramos proyectos con esos filtros. Prueba con otros criterios.', null);
+          else mostrarVacio('No hay publicaciones aún', 'Sé el primero en compartir tu proyecto', 'Crear Publicación', 'crear.html');
           return;
         }
 
-        const publicacionesConLikes = await Promise.all(
-          publicaciones.map(async (pub) => {
-            const { data: miLike } = await window.supabaseClient
-              .from('likes')
-              .select('id')
-              .eq('publicacion_id', pub.id)
-              .eq('usuario_id', usuarioActual.id)
-              .single();
-            return { ...pub, usuarioLeDioLike: !!miLike };
-          })
-        );
+        lista.forEach(p => vistos.add(p.id));
+        await mostrarPublicaciones(lista, !primera, null);
+        if (token !== ordenToken) return;
+        document.getElementById('masContainer').style.display = hayMas ? 'block' : 'none';
 
-        mostrarPublicaciones(publicacionesConLikes);
+        if (primera && pubFijadaId) {
+          const el = document.getElementById('pub-' + pubFijadaId);
+          if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+          pubFijadaId = null;
+        }
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
-        document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
+        if (token === ordenToken) document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
       }
+    }
+
+    async function cargarParaTi(token) {
+      try {
+        const { data: ranking, error } = await window.supabaseClient.rpc('deal_flow', { p_limite: 8 });
+        if (token !== ordenToken) return;
+        if (error) throw error;
+
+        if (!ranking || ranking.length === 0) {
+          const { data: tesis } = await window.supabaseClient.from('tesis_inversor').select('usuario_id').eq('usuario_id', usuarioActual.id).maybeSingle();
+          if (token !== ordenToken) return;
+          if (!tesis) {
+            mostrarVacio('Define tu tesis de inversión', 'Cuéntanos qué sectores, etapas y montos te interesan y te mostraremos los proyectos que mejor encajan.', null);
+            const a = document.getElementById('emptyAccion');
+            a.style.display = 'inline-block'; a.textContent = '🎯 Definir mi tesis'; a.href = '#';
+            a.onclick = (e) => { e.preventDefault(); Proyectos.abrirModalTesis(() => cambiarVista('parati')); };
+          } else {
+            mostrarVacio('Aún no hay coincidencias', 'No hay proyectos nuevos que encajen con tu tesis. Prueba ampliando tus criterios o vuelve pronto.', null);
+          }
+          return;
+        }
+
+        const ids = ranking.map(r => r.publicacion_id);
+        const { data: pubs, error: e2 } = await window.supabaseClient.from('publicaciones').select(SELECT_PUB).in('id', ids);
+        if (token !== ordenToken) return;
+        if (e2) throw e2;
+        const porId = Object.fromEntries(pubs.map(p => [p.id, p]));
+        const lista = ranking.map(r => porId[r.publicacion_id]).filter(Boolean);
+        const info = Object.fromEntries(ranking.map(r => [r.publicacion_id, r]));
+        await mostrarPublicaciones(lista, false, info);
+      } catch (error) {
+        console.error('Error cargando "Para ti":', error);
+        if (token === ordenToken) document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><p>Error al cargar tus recomendaciones</p></div>';
+      }
+    }
+
+    // Señales propias y bitácoras visibles de un grupo de proyectos (2 consultas, no una por proyecto)
+    async function cargarExtras(lista) {
+      const ids = lista.map(p => p.id);
+      if (!ids.length) return;
+      const [s, b] = await Promise.all([
+        window.supabaseClient.from('senales_interes').select('publicacion_id, monto, nota').eq('usuario_id', usuarioActual.id).in('publicacion_id', ids),
+        window.supabaseClient.from('bitacoras').select('id, publicacion_id, publica').in('publicacion_id', ids)
+      ]);
+      (s.data || []).forEach(x => { window.__senales[x.publicacion_id] = x; });
+      (b.data || []).forEach(x => { window.__bitacoras[x.publicacion_id] = x; });
     }
 
     function generarHTMLArchivos(archivos) {
@@ -181,13 +357,31 @@
       return `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gris-medio);"><strong style="color: var(--gris-neon); font-size: 14px; display: block; margin-bottom: 10px;">📎 Archivos adjuntos:</strong>${archivosHTML}</div>`;
     }
 
-    function mostrarPublicaciones(publicaciones) {
+    async function mostrarPublicaciones(publicaciones, anexar, infoMatch) {
       const feed = document.getElementById('feedPublicaciones');
-      window.__pubs = Object.fromEntries(publicaciones.map(p => [p.id, p]));
-      feed.innerHTML = publicaciones.map(pub => {
-        const tipoEmoji = { 'idea': '💡', 'proyecto': '🚀', 'otro': '📌' };
-        const tipoTexto = { 'idea': 'Solo una idea', 'proyecto': 'Proyecto en desarrollo', 'otro': 'Otro' };
-        return `
+      publicaciones.forEach(p => { window.__pubs[p.id] = p; });
+      await cargarExtras(publicaciones);
+      const html = publicaciones.map(pub => tarjetaHTML(pub, infoMatch ? infoMatch[pub.id] : null)).join('');
+      if (anexar) feed.insertAdjacentHTML('beforeend', html);
+      else feed.innerHTML = html;
+    }
+
+    function botonSenalHTML(pub) {
+      if (pub.usuario_id === usuarioActual.id) {
+        return `<button class="publicacion-accion btn-senal" onclick="verSenalesRecibidas('${pub.id}')" id="senal-${pub.id}">💰 <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> señal(es) recibidas</button>`;
+      }
+      const mi = window.__senales[pub.id];
+      return `<button class="publicacion-accion btn-senal ${mi ? 'activa' : ''}" onclick="abrirSenal('${pub.id}')" id="senal-${pub.id}" aria-label="Señal de interés">💰 <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> ${mi ? esc('Tu señal: ' + Proyectos.formatoUSD(mi.monto)) : 'Señal de interés'}</button>`;
+    }
+
+    function tarjetaHTML(pub, match) {
+      const tipoEmoji = { 'idea': '💡', 'proyecto': '🚀', 'otro': '📌' };
+      const tipoTexto = { 'idea': 'Solo una idea', 'proyecto': 'Proyecto en desarrollo', 'otro': 'Otro' };
+      const esDueno = pub.usuario_id === usuarioActual.id;
+      const bit = window.__bitacoras[pub.id];
+      const razones = match && match.razones && match.razones.length
+        ? `<div class="razones-match"><strong>⭐ Compatibilidad ${Number(match.puntaje_match) | 0}%</strong> · ${match.razones.map(esc).join(' · ')}</div>` : '';
+      return `
           <div class="publicacion-card" id="pub-${pub.id}">
             <div class="publicacion-header">
               <img src="${urlImagen(pub.usuario.foto_perfil)}" alt="${esc(pub.usuario.nombre_completo)}" class="publicacion-avatar" onclick="verPerfil('${pub.usuario_id}')" style="cursor: pointer;">
@@ -196,54 +390,50 @@
                 <p>@${esc(pub.usuario.nombre_usuario)} • ${formatearFecha(pub.created_at)}</p>
               </div>
             </div>
+            ${razones}
             <div class="publicacion-badge">${tipoEmoji[pub.tipo] || '📌'} ${tipoTexto[pub.tipo] || 'Otro'}</div>
             <h2 class="publicacion-titulo">${esc(pub.titulo)}</h2>
             <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
             <span class="publicacion-categoria">${esc(pub.categoria)}</span>
+            ${Proyectos.chipsProyecto(pub)}
             ${generarHTMLArchivos(pub.archivos)}
             <div class="publicacion-acciones">
-              <button class="publicacion-accion ${pub.usuarioLeDioLike ? 'liked' : ''}" onclick="toggleLike('${pub.id}', ${pub.usuarioLeDioLike})" id="like-${pub.id}">
-                ${pub.usuarioLeDioLike ? '❤️' : '🤍'} <span id="count-${pub.id}">${pub.likes_count || 0}</span>
-              </button>
+              ${botonSenalHTML(pub)}
               <button class="publicacion-accion" onclick="compartir('${pub.id}')">🔗 Compartir</button>
               <button class="publicacion-accion" onclick="verPerfil('${pub.usuario_id}')">👤 Ver perfil</button>
               <button class="publicacion-accion" onclick="toggleComentarios('${pub.id}')">💬 Comentarios</button>
-              ${pub.usuario_id !== usuarioActual.id ? `<button class="publicacion-accion" onclick="reportarContenido('publicacion', '${pub.id}')">🚩 Reportar</button>` : ''}
+              ${bit && (bit.publica || esDueno) ? `<button class="publicacion-accion" onclick="window.location.href='bitacora.html?id=${bit.id}'">📓 Bitácora${esDueno && !bit.publica ? ' (privada)' : ''}</button>` : ''}
+              ${esDueno ? `<button class="publicacion-accion" onclick="window.location.href='lab.html'">🧪 Lab · pronto</button>` : `<button class="publicacion-accion" onclick="reportarContenido('publicacion', '${pub.id}')">🚩 Reportar</button>`}
             </div>
             <div id="comentarios-${pub.id}" class="comentarios-section" style="display: none;">
               <h4 style="margin-bottom: 15px; font-size: 16px;">💬 Comentarios</h4>
               <div id="lista-comentarios-${pub.id}"></div>
               <div class="comentario-form">
-                <input type="text" id="input-comentario-${pub.id}" placeholder="Escribe un comentario..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--gris-medio); background: var(--gris-oscuro); color: var(--blanco); font-family: 'Montserrat';" onkeypress="if(event.key === 'Enter') enviarComentario('${pub.id}')">
+                <input type="text" id="input-comentario-${pub.id}" maxlength="1000" placeholder="Escribe un comentario..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--gris-medio); background: var(--gris-oscuro); color: var(--blanco); font-family: inherit;">
                 <button onclick="enviarComentario('${pub.id}')" class="btn btn-primary">Enviar</button>
               </div>
             </div>
           </div>
         `;
-      }).join('');
     }
 
-    async function toggleLike(publicacionId, yaLeDioLike) {
-      try {
-        if (yaLeDioLike) {
-          const { error } = await window.supabaseClient.from('likes').delete().eq('publicacion_id', publicacionId).eq('usuario_id', usuarioActual.id);
-          if (error) throw error;
-        } else {
-          const { error } = await window.supabaseClient.from('likes').insert([{ publicacion_id: publicacionId, usuario_id: usuarioActual.id }]);
-          if (error && error.code !== '23505') throw error; // 23505 = ya tenía like
-        }
-        // El contador lo actualiza la base de datos; aquí solo lo leemos ya actualizado
-        const { data: pub } = await window.supabaseClient.from('publicaciones').select('likes_count').eq('id', publicacionId).single();
-        const nuevoCount = (pub && pub.likes_count) || 0;
-        const leDioLike = !yaLeDioLike;
-        const boton = document.getElementById('like-' + publicacionId);
-        boton.classList.toggle('liked', leDioLike);
-        boton.innerHTML = `${leDioLike ? '❤️' : '🤍'} <span id="count-${publicacionId}">${nuevoCount}</span>`;
-        boton.setAttribute('onclick', `toggleLike('${publicacionId}', ${leDioLike})`);
-      } catch (error) {
-        console.error('Error al dar like:', error);
-        mostrarNotificacion('Error al procesar el like', 'error');
-      }
+    // ---------- señal de interés ----------
+    function abrirSenal(pubId) {
+      const pub = window.__pubs[pubId];
+      if (!pub) return;
+      Proyectos.abrirModalSenal(pub, window.__senales[pubId] || null, (estado, countRetirado) => {
+        if (estado) window.__senales[pubId] = { publicacion_id: pubId, monto: estado.monto, nota: estado.nota };
+        else delete window.__senales[pubId];
+        const count = estado ? estado.count : countRetirado;
+        if (count !== undefined && count !== null) pub.senales_count = count;
+        const btn = document.getElementById('senal-' + pubId);
+        if (btn) btn.outerHTML = botonSenalHTML(pub);
+      });
+    }
+
+    function verSenalesRecibidas(pubId) {
+      const pub = window.__pubs[pubId];
+      Proyectos.abrirModalSenalesRecibidas(pubId, pub ? pub.titulo : 'tu proyecto');
     }
 
     function compartir(publicacionId) {
@@ -369,7 +559,7 @@
   </script>
 
   <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-    <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+    <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2026 Arnexu. Todos los derechos reservados.</p>
     <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
       <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
       <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>

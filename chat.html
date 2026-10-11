@@ -3,23 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Chat | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.2"></script>
-  <script src="js/app.js?v=1.0.2"></script>
+  <script src="js/config.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
   
   <!-- Sistema de notificaciones global -->
-<script src="js/badge-notifications.js?v=1.0.0"></script>
-  <script src="js/moderacion.js?v=1.0.0"></script>  
+<script src="js/badge-notifications.js?v=2.0.0"></script>
+  <script src="js/moderacion.js?v=2.0.0"></script>  
   <style>
     .custom-audio-player {
-      background: linear-gradient(135deg, rgba(0,255,136,0.1) 0%, rgba(0,150,255,0.1) 100%);
+      background: linear-gradient(135deg, rgba(45,245,176,0.1) 0%, rgba(0,150,255,0.1) 100%);
       border-radius: 16px;
       padding: 16px;
       margin: 8px 0;
-      border: 1px solid rgba(0,255,136,0.2);
+      border: 1px solid rgba(45,245,176,0.2);
     }
     .audio-header {
       display: flex;
@@ -42,14 +52,14 @@
       height: 50px;
       min-width: 50px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #00ff88 0%, #00dd77 100%);
+      background: linear-gradient(135deg, #2df5b0 0%, #19c7ff 100%);
       border: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      box-shadow: 0 4px 12px rgba(0,255,136,0.3);
+      box-shadow: 0 4px 12px rgba(45,245,176,0.3);
       transition: transform 0.1s;
     }
     .play-btn:active {
@@ -72,7 +82,7 @@
     }
     .progress-bar {
       height: 100%;
-      background: linear-gradient(90deg, #00ff88 0%, #00dd77 100%);
+      background: linear-gradient(90deg, #2df5b0 0%, #19c7ff 100%);
       width: 0%;
       transition: width 0.1s linear;
     }
@@ -85,7 +95,7 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      background: #ff4444;
+      background: #ff5470;
       color: white;
       border-radius: 50%;
       min-width: 20px;
@@ -103,7 +113,7 @@
     }
   </style>
 </head>
-<body>
+<body data-requiere="config,moderacion">
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -519,7 +529,7 @@
         mediaRecorder.start();
         grabando = true;
         const btnVoz = document.getElementById('btnVoz');
-        btnVoz.style.background = '#ff4444';
+        btnVoz.style.background = '#ff5470';
         btnVoz.innerHTML = '⏹️';
         mostrarNotificacion('🎤 Grabando...');
       } catch (error) {
@@ -654,7 +664,7 @@
   </script>
 
   <footer style="background: var(--gris-oscuro); padding: 30px; margin-top: 50px; border-top: 1px solid var(--gris-medio); text-align: center;">
-    <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2025 Arnexu. Todos los derechos reservados.</p>
+    <p style="color: var(--gris-neon); margin-bottom: 15px;">© 2026 Arnexu. Todos los derechos reservados.</p>
     <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
       <a href="legal.html" style="color: var(--gris-neon);">Documentos Legales</a>
       <a href="terminos.html" style="color: var(--gris-neon);">Términos</a>

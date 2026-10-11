@@ -3,23 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Nueva contraseña | Arnexu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.2"></script>
-  <script src="js/app.js?v=1.0.2"></script>
+  <script src="js/config.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
 </head>
-<body>
-  <div class="container" style="max-width: 450px; margin-top: 80px;">
-    <div class="text-center mb-20">
-      <h1 style="font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #ffffff, #000000); background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px;">
-        ARNEXU
-      </h1>
+<body data-requiere="config">
+  <div class="auth-layout una-columna">
+    <div class="auth-mini">
+      <img class="auth-logo" src="icons/icon-192.png" alt="Logo Arnexu">
+      <div class="auth-marca">ARNEXU</div>
     </div>
 
-    <div style="background: var(--gris-oscuro); padding: 30px; border-radius: 12px; border: 1px solid var(--gris-medio);">
+    <div class="auth-card">
 
       <!-- Estado 1: verificando el enlace -->
       <div id="estadoCargando" class="loading">Verificando tu enlace...</div>

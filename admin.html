@@ -3,16 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070910">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Arnexu">
   <meta name="robots" content="noindex, nofollow">
   <title>Moderación | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=1.0.2"></script>
-  <script src="js/app.js?v=1.0.2"></script>
-  <script src="js/moderacion.js?v=1.0.0"></script>
+  <script src="js/config.js?v=2.0.0"></script>
+  <script src="js/app.js?v=2.0.0"></script>
+<script src="js/push-config.js?v=2.0.0"></script>
+<script src="js/pwa.js?v=2.0.0"></script>
+  <script src="js/moderacion.js?v=2.0.0"></script>
 </head>
-<body>
+<body data-requiere="config,moderacion">
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -37,7 +47,7 @@
 
   <script>
     const MOTIVOS = { spam: 'Spam', estafa: 'Posible estafa', ofensivo: 'Ofensivo o acoso', falso: 'Información falsa', suplantacion: 'Suplantación', otro: 'Otro' };
-    const TIPOS = { publicacion: 'Publicación', comentario: 'Comentario', usuario: 'Usuario', mensaje: 'Mensaje' };
+    const TIPOS = { publicacion: 'Publicación', comentario: 'Comentario', usuario: 'Usuario', mensaje: 'Mensaje', bitacora: 'Entrada de bitácora' };
     let estadoActual = 'pendiente';
 
     function el(tag, estilos, texto) {
@@ -90,6 +100,7 @@
       if (r.tipo_contenido === 'publicacion') a.push(['ocultar_publicacion', 'Ocultar publicación']);
       if (r.tipo_contenido === 'comentario') a.push(['eliminar_comentario', 'Eliminar comentario']);
       if (r.tipo_contenido === 'mensaje') a.push(['eliminar_mensaje', 'Eliminar mensaje']);
+      if (r.tipo_contenido === 'bitacora') a.push(['eliminar_entrada', 'Eliminar entrada']);
       if (r.reportado_usuario_id && !r.reportado_suspendido) a.push(['suspender_usuario', 'Suspender usuario']);
       a.push(['descartar', 'Descartar']);
       return a;
