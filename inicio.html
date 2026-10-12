@@ -5,23 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#070910">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="arnexu-favicon.png">
+  <link rel="apple-touch-icon" href="arnexu-apple-touch.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Inicio | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=2.0.0"></script>
-  <script src="js/app.js?v=2.0.0"></script>
-<script src="js/push-config.js?v=2.0.0"></script>
-<script src="js/pwa.js?v=2.0.0"></script>
-  <script src="js/badge-notifications.js?v=2.0.0"></script>
-  <script src="js/moderacion.js?v=2.0.0"></script>
-  <script src="js/proyectos.js?v=2.0.0"></script>
+  <script src="push-config.js?v=3.0.0"></script>
+  <script src="arnexu.js?v=3.0.0"></script>
   <style>
     .comentario-item {
       background: rgba(255,255,255,0.03);
@@ -61,7 +56,7 @@
     }
   </style>
 </head>
-<body data-requiere="config,moderacion,proyectos">
+<body data-requiere="config,moderacion,proyectos,ciudades">
   <nav class="navbar">
     <div class="navbar-content">
       <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -112,18 +107,39 @@
     </div>
 
     <div class="filtros-bar" id="barraFiltros">
-      <input type="search" id="filtroBusqueda" placeholder="🔍 Buscar por título o descripción..." maxlength="60" aria-label="Buscar proyectos">
-      <div class="filtros-grid">
-        <select id="filtroCategoria" aria-label="Categoría"><option value="">Todas las categorías</option></select>
-        <select id="filtroEtapa" aria-label="Etapa"><option value="">Todas las etapas</option></select>
-        <input type="text" id="filtroCiudad" list="listaCiudades" placeholder="📍 Ciudad" maxlength="80" aria-label="Ciudad" autocomplete="off">
-        <datalist id="listaCiudades"></datalist>
-        <input type="text" id="filtroMontoMin" inputmode="numeric" placeholder="Monto mín. (USD)" maxlength="11" aria-label="Monto mínimo que busca, en dólares">
-        <input type="text" id="filtroMontoMax" inputmode="numeric" placeholder="Monto máx. (USD)" maxlength="11" aria-label="Monto máximo que busca, en dólares">
+      <div class="busqueda-fila">
+        <div class="busqueda-caja">
+          <svg class="busqueda-icono" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" id="filtroBusqueda" placeholder="Buscar proyectos por título o descripción…" maxlength="60" aria-label="Buscar proyectos">
+        </div>
+        <button type="button" class="btn btn-secondary btn-filtros" id="btnFiltros" aria-expanded="false" aria-controls="panelFiltros">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <span>Filtros</span>
+          <span class="filtros-contador" id="contadorFiltros" hidden>0</span>
+        </button>
       </div>
-      <div style="text-align: right; margin-top: 12px;">
-        <button class="btn btn-secondary" onclick="limpiarFiltros()" style="padding: 8px 14px;">Limpiar filtros</button>
+
+      <div class="panel-filtros" id="panelFiltros" hidden>
+        <div class="panel-grid">
+          <div>
+            <label for="filtroCategoria">Categoría</label>
+            <select id="filtroCategoria"><option value="">Todas las categorías</option></select>
+          </div>
+          <div>
+            <label for="filtroEtapa">Etapa</label>
+            <select id="filtroEtapa"><option value="">Todas las etapas</option></select>
+          </div>
+          <div class="panel-ancho">
+            <label for="filtroCiudad">Ciudad</label>
+            <input type="text" id="filtroCiudad" placeholder="Escribe una ciudad de cualquier país…" maxlength="80">
+          </div>
+        </div>
+        <div class="panel-pie">
+          <button type="button" class="btn btn-secondary" onclick="limpiarFiltros()">Limpiar todo</button>
+          <button type="button" class="btn btn-primary" onclick="cerrarPanelFiltros()">Ver resultados</button>
+        </div>
       </div>
+      <div class="chips-filtros" id="chipsFiltros"></div>
     </div>
 
     <div id="feedPublicaciones" aria-live="polite"><div class="loading">Cargando publicaciones...</div></div>
@@ -165,39 +181,72 @@
       Proyectos.CATEGORIAS.forEach(c => cat.appendChild(new Option(c, c)));
       const eta = document.getElementById('filtroEtapa');
       Object.entries(Proyectos.ETAPAS).forEach(([v, t]) => eta.appendChild(new Option(t, v)));
-      const lista = document.getElementById('listaCiudades');
-      Proyectos.CIUDADES.forEach(c => lista.appendChild(new Option(c, c)));
 
-      Proyectos.campoSoloNumeros(document.getElementById('filtroMontoMin'));
-      Proyectos.campoSoloNumeros(document.getElementById('filtroMontoMax'));
+      // Ciudad: sugerencias de todo el mundo; el filtro se aplica al elegir una (o al vaciar el campo)
+      const ciudad = document.getElementById('filtroCiudad');
+      Ciudades.enlazar(ciudad, { alElegir: () => recargar() });
+      ciudad.addEventListener('input', () => { if (!ciudad.value.trim()) recargar(); });
 
       let temporizador = null;
-      const diferido = () => { clearTimeout(temporizador); temporizador = setTimeout(recargar, 400); };
-      ['filtroBusqueda', 'filtroCiudad', 'filtroMontoMin', 'filtroMontoMax'].forEach(id =>
-        document.getElementById(id).addEventListener('input', diferido));
-      ['filtroCategoria', 'filtroEtapa'].forEach(id =>
-        document.getElementById(id).addEventListener('change', recargar));
+      document.getElementById('filtroBusqueda').addEventListener('input', () => { clearTimeout(temporizador); temporizador = setTimeout(recargar, 400); });
+      ['filtroCategoria', 'filtroEtapa'].forEach(id => document.getElementById(id).addEventListener('change', recargar));
+
+      const boton = document.getElementById('btnFiltros');
+      boton.addEventListener('click', () => {
+        const abierto = document.getElementById('panelFiltros').hidden;
+        document.getElementById('panelFiltros').hidden = !abierto;
+        boton.setAttribute('aria-expanded', String(abierto));
+        boton.classList.toggle('abierto', abierto);
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarPanelFiltros(); });
+    }
+
+    function cerrarPanelFiltros() {
+      const panel = document.getElementById('panelFiltros');
+      if (!panel || panel.hidden) return;
+      panel.hidden = true;
+      const boton = document.getElementById('btnFiltros');
+      boton.setAttribute('aria-expanded', 'false'); boton.classList.remove('abierto');
     }
 
     function filtrosActuales() {
-      const monto = (id) => { const d = Proyectos.soloDigitos(document.getElementById(id).value); return d ? parseInt(d, 10) : null; };
       return {
         q: Proyectos.terminoBusqueda(document.getElementById('filtroBusqueda').value),
         categoria: document.getElementById('filtroCategoria').value,
         etapa: document.getElementById('filtroEtapa').value,
-        ciudad: Proyectos.terminoBusqueda(document.getElementById('filtroCiudad').value),
-        min: monto('filtroMontoMin'),
-        max: monto('filtroMontoMax')
+        // se filtra por el nombre de la ciudad (lo que va antes de la primera coma)
+        ciudad: Proyectos.terminoBusqueda(document.getElementById('filtroCiudad').value.split(',')[0])
       };
     }
 
     function hayFiltros(f) {
-      return !!(f.q || f.categoria || f.etapa || f.ciudad || f.min !== null || f.max !== null);
+      return !!(f.q || f.categoria || f.etapa || f.ciudad);
+    }
+
+    // Etiquetas con los filtros activos (cada una se quita con ✕) y contador en el botón
+    function pintarChipsFiltros() {
+      const cont = document.getElementById('chipsFiltros');
+      const activos = [];
+      const cat = document.getElementById('filtroCategoria').value;
+      const eta = document.getElementById('filtroEtapa').value;
+      const ciu = document.getElementById('filtroCiudad').value.trim();
+      if (cat) activos.push(['📂 ' + cat, () => { document.getElementById('filtroCategoria').value = ''; }]);
+      if (eta) activos.push([Proyectos.ETAPAS[eta] || eta, () => { document.getElementById('filtroEtapa').value = ''; }]);
+      if (ciu) activos.push(['📍 ' + ciu, () => { document.getElementById('filtroCiudad').value = ''; document.getElementById('filtroCiudad').removeAttribute('data-valor'); }]);
+      cont.replaceChildren(...activos.map(([texto, quitar]) => {
+        const chip = document.createElement('span'); chip.className = 'chip chip-filtro';
+        chip.append(document.createTextNode(texto + ' '));
+        const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Quitar filtro');
+        x.addEventListener('click', () => { quitar(); recargar(); });
+        chip.append(x); return chip;
+      }));
+      const n = document.getElementById('contadorFiltros');
+      n.textContent = String(activos.length); n.hidden = activos.length === 0;
     }
 
     function limpiarFiltros() {
-      ['filtroBusqueda', 'filtroCategoria', 'filtroEtapa', 'filtroCiudad', 'filtroMontoMin', 'filtroMontoMax']
-        .forEach(id => { document.getElementById(id).value = ''; });
+      ['filtroBusqueda', 'filtroCategoria', 'filtroEtapa', 'filtroCiudad'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('filtroCiudad').removeAttribute('data-valor');
       recargar();
     }
 
@@ -227,6 +276,7 @@
       const token = ++ordenToken;
       pagina = 0;
       vistos.clear();
+      pintarChipsFiltros();
       document.getElementById('emptyState').style.display = 'none';
       document.getElementById('masContainer').style.display = 'none';
       document.getElementById('feedPublicaciones').innerHTML = '<div class="loading">Cargando proyectos...</div>';
@@ -247,8 +297,6 @@
         if (f.categoria) q = q.eq('categoria', f.categoria);
         if (f.etapa) q = q.eq('etapa', f.etapa);
         if (f.ciudad) q = q.ilike('ciudad', `%${f.ciudad}%`);
-        if (f.min !== null) q = q.gte('monto_busca', f.min);
-        if (f.max !== null) q = q.lte('monto_busca', f.max);
         if (f.q) q = q.or(`titulo.ilike.%${f.q}%,descripcion.ilike.%${f.q}%`);
 
         const desde = pagina * POR_PAGINA;
@@ -284,7 +332,7 @@
         }
       } catch (error) {
         console.error('Error cargando publicaciones:', error);
-        if (token === ordenToken) document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><p>Error al cargar publicaciones</p></div>';
+        if (token === ordenToken) document.getElementById('feedPublicaciones').innerHTML = '<div class="empty-state"><h3>No se pudieron cargar los proyectos</h3><p>Revisa la conexión o abre <a href="diagnostico.html" style="color: var(--acento);">el diagnóstico</a> para ver qué falla.</p></div>';
       }
     }
 
@@ -568,5 +616,21 @@
       <a href="confidencialidad.html" style="color: var(--gris-neon);">Confidencialidad</a>
     </div>
   </footer>
+<script>
+(function () {
+  window.addEventListener('load', function () {
+    var req = (document.body.getAttribute('data-requiere') || '').split(',').filter(Boolean);
+    var m = window.__arnexuModulos, falta = [];
+    if (!m) falta.push('arnexu.js'); else if (req.some(function (x) { return !m[x]; })) falta.push('arnexu.js (versión vieja)');
+    var css = getComputedStyle(document.documentElement).getPropertyValue('--acento');
+    if (!css || !css.trim()) falta.push('arnexu.css');
+    if (!falta.length) return;
+    var d = document.createElement('div'); d.setAttribute('role', 'alert');
+    d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:20000;background:#2a1016;border:1px solid #ff5470;color:#fff;padding:14px 16px;border-radius:14px;font:600 13px/1.5 sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+    d.textContent = 'Faltan archivos en tu hosting: ' + falta.join(', ') + '. Sube TODOS los archivos del ZIP a la raíz de tu repositorio de GitHub (junto a index.html), recarga con Ctrl+F5 y abre diagnostico.html para ver el detalle.';
+    document.body.appendChild(d);
+  });
+})();
+</script>
 </body>
 </html>

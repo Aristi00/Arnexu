@@ -2,10 +2,9 @@
    - Red primero: siempre intenta traer lo más nuevo; si no hay internet, usa lo guardado.
    - Nunca guarda llamadas a Supabase ni a otros dominios (datos siempre frescos y privados).
    - Recibe y muestra notificaciones push. */
-const VERSION = 'arnexu-v2';
+const VERSION = 'arnexu-v3';
 const PRECACHE = [
-  'offline.html', 'css/styles.css', 'js/config.js', 'js/app.js', 'js/pwa.js',
-  'icons/icon-192.png', 'icons/icon-512.png', 'arnexu-64x (1).png'
+  'offline.html', 'arnexu.css', 'arnexu.js', 'arnexu-icon-192.png', 'arnexu-icon-512.png', 'arnexu-64x (1).png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -55,8 +54,8 @@ self.addEventListener('push', (event) => {
   const titulo = datos.titulo || 'Arnexu';
   event.waitUntil(self.registration.showNotification(titulo, {
     body: datos.cuerpo || '',
-    icon: 'icons/icon-192.png',
-    badge: 'icons/favicon-48.png',
+    icon: 'arnexu-icon-192.png',
+    badge: 'arnexu-favicon.png',
     tag: datos.tag || 'arnexu',
     renotify: true,
     data: { url: datos.url || 'inicio.html' }

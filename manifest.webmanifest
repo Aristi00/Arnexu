@@ -12,12 +12,12 @@
   "theme_color": "#070910",
   "categories": ["business", "finance", "social"],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "arnexu-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "arnexu-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "arnexu-icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Crear proyecto", "url": "./crear.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Mensajes", "url": "./chat.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Crear proyecto", "url": "./crear.html", "icons": [{ "src": "arnexu-icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mensajes", "url": "./chat.html", "icons": [{ "src": "arnexu-icon-192.png", "sizes": "192x192" }] }
   ]
 }

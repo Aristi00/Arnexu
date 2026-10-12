@@ -1000,14 +1000,14 @@ begin
   if not found then
     return;
   end if;
-  select coalesce(array_agg(lower(trim(x))), '{}') into v_ciudades from unnest(t.ciudades) x;
+  select coalesce(array_agg(lower(trim(split_part(x, ',', 1)))), '{}') into v_ciudades from unnest(t.ciudades) x;
 
   return query
   with base as (
     select p.id, p.created_at, p.categoria, p.etapa, p.ciudad, p.monto_busca, p.lab_puntaje,
            (p.categoria = any (t.categorias))                                           as m_cat,
            (p.etapa = any (t.etapas))                                                   as m_eta,
-           (p.ciudad is not null and lower(trim(p.ciudad)) = any (v_ciudades))          as m_ciu,
+           (p.ciudad is not null and lower(trim(split_part(p.ciudad, ',', 1))) = any (v_ciudades))          as m_ciu,
            (p.monto_busca is not null
               and (t.monto_min is null or p.monto_busca >= t.monto_min)
               and (t.monto_max is null or p.monto_busca <= t.monto_max)

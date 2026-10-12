@@ -1,35 +1,34 @@
-# Arnexu · cómo ponerlo en marcha (GitHub Pages + Supabase)
+# Arnexu · puesta en marcha (GitHub Pages + Supabase)
 
 ## 1) Sube la web a GitHub
-Sube **todo el contenido de esta carpeta** a tu repositorio `Arnexu` (reemplaza lo que ya hay) y espera ~1 minuto a que GitHub Pages publique.
-Importante: sube también la carpeta **js/**, **css/** e **icons/**. Si falta algún archivo, la web te muestra un aviso rojo diciendo cuál.
-Después de subir, recarga con **Ctrl + F5** para limpiar la versión vieja.
+Al descomprimir el ZIP queda **una sola carpeta** llamada `Arnexu`. Abre esa carpeta, selecciona **todos los archivos que hay dentro** y súbelos a tu repositorio (la carpeta en sí no hace falta), reemplazando los anteriores.
+En GitHub: *Add file → Upload files*, arrastra los archivos. Espera ~1 minuto y recarga la web con **Ctrl + F5**.
+
+Tus logos originales no se tocaron: `arnexu-64x (1).png` es exactamente el que me diste. Los íconos de la app (`arnexu-icon-*.png`, `arnexu-apple-touch.png`, `arnexu-favicon.png`) son ese mismo logo, solo cambiado de tamaño.
+
+Los archivos clave son `arnexu.js`, `arnexu.css` y `arnexu-ciudades.txt`. Si falta alguno, la web lo dice con un aviso rojo.
 
 ## 2) Instala la base de datos (un solo paso)
-En Supabase → **SQL Editor → New query** → pega TODO el archivo `INSTALAR_EN_SUPABASE.sql` → **Run**.
-- No tienes que cambiar nada dentro del archivo.
-- Se puede repetir sin problema.
-- Tu cuenta (la más antigua) queda como **administradora automáticamente**.
+Supabase → **SQL Editor → New query** → pega TODO el archivo `INSTALAR_EN_SUPABASE.sql` → **Run**.
+Se puede repetir sin problema. Tu cuenta (la más antigua) queda como administradora automáticamente.
 
-## 3) (Solo si usas "Olvidé mi contraseña") Permite el enlace
-Supabase → **Authentication → URL Configuration** → en **Redirect URLs** agrega:
-`https://aristi00.github.io/Arnexu/**`
+## 3) (Solo para "Olvidé mi contraseña")
+Supabase → **Authentication → URL Configuration → Redirect URLs** → agrega `https://aristi00.github.io/Arnexu/**`
 
-Listo. Entra a tu web y pruébala.
+## 4) Comprueba que todo funciona
+Abre `https://aristi00.github.io/Arnexu/diagnostico.html` (inicia sesión antes). Te dice en verde/rojo si los archivos, la base de datos, tu perfil, tus chats y tu foto están bien, y qué hacer si algo falla. Con "Copiar informe" me lo puedes mandar.
 
 ---
 
 ## Qué incluye
-- Diseño nuevo: fondo animado, tarjetas, barra inferior tipo app en el celular.
-- Búsqueda y filtros (texto, categoría, etapa, ciudad, monto en USD), "Para ti" según tu tesis de inversión.
-- Señal de interés 💰 (reemplaza al like), bitácora por proyecto (privada o pública), moderación y panel de administración.
-- App instalable (PWA): en el celular usa el botón 📲 del menú.
-- Arnexu Lab: **pausado** (solo se ve la interfaz, sin IA). El código del servidor quedó guardado en `supabase/pausado/`.
+- Diseño nuevo, con barra inferior tipo app en el celular.
+- Búsqueda y menú de filtros desplegable (categoría, etapa, ciudad). La ciudad se elige de una lista con ~107.000 ciudades del mundo mientras escribes.
+- "Para ti" según tu tesis de inversión, señal de interés 💰, bitácora por proyecto, moderación y panel de administración.
+- App instalable (botón 📲 del menú). Arnexu Lab: pausado, solo interfaz.
 
 ## Opcional: notificaciones push
-Necesitan una función en Supabase, así que no funcionan solo con GitHub. Si las quieres: `node supabase/desplegar.mjs --push`
-(el botón 🔔 aparece solo cuando están activadas).
+Necesitan una función en Supabase (no corren solo con GitHub): `node supabase/desplegar.mjs --push`.
 
 ## Notas
 - Los datos de personas están sujetos a la Ley 1581 (habeas data): valida tus textos legales con un abogado.
-- El instalador `supabase/desplegar.mjs` es opcional: hace el paso 2 y 3 desde tu computador.
+- `supabase/desplegar.mjs` es opcional: repite los pasos 2 y 3 desde tu computador.

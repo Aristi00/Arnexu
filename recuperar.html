@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#070910">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="arnexu-favicon.png">
+  <link rel="apple-touch-icon" href="arnexu-apple-touch.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -14,17 +14,15 @@
   <title>Recuperar contraseña | Arnexu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=2.0.0"></script>
-  <script src="js/app.js?v=2.0.0"></script>
-<script src="js/push-config.js?v=2.0.0"></script>
-<script src="js/pwa.js?v=2.0.0"></script>
+  <script src="push-config.js?v=3.0.0"></script>
+  <script src="arnexu.js?v=3.0.0"></script>
 </head>
 <body data-requiere="config">
   <div class="auth-layout una-columna">
     <div class="auth-mini">
-      <img class="auth-logo" src="icons/icon-192.png" alt="Logo Arnexu">
+      <img class="auth-logo" src="arnexu-64x (1).png" alt="Logo Arnexu" width="64" height="64">
       <div class="auth-marca">ARNEXU</div>
     </div>
 
@@ -100,5 +98,21 @@
       iniciarEspera();
     });
   </script>
+<script>
+(function () {
+  window.addEventListener('load', function () {
+    var req = (document.body.getAttribute('data-requiere') || '').split(',').filter(Boolean);
+    var m = window.__arnexuModulos, falta = [];
+    if (!m) falta.push('arnexu.js'); else if (req.some(function (x) { return !m[x]; })) falta.push('arnexu.js (versión vieja)');
+    var css = getComputedStyle(document.documentElement).getPropertyValue('--acento');
+    if (!css || !css.trim()) falta.push('arnexu.css');
+    if (!falta.length) return;
+    var d = document.createElement('div'); d.setAttribute('role', 'alert');
+    d.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:20000;background:#2a1016;border:1px solid #ff5470;color:#fff;padding:14px 16px;border-radius:14px;font:600 13px/1.5 sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.6)';
+    d.textContent = 'Faltan archivos en tu hosting: ' + falta.join(', ') + '. Sube TODOS los archivos del ZIP a la raíz de tu repositorio de GitHub (junto a index.html), recarga con Ctrl+F5 y abre diagnostico.html para ver el detalle.';
+    document.body.appendChild(d);
+  });
+})();
+</script>
 </body>
 </html>

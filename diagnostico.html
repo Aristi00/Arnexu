@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#070910">
+  <title>Diagnóstico | Arnexu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Esta página no depende de ningún otro archivo de la web: así funciona aunque algo esté mal subido */
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #070910; color: #f5f7fb; font-family: 'Montserrat', system-ui, sans-serif; line-height: 1.5; padding: 28px 16px 80px; }
+    .caja { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: #9aa4ba; margin: 0 0 22px; font-size: 14px; }
+    .resumen { padding: 16px 18px; border-radius: 16px; margin-bottom: 20px; font-weight: 700; border: 1px solid; }
+    .resumen.ok { background: rgba(45,245,176,.10); border-color: rgba(45,245,176,.5); color: #2df5b0; }
+    .resumen.mal { background: rgba(255,84,112,.10); border-color: rgba(255,84,112,.5); color: #ff8aa0; }
+    .resumen.aviso { background: rgba(255,208,86,.10); border-color: rgba(255,208,86,.5); color: #ffd056; }
+    .grupo { margin: 26px 0 8px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #9aa4ba; font-weight: 700; }
+    .fila { display: flex; gap: 12px; padding: 13px 15px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09); margin-bottom: 8px; align-items: flex-start; }
+    .fila .ico { font-size: 18px; line-height: 1.3; flex-shrink: 0; }
+    .fila .tit { font-weight: 700; font-size: 14px; }
+    .fila .det { color: #9aa4ba; font-size: 13px; word-break: break-word; }
+    .fila.error { border-color: rgba(255,84,112,.55); background: rgba(255,84,112,.07); }
+    .fila.error .det { color: #ffb3c0; }
+    .fila.aviso { border-color: rgba(255,208,86,.45); }
+    .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0; }
+    button, a.boton { background: linear-gradient(135deg, #2df5b0, #19c7ff); color: #04130d; border: 0; padding: 12px 22px; border-radius: 12px; font: 700 14px 'Montserrat', sans-serif; cursor: pointer; text-decoration: none; display: inline-block; }
+    button.sec, a.sec { background: rgba(255,255,255,.07); color: #f5f7fb; border: 1px solid rgba(255,255,255,.16); }
+    pre { white-space: pre-wrap; background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.1); padding: 14px; border-radius: 12px; font-size: 12px; color: #c3cbe0; display: none; }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <h1>🩺 Diagnóstico de Arnexu</h1>
+    <p class="sub">Revisa en un minuto si los archivos, la base de datos, tu perfil, los chats y las fotos están funcionando. Si algo sale en rojo, copia el informe y envíamelo.</p>
+    <div id="resumen" class="resumen aviso">Revisando…</div>
+    <div class="acciones">
+      <button id="btnRepetir" type="button">🔄 Volver a revisar</button>
+      <button id="btnCopiar" type="button" class="sec">📋 Copiar informe</button>
+      <a class="boton sec" href="inicio.html">← Volver a la web</a>
+    </div>
+    <div id="resultados"></div>
+    <pre id="informe"></pre>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ifdajpaxbvpnbgeuohej.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmZGFqcGF4YnZwbmJnZXVvaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzA4ODMsImV4cCI6MjA4MTQwNjg4M30._2ogsIF2R5knYgea2mg5KE3TVlkEVt13TIyBZ69Yry4';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const TABLAS_BASE = ['usuarios', 'publicaciones', 'comentarios', 'chats', 'mensajes'];
+    const TABLAS_NUEVAS = ['mensajes_no_leidos', 'mensajes_ocultos', 'contactos_proyectos', 'badges', 'bloqueos', 'reportes', 'senales_interes', 'bitacoras', 'bitacora_entradas', 'tesis_inversor', 'push_subscriptions'];
+    const ARCHIVOS = [
+      ['arnexu.js', 'Código de la web (arnexu.js)', true], ['arnexu.css', 'Diseño (arnexu.css)', true],
+      ['arnexu-ciudades.txt', 'Lista de ciudades del mundo', false], ['manifest.webmanifest', 'App instalable (manifest)', false],
+      ['sw.js', 'Service worker', false], ['arnexu-icon-192.png', 'Íconos de la app', false]
+    ];
+
+    let filas = [];
+    const resultados = document.getElementById('resultados');
+
+    function agregar(grupo, estado, titulo, detalle) {
+      filas.push({ grupo, estado, titulo, detalle: detalle || '' });
+    }
+
+    function pintar() {
+      resultados.replaceChildren();
+      let grupoActual = null;
+      filas.forEach((f) => {
+        if (f.grupo !== grupoActual) {
+          grupoActual = f.grupo;
+          const g = document.createElement('div'); g.className = 'grupo'; g.textContent = grupoActual; resultados.appendChild(g);
+        }
+        const fila = document.createElement('div'); fila.className = 'fila ' + f.estado;
+        const ico = document.createElement('div'); ico.className = 'ico'; ico.textContent = f.estado === 'ok' ? '✅' : f.estado === 'aviso' ? '⚠️' : '❌';
+        const cuerpo = document.createElement('div');
+        const t = document.createElement('div'); t.className = 'tit'; t.textContent = f.titulo;
+        cuerpo.appendChild(t);
+        if (f.detalle) { const d = document.createElement('div'); d.className = 'det'; d.textContent = f.detalle; cuerpo.appendChild(d); }
+        fila.append(ico, cuerpo); resultados.appendChild(fila);
+      });
+    }
+
+    // Traduce un error de Supabase a algo que se entienda
+    function explicar(error, tabla) {
+      const m = (error && (error.message || '')) + '';
+      const c = error && error.code;
+      if (c === '42P01' || c === 'PGRST205' || /does not exist|Could not find the table/i.test(m)) return `La tabla "${tabla}" no existe. Ejecuta INSTALAR_EN_SUPABASE.sql en el SQL Editor de Supabase.`;
+      if (c === '42703' || /column .* does not exist|Could not find the .* column/i.test(m)) return 'Faltan columnas nuevas. Ejecuta INSTALAR_EN_SUPABASE.sql en el SQL Editor de Supabase.';
+      if (c === '42501' || /permission denied/i.test(m)) return 'Sin permiso de lectura (RLS). Ejecuta INSTALAR_EN_SUPABASE.sql; si ya lo hiciste, envíame este informe.';
+      if (c === 'PGRST202' || /Could not find the function/i.test(m)) return 'Falta una función de la base de datos. Ejecuta INSTALAR_EN_SUPABASE.sql.';
+      if (/Failed to fetch|NetworkError/i.test(m)) return 'No hay conexión con Supabase (revisa internet o la URL del proyecto).';
+      return (c ? '[' + c + '] ' : '') + m;
+    }
+
+    function probarImagen(url) {
+      return new Promise((res) => {
+        const img = new Image(); const t = setTimeout(() => res(false), 8000);
+        img.onload = () => { clearTimeout(t); res(true); }; img.onerror = () => { clearTimeout(t); res(false); };
+        img.src = url;
+      });
+    }
+
+    async function revisar() {
+      filas = [];
+      document.getElementById('resumen').className = 'resumen aviso';
+      document.getElementById('resumen').textContent = 'Revisando…';
+      pintar();
+
+      // 1. archivos
+      const G1 = '1 · Archivos de la web en tu hosting';
+      for (const [ruta, nombre, critico] of ARCHIVOS) {
+        try {
+          const r = await fetch(ruta + '?diag=' + Date.now(), { cache: 'no-store' });
+          if (!r.ok) { agregar(G1, critico ? 'error' : 'aviso', nombre + ': no se encuentra (HTTP ' + r.status + ')', critico ? 'Sube este archivo a la raíz de tu repositorio de GitHub (junto a index.html).' : 'No es crítico, pero conviene subirlo.'); continue; }
+          if (ruta === 'arnexu.js') {
+            const t = await r.text();
+            const nuevo = t.includes('__arnexuModulos') && t.includes('Ciudades');
+            agregar(G1, nuevo ? 'ok' : 'error', nombre + (nuevo ? ': versión actual' : ': es una versión VIEJA'), nuevo ? '' : 'Reemplaza arnexu.js por el del ZIP nuevo y recarga con Ctrl+F5.');
+          } else agregar(G1, 'ok', nombre);
+        } catch (e) { agregar(G1, 'error', nombre + ': no se pudo comprobar', String(e.message || e)); }
+      }
+
+      // 2. conexión y sesión
+      const G2 = '2 · Conexión y sesión';
+      let usuario = null;
+      try {
+        const { data, error } = await sb.auth.getSession();
+        if (error) throw error;
+        usuario = data.session ? data.session.user : null;
+        agregar(G2, 'ok', 'Conexión con Supabase', SUPABASE_URL);
+        if (usuario) agregar(G2, 'ok', 'Sesión iniciada', usuario.email || usuario.phone || usuario.id);
+        else agregar(G2, 'aviso', 'No has iniciado sesión', 'Inicia sesión en la web y vuelve a abrir esta página para revisar tus datos.');
+      } catch (e) { agregar(G2, 'error', 'No hay conexión con Supabase', explicar(e)); }
+
+      // 3. tablas
+      const G3 = '3 · Base de datos (tablas)';
+      for (const t of [...TABLAS_BASE, ...TABLAS_NUEVAS]) {
+        const base = TABLAS_BASE.includes(t);
+        const col = t === 'usuarios' ? 'id' : '*';
+        const { count, error } = await sb.from(t).select(col, { count: 'exact', head: true });
+        if (error) agregar(G3, 'error', t, explicar(error, t));
+        else agregar(G3, 'ok', t, (count === null ? '' : count + ' fila(s) visibles para ti') + (base ? '' : ''));
+      }
+      {
+        const { error } = await sb.from('publicaciones').select('etapa, ciudad, monto_busca, senales_count, oculta, lab_puntaje').limit(1);
+        agregar(G3, error ? 'error' : 'ok', 'Columnas nuevas de publicaciones (etapa, ciudad, monto…)', error ? explicar(error, 'publicaciones') : '');
+      }
+
+      // 4. tu cuenta
+      const G4 = '4 · Tu cuenta';
+      if (!usuario) agregar(G4, 'aviso', 'Sin sesión: no se puede revisar tu perfil, chats ni fotos');
+      else {
+        const { data: perfil, error } = await sb.from('usuarios').select('id, nombre_completo, nombre_usuario, foto_perfil, rol').eq('id', usuario.id).maybeSingle();
+        if (error) agregar(G4, 'error', 'Leer tu perfil', explicar(error, 'usuarios'));
+        else if (!perfil) agregar(G4, 'error', 'Tu cuenta NO tiene perfil en la tabla "usuarios"', 'Por eso no se ve tu nombre ni tu foto. Cierra sesión y vuelve a registrarte, o envíame este informe.');
+        else {
+          agregar(G4, 'ok', 'Perfil encontrado', perfil.nombre_completo + ' (@' + perfil.nombre_usuario + ') · rol: ' + perfil.rol);
+          if (!perfil.foto_perfil) agregar(G4, 'aviso', 'Todavía no tienes foto de perfil', 'Súbela desde Perfil → Editar perfil.');
+          else {
+            const ok = await probarImagen(perfil.foto_perfil);
+            agregar(G4, ok ? 'ok' : 'error', ok ? 'Tu foto de perfil carga bien' : 'Tu foto de perfil NO carga', ok ? '' : 'La dirección guardada no abre la imagen. ¿El bucket "arnexu-files" es público? ' + perfil.foto_perfil);
+          }
+        }
+        const mias = await sb.from('publicaciones').select('id', { count: 'exact', head: true }).eq('usuario_id', usuario.id);
+        agregar(G4, mias.error ? 'error' : 'ok', 'Tus proyectos', mias.error ? explicar(mias.error, 'publicaciones') : (mias.count || 0) + ' publicado(s)');
+        const todas = await sb.from('publicaciones').select('id', { count: 'exact', head: true });
+        agregar(G4, todas.error ? 'error' : 'ok', 'Proyectos visibles para ti en el feed', todas.error ? explicar(todas.error, 'publicaciones') : String(todas.count || 0));
+        const ch = await sb.from('chats').select('id', { count: 'exact', head: true }).or(`participante1_id.eq.${usuario.id},participante2_id.eq.${usuario.id}`);
+        agregar(G4, ch.error ? 'error' : 'ok', 'Tus chats', ch.error ? explicar(ch.error, 'chats') : (ch.count || 0) + ' conversación(es)');
+        const adm = await sb.rpc('soy_admin');
+        agregar(G4, adm.error ? 'error' : 'ok', 'Permisos de administrador', adm.error ? explicar(adm.error) : (adm.data ? 'Eres administrador 🛡️' : 'No eres administrador'));
+        const dfl = await sb.rpc('deal_flow', { p_limite: 1 });
+        agregar(G4, dfl.error ? 'error' : 'ok', 'Función "Para ti" (deal_flow)', dfl.error ? explicar(dfl.error) : '');
+      }
+
+      // 5. almacenamiento
+      const G5 = '5 · Almacenamiento de fotos y archivos';
+      try {
+        const r = await fetch(SUPABASE_URL + '/storage/v1/object/public/arnexu-files/__diagnostico__', { cache: 'no-store' });
+        const t = await r.text();
+        if (/Bucket not found/i.test(t)) agregar(G5, 'error', 'El bucket "arnexu-files" no existe', 'Ejecuta INSTALAR_EN_SUPABASE.sql o créalo en Storage como bucket público.');
+        else agregar(G5, 'ok', 'Bucket público "arnexu-files" disponible');
+      } catch (e) { agregar(G5, 'error', 'No se pudo comprobar el almacenamiento', String(e.message || e)); }
+
+      pintar();
+      const errores = filas.filter((f) => f.estado === 'error').length, avisos = filas.filter((f) => f.estado === 'aviso').length;
+      const r = document.getElementById('resumen');
+      if (errores) { r.className = 'resumen mal'; r.textContent = `❌ ${errores} problema(s) por resolver${avisos ? ' y ' + avisos + ' aviso(s)' : ''}. Mira los puntos en rojo.`; }
+      else if (avisos) { r.className = 'resumen aviso'; r.textContent = `⚠️ Todo funciona; hay ${avisos} aviso(s) sin importancia grave.`; }
+      else { r.className = 'resumen ok'; r.textContent = '✅ Todo está funcionando correctamente.'; }
+    }
+
+    function informe() {
+      const lineas = ['INFORME ARNEXU · ' + new Date().toLocaleString('es-CO') + ' · ' + location.href];
+      let g = null;
+      filas.forEach((f) => { if (f.grupo !== g) { g = f.grupo; lineas.push('', g); } lineas.push((f.estado === 'ok' ? '[OK] ' : f.estado === 'aviso' ? '[AVISO] ' : '[ERROR] ') + f.titulo + (f.detalle ? ' — ' + f.detalle : '')); });
+      return lineas.join('\n');
+    }
+
+    document.getElementById('btnRepetir').addEventListener('click', revisar);
+    document.getElementById('btnCopiar').addEventListener('click', async () => {
+      const texto = informe(); const pre = document.getElementById('informe');
+      pre.textContent = texto; pre.style.display = 'block';
+      try { await navigator.clipboard.writeText(texto); document.getElementById('btnCopiar').textContent = '✅ Copiado'; setTimeout(() => { document.getElementById('btnCopiar').textContent = '📋 Copiar informe'; }, 2000); }
+      catch (e) { /* si no se puede copiar, queda visible para copiarlo a mano */ }
+    });
+    revisar();
+  </script>
+</body>
+</html>
