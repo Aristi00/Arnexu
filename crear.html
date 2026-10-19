@@ -13,10 +13,10 @@
   <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Crear| Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
+  <link rel="stylesheet" href="arnexu.css?v=3.1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="push-config.js?v=3.0.0"></script>
-  <script src="arnexu.js?v=3.0.0"></script>
+  <script src="push-config.js?v=3.1.0"></script>
+  <script src="arnexu.js?v=3.1.0"></script>
 </head>
 <body data-requiere="config,moderacion,proyectos,ciudades">
   <!-- Navbar -->
@@ -134,6 +134,13 @@
             <option value="Sostenibilidad">🌱 Sostenibilidad</option>
             <option value="Otro">📌 Otro</option>
           </select>
+        </div>
+
+        <!-- Necesidades -->
+        <div class="form-group">
+          <label class="form-label">¿Qué necesita tu proyecto? *</label>
+          <div id="necesidades"></div>
+          <small style="color: var(--gris-neon); font-size: 12px;">Elige lo que buscas hoy. Quienes puedan ayudarte te enviarán una oferta concreta.</small>
         </div>
 
         <!-- Etapa -->
@@ -331,6 +338,7 @@
       const eta = document.getElementById('etapa');
       Object.entries(Proyectos.ETAPAS).forEach(([v, t]) => eta.appendChild(new Option(t, v)));
       Ciudades.enlazar(document.getElementById('ciudad'));
+      window.leerNecesidades = Proyectos.selectorNecesidades(document.getElementById('necesidades'), []);
       Proyectos.campoSoloNumeros(document.getElementById('montoBusca'));
     })();
 
@@ -345,6 +353,12 @@
       // Validaciones
       if (!titulo || !tipo || !descripcion || !categoria || !etapa) {
         mostrarNotificacion('Por favor completa todos los campos obligatorios', 'error');
+        return;
+      }
+
+      const necesidades = window.leerNecesidades();
+      if (!necesidades.length) {
+        mostrarNotificacion('Elige al menos una necesidad de tu proyecto', 'error');
         return;
       }
 
@@ -373,6 +387,7 @@
             descripcion: descripcion,
             categoria: categoria,
             etapa: etapa,
+            necesidades: necesidades,
             ciudad: ciudad,
             monto_busca: montoBusca,
             archivos: archivosUrls

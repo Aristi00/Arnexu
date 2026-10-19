@@ -13,10 +13,10 @@
   <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Registro| Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
+  <link rel="stylesheet" href="arnexu.css?v=3.1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="push-config.js?v=3.0.0"></script>
-  <script src="arnexu.js?v=3.0.0"></script>
+  <script src="push-config.js?v=3.1.0"></script>
+  <script src="arnexu.js?v=3.1.0"></script>
 </head>
 <body data-requiere="config">
   <div class="auth-layout una-columna">
@@ -234,13 +234,27 @@
 
       try {
         // 1. Registrar usuario en Supabase Auth
-        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({
-          email: email,
-          password: password,
-          phone: telefono,
-        });
+        const datosCuenta = { email: email, password: password };
+        if (telefono) datosCuenta.phone = telefono;
+        const { data: authData, error: authError } = await window.supabaseClient.auth.signUp(datosCuenta);
 
         if (authError) throw authError;
+
+        // Supabase responde sin error pero con "identities" vacío cuando el correo ya existe
+        if (authData.user && Array.isArray(authData.user.identities) && authData.user.identities.length === 0) {
+          mostrarNotificacion('Este email ya está registrado', 'error');
+          return;
+        }
+
+        // Si el proyecto exige confirmar el correo, todavía no hay sesión: se guarda el perfil para completarlo al ingresar
+        if (!authData.session) {
+          try {
+            localStorage.setItem('arnexu_perfil_pendiente', JSON.stringify({ email: email, telefono: telefono || null, nombre_completo: nombreCompleto, nombre_usuario: nombreUsuario, rol: rol }));
+          } catch (e) { /* si no se puede guardar, se crea un perfil básico al ingresar */ }
+          mostrarNotificacion('Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.');
+          setTimeout(() => { window.location.href = 'index.html'; }, 3500);
+          return;
+        }
 
         // 2. Subir foto de perfil (si existe)
         let fotoUrl = null;
@@ -259,7 +273,7 @@
           .insert([{
             id: authData.user.id,
             email: email,
-            telefono: telefono,
+            telefono: telefono || null,
             nombre_completo: nombreCompleto,
             nombre_usuario: nombreUsuario,
             foto_perfil: fotoUrl,

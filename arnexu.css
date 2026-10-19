@@ -1119,3 +1119,44 @@ footer { border-top: 1px solid var(--borde) !important; background: transparent 
 .ciu-nombre mark { background: none; color: var(--acento); font-weight: 800; }
 .ciu-pais { color: var(--gris-neon); font-size: 12px; font-weight: 500; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ciu-estado { padding: 13px; color: var(--gris-neon); font-size: 13px; }
+
+/* =====================================================================
+   Arnexu: necesidades, ofertas, hitos y Mi Lab privado
+   ===================================================================== */
+.puerta { margin: 4px 0 18px; padding: 18px; border-radius: var(--radio); background: var(--grad-suave); border: 1px solid rgba(45,245,176,.28); }
+.puerta-titulo { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--acento); margin-bottom: 12px; }
+.puerta-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.puerta-chip { background: rgba(255,255,255,.06); border: 1px solid var(--borde-fuerte); color: var(--blanco); padding: 10px 16px; border-radius: 999px; font: 600 13px 'Montserrat', sans-serif; cursor: pointer; transition: transform .2s, background .2s, border-color .2s; }
+.puerta-chip:hover { transform: translateY(-2px); border-color: rgba(45,245,176,.6); }
+.puerta-chip.activa { background: var(--grad); color: #04130d; border-color: transparent; box-shadow: var(--glow); }
+.orden-feed { display: flex; gap: 6px; margin-top: 14px; }
+.orden-op { background: transparent; border: 1px solid var(--borde); color: var(--gris-neon); padding: 6px 12px; border-radius: 999px; font: 600 12px 'Montserrat', sans-serif; cursor: pointer; }
+.orden-op.activa { color: var(--acento); border-color: rgba(45,245,176,.5); background: rgba(45,245,176,.08); }
+
+.necesita { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; padding: 12px 14px; border-radius: 14px; background: rgba(45,245,176,.07); border: 1px dashed rgba(45,245,176,.45); }
+.necesita-titulo { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--acento); margin-right: 4px; }
+.chip-necesidad { background: rgba(45,245,176,.14); border-color: rgba(45,245,176,.5); color: #d6fff0; }
+.chip-movimiento { background: rgba(255,140,66,.14); border-color: rgba(255,140,66,.55); color: #ffb27a; margin-left: 6px; }
+.chip-privado { background: rgba(124,92,255,.14); border-color: rgba(124,92,255,.5); color: #cdbfff; }
+
+.hitos-bloque { margin: 14px 0; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid var(--borde); }
+.hitos-titulo { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--gris-neon); margin-bottom: 8px; }
+.hito-item { padding: 8px 0 8px 14px; border-left: 2px solid var(--acento); margin-bottom: 4px; }
+.hito-cab { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.hito-cab span { color: var(--gris-neon); font-size: 12px; }
+.hito-item p { margin: 4px 0 0; color: #b4bdd1; font-size: 13px; line-height: 1.5; }
+
+.ax-check.activa { background: rgba(45,245,176,.14); border-color: var(--acento); color: var(--acento); }
+button.ax-check { font-family: inherit; color: var(--blanco); }
+
+.lab-privado-aviso { padding: 14px 16px; border-radius: 14px; margin-bottom: 16px; background: rgba(124,92,255,.10); border: 1px solid rgba(124,92,255,.4); font-size: 14px; line-height: 1.5; }
+.lab-item { display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--borde); }
+.lab-seg { display: inline-flex; border-radius: 999px; overflow: hidden; border: 1px solid var(--borde-fuerte); flex-shrink: 0; }
+.lab-seg button { background: transparent; border: none; color: var(--gris-neon); padding: 8px 13px; font: 600 12px 'Montserrat', sans-serif; cursor: pointer; transition: background .2s, color .2s; }
+.lab-seg button:hover { color: var(--blanco); background: rgba(255,255,255,.06); }
+.lab-seg button.v0 { background: rgba(255,255,255,.12); color: var(--blanco); }
+.lab-seg button.v1 { background: rgba(255,208,86,.18); color: #ffd056; }
+.lab-seg button.v2 { background: var(--grad); color: #04130d; }
+.lab-notas { width: 100%; margin-top: 12px; min-height: 70px; padding: 12px 14px; border-radius: 12px; resize: vertical; font-family: inherit; font-size: 14px; border: 1px solid var(--borde-fuerte); background: rgba(0,0,0,.3); color: var(--blanco); }
+.lab-notas:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 4px rgba(45,245,176,.14); }
+@media (max-width: 560px) { .lab-seg { width: 100%; } .lab-seg button { flex: 1; padding: 9px 6px; } }

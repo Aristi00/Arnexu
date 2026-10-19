@@ -2,7 +2,7 @@
    - Red primero: siempre intenta traer lo más nuevo; si no hay internet, usa lo guardado.
    - Nunca guarda llamadas a Supabase ni a otros dominios (datos siempre frescos y privados).
    - Recibe y muestra notificaciones push. */
-const VERSION = 'arnexu-v3';
+const VERSION = 'arnexu-v4';
 const PRECACHE = [
   'offline.html', 'arnexu.css', 'arnexu.js', 'arnexu-icon-192.png', 'arnexu-icon-512.png', 'arnexu-64x (1).png'
 ];

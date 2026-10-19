@@ -13,10 +13,10 @@
   <meta name="apple-mobile-web-app-title" content="Arnexu">
   <title>Inicio | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
+  <link rel="stylesheet" href="arnexu.css?v=3.1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="push-config.js?v=3.0.0"></script>
-  <script src="arnexu.js?v=3.0.0"></script>
+  <script src="push-config.js?v=3.1.0"></script>
+  <script src="arnexu.js?v=3.1.0"></script>
   <style>
     .comentario-item {
       background: rgba(255,255,255,0.03);
@@ -98,12 +98,21 @@
 
   <div class="container" style="margin-top: 30px;">
     <h2 class="titulo-pagina">Descubre <span class="grad-texto">proyectos</span></h2>
-    <p class="sub-pagina">Ideas reales buscando impulso. Filtra, comenta y envía tu señal de interés.</p>
+    <p class="sub-pagina">Aquí no se publican fotos: se publican <strong>necesidades</strong>. Encuentra un proyecto que te necesite y haz tu oferta.</p>
 
     <div class="tabs-feed" role="tablist" aria-label="Vista del feed">
       <button class="tab-feed activa" id="tabTodos" role="tab" onclick="cambiarVista('todos')">🌐 Todos</button>
       <button class="tab-feed" id="tabParaTi" role="tab" onclick="cambiarVista('parati')">⭐ Para ti</button>
       <button class="tab-feed" onclick="Proyectos.abrirModalTesis(function () { cambiarVista('parati'); })">🎯 Mi tesis de inversión</button>
+    </div>
+
+    <div class="puerta" id="puerta">
+      <div class="puerta-titulo">¿Cómo quieres participar hoy?</div>
+      <div class="puerta-chips" id="puertaChips" role="group" aria-label="Cómo quieres participar"></div>
+      <div class="orden-feed" id="ordenFeed" role="group" aria-label="Orden de los proyectos">
+        <button type="button" class="orden-op activa" data-orden="recientes">✨ Recientes</button>
+        <button type="button" class="orden-op" data-orden="movimiento">🔥 Más movimiento</button>
+      </div>
     </div>
 
     <div class="filtros-bar" id="barraFiltros">
@@ -164,6 +173,9 @@
     window.__pubs = {};
     window.__senales = {};
     window.__bitacoras = {};
+    window.__hitos = {};
+    let necesidadFiltro = '';           // '' = todas; si no: capital | socio | talento | mentoria | clientes
+    let orden = 'recientes';            // 'recientes' | 'movimiento'
 
     async function inicializar() {
       await protegerPagina();
@@ -190,6 +202,25 @@
       let temporizador = null;
       document.getElementById('filtroBusqueda').addEventListener('input', () => { clearTimeout(temporizador); temporizador = setTimeout(recargar, 400); });
       ['filtroCategoria', 'filtroEtapa'].forEach(id => document.getElementById(id).addEventListener('change', recargar));
+
+      // ¿Cómo quieres participar hoy? → muestra los proyectos que piden justo eso
+      const puerta = document.getElementById('puertaChips');
+      const opciones = [['', '✨ Todo']].concat(Object.entries(Proyectos.NECESIDADES).map(([k, n]) => [k, n.icono + ' ' + n.participar]));
+      opciones.forEach(([valor, texto]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'puerta-chip' + (valor === '' ? ' activa' : '');
+        b.dataset.necesidad = valor; b.textContent = texto;
+        b.addEventListener('click', () => {
+          necesidadFiltro = valor;
+          puerta.querySelectorAll('.puerta-chip').forEach(c => c.classList.toggle('activa', c.dataset.necesidad === valor));
+          recargar();
+        });
+        puerta.appendChild(b);
+      });
+      document.querySelectorAll('#ordenFeed .orden-op').forEach(b => b.addEventListener('click', () => {
+        orden = b.dataset.orden;
+        document.querySelectorAll('#ordenFeed .orden-op').forEach(c => c.classList.toggle('activa', c === b));
+        recargar();
+      }));
 
       const boton = document.getElementById('btnFiltros');
       boton.addEventListener('click', () => {
@@ -220,7 +251,7 @@
     }
 
     function hayFiltros(f) {
-      return !!(f.q || f.categoria || f.etapa || f.ciudad);
+      return !!(f.q || f.categoria || f.etapa || f.ciudad || necesidadFiltro);
     }
 
     // Etiquetas con los filtros activos (cada una se quita con ✕) y contador en el botón
@@ -247,6 +278,8 @@
     function limpiarFiltros() {
       ['filtroBusqueda', 'filtroCategoria', 'filtroEtapa', 'filtroCiudad'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('filtroCiudad').removeAttribute('data-valor');
+      necesidadFiltro = '';
+      document.querySelectorAll('#puertaChips .puerta-chip').forEach(c => c.classList.toggle('activa', c.dataset.necesidad === ''));
       recargar();
     }
 
@@ -255,6 +288,7 @@
       document.getElementById('tabTodos').classList.toggle('activa', nueva === 'todos');
       document.getElementById('tabParaTi').classList.toggle('activa', nueva === 'parati');
       document.getElementById('barraFiltros').style.display = nueva === 'todos' ? 'block' : 'none';
+      document.getElementById('puerta').style.display = nueva === 'todos' ? 'block' : 'none';
       recargar();
     }
 
@@ -297,9 +331,11 @@
         if (f.categoria) q = q.eq('categoria', f.categoria);
         if (f.etapa) q = q.eq('etapa', f.etapa);
         if (f.ciudad) q = q.ilike('ciudad', `%${f.ciudad}%`);
+        if (necesidadFiltro) q = q.contains('necesidades', [necesidadFiltro]);
         if (f.q) q = q.or(`titulo.ilike.%${f.q}%,descripcion.ilike.%${f.q}%`);
 
         const desde = pagina * POR_PAGINA;
+        if (orden === 'movimiento') q = q.order('ultimo_hito_en', { ascending: false, nullsFirst: false });
         const { data, error } = await q.order('created_at', { ascending: false }).range(desde, desde + POR_PAGINA);
         if (token !== ordenToken) return;
         if (error) throw error;
@@ -374,12 +410,15 @@
     async function cargarExtras(lista) {
       const ids = lista.map(p => p.id);
       if (!ids.length) return;
-      const [s, b] = await Promise.all([
-        window.supabaseClient.from('senales_interes').select('publicacion_id, monto, nota').eq('usuario_id', usuarioActual.id).in('publicacion_id', ids),
-        window.supabaseClient.from('bitacoras').select('id, publicacion_id, publica').in('publicacion_id', ids)
+      const [s, b, h] = await Promise.all([
+        window.supabaseClient.from('senales_interes').select('publicacion_id, tipo, monto, nota').eq('usuario_id', usuarioActual.id).in('publicacion_id', ids),
+        window.supabaseClient.from('bitacoras').select('id, publicacion_id, publica').in('publicacion_id', ids),
+        window.supabaseClient.from('hitos').select('publicacion_id, titulo, detalle, created_at').in('publicacion_id', ids).order('created_at', { ascending: false }).limit(300)
       ]);
       (s.data || []).forEach(x => { window.__senales[x.publicacion_id] = x; });
       (b.data || []).forEach(x => { window.__bitacoras[x.publicacion_id] = x; });
+      ids.forEach(id => { window.__hitos[id] = []; });
+      (h.data || []).forEach(x => { const l = window.__hitos[x.publicacion_id]; if (l && l.length < 2) l.push(x); });
     }
 
     function generarHTMLArchivos(archivos) {
@@ -416,10 +455,24 @@
 
     function botonSenalHTML(pub) {
       if (pub.usuario_id === usuarioActual.id) {
-        return `<button class="publicacion-accion btn-senal" onclick="verSenalesRecibidas('${pub.id}')" id="senal-${pub.id}">💰 <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> señal(es) recibidas</button>`;
+        return `<button class="publicacion-accion btn-senal" onclick="verSenalesRecibidas('${pub.id}')" id="senal-${pub.id}">✋ <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> oferta(s) recibidas</button>`;
       }
       const mi = window.__senales[pub.id];
-      return `<button class="publicacion-accion btn-senal ${mi ? 'activa' : ''}" onclick="abrirSenal('${pub.id}')" id="senal-${pub.id}" aria-label="Señal de interés">💰 <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> ${mi ? esc('Tu señal: ' + Proyectos.formatoUSD(mi.monto)) : 'Señal de interés'}</button>`;
+      const info = mi ? (Proyectos.TIPOS_OFERTA[mi.tipo || 'invertir'] || { icono: '✋', texto: 'Oferta' }) : null;
+      const etiqueta = mi ? 'Tu oferta: ' + info.icono + ' ' + info.texto + (mi.monto ? ' · ' + Proyectos.formatoUSD(mi.monto) : '') : 'Quiero participar';
+      return `<button class="publicacion-accion btn-senal ${mi ? 'activa' : ''}" onclick="abrirSenal('${pub.id}')" id="senal-${pub.id}" aria-label="Quiero participar en este proyecto">✋ <span id="senal-count-${pub.id}">${pub.senales_count || 0}</span> ${esc(etiqueta)}</button>`;
+    }
+
+    function hitosHTML(pub) {
+      const lista = window.__hitos[pub.id] || [];
+      if (!lista.length) return '';
+      return `<div class="hitos-bloque"><div class="hitos-titulo">🏁 Últimos hitos</div>${lista.map(h => `
+        <div class="hito-item"><div class="hito-cab"><strong>${esc(h.titulo)}</strong><span>${formatearFecha(h.created_at)}</span></div>${h.detalle ? `<p>${esc(h.detalle)}</p>` : ''}</div>`).join('')}</div>`;
+    }
+
+    function publicarHito(pubId) {
+      const pub = window.__pubs[pubId];
+      if (pub) Proyectos.abrirModalHito(pub, () => recargar());
     }
 
     function tarjetaHTML(pub, match) {
@@ -439,11 +492,13 @@
               </div>
             </div>
             ${razones}
-            <div class="publicacion-badge">${tipoEmoji[pub.tipo] || '📌'} ${tipoTexto[pub.tipo] || 'Otro'}</div>
+            <div class="publicacion-badge">${tipoEmoji[pub.tipo] || '📌'} ${tipoTexto[pub.tipo] || 'Otro'}</div>${Proyectos.enMovimiento(pub) ? ' <span class="chip chip-movimiento">🔥 En movimiento</span>' : ''}
             <h2 class="publicacion-titulo">${esc(pub.titulo)}</h2>
             <p class="publicacion-descripcion">${esc(pub.descripcion)}</p>
             <span class="publicacion-categoria">${esc(pub.categoria)}</span>
+            ${Proyectos.necesidadesHTML(pub)}
             ${Proyectos.chipsProyecto(pub)}
+            ${hitosHTML(pub)}
             ${generarHTMLArchivos(pub.archivos)}
             <div class="publicacion-acciones">
               ${botonSenalHTML(pub)}
@@ -451,7 +506,7 @@
               <button class="publicacion-accion" onclick="verPerfil('${pub.usuario_id}')">👤 Ver perfil</button>
               <button class="publicacion-accion" onclick="toggleComentarios('${pub.id}')">💬 Comentarios</button>
               ${bit && (bit.publica || esDueno) ? `<button class="publicacion-accion" onclick="window.location.href='bitacora.html?id=${bit.id}'">📓 Bitácora${esDueno && !bit.publica ? ' (privada)' : ''}</button>` : ''}
-              ${esDueno ? `<button class="publicacion-accion" onclick="window.location.href='lab.html'">🧪 Lab · pronto</button>` : `<button class="publicacion-accion" onclick="reportarContenido('publicacion', '${pub.id}')">🚩 Reportar</button>`}
+              ${esDueno ? `<button class="publicacion-accion" onclick="publicarHito('${pub.id}')">🏁 Publicar hito</button>` : `<button class="publicacion-accion" onclick="reportarContenido('publicacion', '${pub.id}')">🚩 Reportar</button>`}
             </div>
             <div id="comentarios-${pub.id}" class="comentarios-section" style="display: none;">
               <h4 style="margin-bottom: 15px; font-size: 16px;">💬 Comentarios</h4>
@@ -470,7 +525,7 @@
       const pub = window.__pubs[pubId];
       if (!pub) return;
       Proyectos.abrirModalSenal(pub, window.__senales[pubId] || null, (estado, countRetirado) => {
-        if (estado) window.__senales[pubId] = { publicacion_id: pubId, monto: estado.monto, nota: estado.nota };
+        if (estado) window.__senales[pubId] = { publicacion_id: pubId, tipo: estado.tipo, monto: estado.monto, nota: estado.nota };
         else delete window.__senales[pubId];
         const count = estado ? estado.count : countRetirado;
         if (count !== undefined && count !== null) pub.senales_count = count;

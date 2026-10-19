@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#070910">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="48x48" href="arnexu-favicon.png">
@@ -11,14 +12,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Arnexu">
-  <title>Arnexu Lab | Arnexu</title>
+  <title>Mi Lab | Arnexu</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="arnexu.css?v=3.0.0">
+  <link rel="stylesheet" href="arnexu.css?v=3.1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="push-config.js?v=3.0.0"></script>
-  <script src="arnexu.js?v=3.0.0"></script>
+  <script src="push-config.js?v=3.1.0"></script>
+  <script src="arnexu.js?v=3.1.0"></script>
 </head>
-<body data-requiere="config">
+<body data-requiere="config,moderacion,proyectos">
   <nav class="navbar">
     <div class="navbar-content">
             <a href="inicio.html"><img src="arnexu-64x (1).png" alt="Logo Arnexu"></a>
@@ -63,48 +64,170 @@
     </div>
   </nav>
 
-  <div class="container" style="max-width: 760px; margin-bottom: 60px;">
-    <span class="chip chip-lab" style="margin-bottom: 14px;">⏳ Próximamente</span>
-    <h1 class="titulo-pagina">🧪 Arnexu <span class="grad-texto">Lab</span></h1>
-    <p class="sub-pagina">Un comité de inversión virtual que prepara tu proyecto antes de hablar con inversores.</p>
-
-    <div class="lab-caja">
-      <h2 style="font-size: 20px; margin-bottom: 14px;">Cómo va a funcionar</h2>
-      <ul class="auth-puntos" style="max-width: none;">
-        <li><span class="ico">1</span> Responde 6 preguntas sobre tu propuesta, mercado, finanzas, tracción, equipo y riesgos.</li>
-        <li><span class="ico">2</span> Recibe un puntaje de preparación de 0 a 100 con tus fortalezas.</li>
-        <li><span class="ico">3</span> Cierra las brechas con un plan de mejora que se guarda en tu bitácora.</li>
-      </ul>
-    </div>
-
-    <div class="lab-caja" aria-label="Ejemplo ilustrativo">
-      <div style="font-size: 12px; color: var(--gris-neon); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .08em;">Ejemplo ilustrativo · no es un resultado real</div>
-      <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap; margin-bottom: 18px;">
-        <svg viewBox="0 0 120 120" width="140" height="140" role="img" aria-label="Puntaje de ejemplo: 72 de 100">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2df5b0"/><stop offset="1" stop-color="#19c7ff"/></linearGradient></defs>
-          <circle cx="60" cy="60" r="52" fill="none" stroke="#1f2538" stroke-width="10"/>
-          <circle cx="60" cy="60" r="52" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-dasharray="235 327" transform="rotate(-90 60 60)"/>
-          <text x="60" y="70" text-anchor="middle" font-size="32" font-weight="800" fill="#f5f7fb">72</text>
-        </svg>
-        <div style="flex: 1; min-width: 200px;">
-          <div style="font-size: 20px; font-weight: 700; margin-bottom: 6px;">Buen camino: ajusta unos detalles</div>
-          <div style="color: var(--gris-neon); line-height: 1.5;">Tu propuesta es clara y el mercado está bien definido. Falta respaldar tus finanzas con números.</div>
-        </div>
-      </div>
-      <div class="lab-barra"><span class="nombre">Propuesta</span><div class="pista"><div style="width: 85%"></div></div><span class="valor">85</span></div>
-      <div class="lab-barra"><span class="nombre">Mercado</span><div class="pista"><div style="width: 76%"></div></div><span class="valor">76</span></div>
-      <div class="lab-barra"><span class="nombre">Finanzas</span><div class="pista"><div style="width: 52%"></div></div><span class="valor">52</span></div>
-      <div class="lab-barra"><span class="nombre">Tracción</span><div class="pista"><div style="width: 68%"></div></div><span class="valor">68</span></div>
-      <div class="lab-barra"><span class="nombre">Equipo</span><div class="pista"><div style="width: 80%"></div></div><span class="valor">80</span></div>
-      <div class="lab-barra"><span class="nombre">Riesgos</span><div class="pista"><div style="width: 71%"></div></div><span class="valor">71</span></div>
-      <div class="lab-aviso">Cuando esté disponible será una guía de preparación; no es asesoría financiera ni garantiza inversión.</div>
-    </div>
-
-    <a href="inicio.html" class="btn btn-primary">← Volver al inicio</a>
+  <div class="container" style="max-width: 780px; margin-bottom: 70px;">
+    <span class="chip chip-privado" style="margin-bottom: 14px;">🔒 Solo tú ves esto</span>
+    <h1 class="titulo-pagina">🧪 Mi <span class="grad-texto">Lab</span></h1>
+    <p class="sub-pagina" id="subtitulo">Prepara tu proyecto para hablar con inversores y socios.</p>
+    <div id="lab" aria-live="polite"><div class="loading">Cargando tu laboratorio...</div></div>
   </div>
 
   <script>
-    protegerPagina();
+    const params = new URLSearchParams(window.location.search);
+    const pubId = params.get('id');
+    let usuarioActual = null, proyecto = null, existe = false;
+    let estado = {}, notas = {};
+    let temporizador = null;
+
+    function el(tag, estilos, texto) {
+      const n = document.createElement(tag);
+      if (estilos) n.style.cssText = estilos;
+      if (texto !== undefined) n.textContent = texto;
+      return n;
+    }
+
+    async function inicializar() {
+      await protegerPagina();
+      usuarioActual = await getCurrentUser();
+      if (!usuarioActual) return;
+      if (!esUUID(pubId)) { window.location.href = 'perfil.html'; return; }
+
+      const { data: pub } = await window.supabaseClient.from('publicaciones').select('id, usuario_id, titulo').eq('id', pubId).maybeSingle();
+      if (!pub || pub.usuario_id !== usuarioActual.id) { window.location.href = 'perfil.html'; return; }
+      proyecto = pub;
+      document.getElementById('subtitulo').textContent = 'Proyecto: ' + pub.titulo;
+
+      const { data: fila } = await window.supabaseClient.from('lab_privado').select('estado, notas').eq('publicacion_id', pubId).eq('usuario_id', usuarioActual.id).maybeSingle();
+      if (fila) { existe = true; estado = fila.estado || {}; notas = fila.notas || {}; }
+      dibujar();
+    }
+
+    // ---------- guardado automático ----------
+    function marcarGuardado(texto) { const s = document.getElementById('guardado'); if (s) s.textContent = texto; }
+    function programarGuardado() {
+      marcarGuardado('Guardando…');
+      clearTimeout(temporizador);
+      temporizador = setTimeout(guardar, 700);
+    }
+    async function guardar() {
+      const carga = { estado, notas };
+      let error;
+      if (existe) ({ error } = await window.supabaseClient.from('lab_privado').update(carga).eq('usuario_id', usuarioActual.id).eq('publicacion_id', pubId));
+      else { ({ error } = await window.supabaseClient.from('lab_privado').insert([{ usuario_id: usuarioActual.id, publicacion_id: pubId, ...carga }])); if (!error) existe = true; }
+      if (error) { console.error(error); marcarGuardado('⚠️ No se pudo guardar'); mostrarNotificacion('No se pudo guardar tu avance', 'error'); }
+      else marcarGuardado('Guardado ✓');
+    }
+
+    // ---------- pantalla ----------
+    const ETIQUETAS = ['Pendiente', 'En progreso', 'Listo'];
+
+    function anillo(p) {
+      const C = 2 * Math.PI * 52, ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 120 120'); svg.setAttribute('width', '140'); svg.setAttribute('height', '140');
+      svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Preparación ' + p + '%'); svg.id = 'anillo';
+      const base = document.createElementNS(ns, 'circle');
+      [['cx', 60], ['cy', 60], ['r', 52], ['fill', 'none'], ['stroke', '#1f2538'], ['stroke-width', 10]].forEach(([k, v]) => base.setAttribute(k, v));
+      const arco = document.createElementNS(ns, 'circle');
+      [['cx', 60], ['cy', 60], ['r', 52], ['fill', 'none'], ['stroke', '#2df5b0'], ['stroke-width', 10], ['stroke-linecap', 'round'], ['stroke-dasharray', `${(C * p) / 100} ${C}`], ['transform', 'rotate(-90 60 60)']].forEach(([k, v]) => arco.setAttribute(k, v));
+      const t = document.createElementNS(ns, 'text');
+      [['x', 60], ['y', 70], ['text-anchor', 'middle'], ['font-size', 28], ['font-weight', 800], ['fill', '#f5f7fb']].forEach(([k, v]) => t.setAttribute(k, v));
+      t.textContent = p + '%';
+      svg.append(base, arco, t); return svg;
+    }
+
+    function nivel(p) {
+      if (p >= 85) return 'Listo para presentarte';
+      if (p >= 60) return 'Muy avanzado: cierra los últimos detalles';
+      if (p >= 30) return 'Buen avance: sigue completando';
+      return 'Apenas empiezas: elige tus primeros pasos';
+    }
+
+    function pendientes() {
+      const lista = [];
+      [0, 1].forEach(nivelEstado => Proyectos.LAB.forEach(a => a.items.forEach(it => { if ((Number(estado[it.id]) || 0) === nivelEstado) lista.push({ area: a.nombre, it, nivelEstado }); })));
+      return lista;
+    }
+
+    function resumen() {
+      const p = Proyectos.progresoLab(estado);
+      const c = el('div'); c.className = 'lab-caja'; c.id = 'resumen';
+      const fila = el('div', 'display:flex; gap:24px; align-items:center; flex-wrap:wrap;');
+      const info = el('div', 'flex:1; min-width:220px;');
+      info.append(el('div', 'font-size:13px; color: var(--gris-neon);', 'Tu preparación (autoevaluación)'), el('div', 'font-size:22px; font-weight:800; margin:6px 0;', nivel(p)));
+      const sig = pendientes().slice(0, 3);
+      if (sig.length) {
+        info.append(el('div', 'font-size:13px; color: var(--gris-neon); margin-top:10px;', 'Siguientes pasos'));
+        const ul = el('ul', 'margin: 6px 0 0 18px; line-height:1.6; font-size:14px;');
+        sig.forEach(x => ul.append(el('li', '', x.it.texto)));
+        info.append(ul);
+      } else info.append(el('div', 'color: var(--acento); font-weight:700;', '🎉 Completaste toda la lista'));
+      fila.append(anillo(p), info); c.append(fila); return c;
+    }
+
+    function refrescarResumen() {
+      const nuevo = resumen(); document.getElementById('resumen').replaceWith(nuevo);
+      document.querySelectorAll('[data-area-progreso]').forEach(n => {
+        const a = Proyectos.LAB.find(x => x.id === n.dataset.areaProgreso);
+        n.textContent = a.items.filter(it => (Number(estado[it.id]) || 0) === 2).length + '/' + a.items.length + ' listos';
+      });
+    }
+
+    function areaHTML(a) {
+      const c = el('div'); c.className = 'lab-caja';
+      const cab = el('div', 'display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;');
+      cab.append(el('h3', 'font-size:18px; margin:0;', a.nombre));
+      const pr = el('span', 'font-size:12px; color: var(--gris-neon);', a.items.filter(it => (Number(estado[it.id]) || 0) === 2).length + '/' + a.items.length + ' listos'); pr.dataset.areaProgreso = a.id;
+      cab.append(pr); c.append(cab);
+      a.items.forEach(it => {
+        const fila = el('div'); fila.className = 'lab-item';
+        const txt = el('div', 'flex:1; min-width:200px;'); txt.append(el('div', 'font-weight:600;', it.texto), el('div', 'font-size:12px; color: var(--gris-neon); margin-top:2px;', it.pista));
+        const seg = el('div'); seg.className = 'lab-seg'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', it.texto);
+        ETIQUETAS.forEach((et, valor) => {
+          const b = el('button', '', et); b.type = 'button'; b.dataset.item = it.id; b.dataset.valor = String(valor);
+          const act = (Number(estado[it.id]) || 0) === valor; b.setAttribute('aria-pressed', String(act)); if (act) b.classList.add('activa', 'v' + valor);
+          b.addEventListener('click', () => {
+            estado[it.id] = valor;
+            seg.querySelectorAll('button').forEach((x, i) => { const on = i === valor; x.setAttribute('aria-pressed', String(on)); x.className = on ? 'activa v' + i : ''; });
+            refrescarResumen(); programarGuardado();
+          });
+          seg.append(b);
+        });
+        fila.append(txt, seg); c.append(fila);
+      });
+      const ta = el('textarea'); ta.className = 'lab-notas'; ta.maxLength = 1500; ta.placeholder = 'Notas privadas de esta área…'; ta.value = notas[a.id] || ''; ta.setAttribute('aria-label', 'Notas de ' + a.nombre);
+      ta.addEventListener('input', () => { notas[a.id] = ta.value; programarGuardado(); });
+      c.append(ta); return c;
+    }
+
+    async function pendientesABitacora(btn) {
+      const lista = pendientes();
+      if (!lista.length) { mostrarNotificacion('No tienes pendientes: ¡todo está listo!'); return; }
+      btn.disabled = true;
+      try {
+        const { data: bit } = await window.supabaseClient.from('bitacoras').select('id').eq('publicacion_id', pubId).maybeSingle();
+        if (!bit) throw new Error('sin bitácora');
+        const contenido = ('Preparación: ' + Proyectos.progresoLab(estado) + '%\n\nPendientes:\n' + lista.map((x, i) => `${i + 1}. [${x.area}] ${x.it.texto}${x.nivelEstado === 1 ? ' (en progreso)' : ''}`).join('\n')).slice(0, 9000);
+        const { error } = await window.supabaseClient.from('bitacora_entradas').insert([{ bitacora_id: bit.id, usuario_id: usuarioActual.id, titulo: 'Plan de preparación (Mi Lab)', contenido }]);
+        if (error) throw error;
+        mostrarNotificacion('Pendientes guardados en tu bitácora');
+        btn.textContent = '✅ Guardado · abrir bitácora'; btn.disabled = false; btn.onclick = () => { window.location.href = 'bitacora.html?id=' + bit.id; };
+      } catch (e) { console.error(e); mostrarNotificacion('No se pudo guardar en la bitácora', 'error'); btn.disabled = false; }
+    }
+
+    function dibujar() {
+      const cont = document.getElementById('lab');
+      const nodos = [resumen()];
+      Proyectos.LAB.forEach(a => nodos.push(areaHTML(a)));
+      const pie = el('div', 'display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top: 6px;');
+      const b = el('button', '', '📓 Guardar pendientes en mi bitácora'); b.type = 'button'; b.className = 'btn btn-secondary'; b.addEventListener('click', () => pendientesABitacora(b));
+      const g = el('span', 'font-size:13px; color: var(--gris-neon);', existe ? 'Guardado ✓' : 'Se guarda solo mientras avanzas'); g.id = 'guardado'; g.setAttribute('role', 'status');
+      pie.append(b, g);
+      const ia = el('div', 'margin-top:18px; font-size:13px; color: var(--gris-neon);', '🤖 Evaluación con inteligencia artificial: próximamente. Tu Lab es privado y nunca se muestra en tu proyecto.');
+      nodos.push(pie, ia);
+      cont.replaceChildren(...nodos);
+    }
+
+    inicializar();
   </script>
 <script>
 (function () {

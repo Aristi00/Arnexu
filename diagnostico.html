@@ -54,7 +54,7 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const TABLAS_BASE = ['usuarios', 'publicaciones', 'comentarios', 'chats', 'mensajes'];
-    const TABLAS_NUEVAS = ['mensajes_no_leidos', 'mensajes_ocultos', 'contactos_proyectos', 'badges', 'bloqueos', 'reportes', 'senales_interes', 'bitacoras', 'bitacora_entradas', 'tesis_inversor', 'push_subscriptions'];
+    const TABLAS_NUEVAS = ['mensajes_no_leidos', 'mensajes_ocultos', 'contactos_proyectos', 'badges', 'bloqueos', 'reportes', 'senales_interes', 'bitacoras', 'bitacora_entradas', 'hitos', 'lab_privado', 'tesis_inversor', 'push_subscriptions'];
     const ARCHIVOS = [
       ['arnexu.js', 'Código de la web (arnexu.js)', true], ['arnexu.css', 'Diseño (arnexu.css)', true],
       ['arnexu-ciudades.txt', 'Lista de ciudades del mundo', false], ['manifest.webmanifest', 'App instalable (manifest)', false],
@@ -148,8 +148,13 @@
         else agregar(G3, 'ok', t, (count === null ? '' : count + ' fila(s) visibles para ti') + (base ? '' : ''));
       }
       {
-        const { error } = await sb.from('publicaciones').select('etapa, ciudad, monto_busca, senales_count, oculta, lab_puntaje').limit(1);
-        agregar(G3, error ? 'error' : 'ok', 'Columnas nuevas de publicaciones (etapa, ciudad, monto…)', error ? explicar(error, 'publicaciones') : '');
+        const { error } = await sb.from('publicaciones').select('etapa, ciudad, monto_busca, senales_count, oculta, necesidades, hitos_count, ultimo_hito_en').limit(1);
+        agregar(G3, error ? 'error' : 'ok', 'Columnas nuevas de publicaciones (etapa, ciudad, monto, necesidades, hitos…)', error ? explicar(error, 'publicaciones') : '');
+      }
+
+      {
+        const { error } = await sb.from('senales_interes').select('tipo, estado, monto').limit(1);
+        agregar(G3, error ? 'error' : 'ok', 'Columnas de ofertas (tipo y estado)', error ? explicar(error, 'senales_interes') : '');
       }
 
       // 4. tu cuenta

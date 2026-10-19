@@ -1,7 +1,7 @@
 /* Arnexu · código completo de la web (un solo archivo) */
 /* ===== config ===== */
 (window.__arnexuModulos = window.__arnexuModulos || {}).config = true;
-const ARNEXU_VERSION = '3.0.0';
+const ARNEXU_VERSION = '3.1.0';
 const SUPABASE_URL = 'https://ifdajpaxbvpnbgeuohej.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmZGFqcGF4YnZwbmJnZXVvaGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MzA4ODMsImV4cCI6MjA4MTQwNjg4M30._2ogsIF2R5knYgea2mg5KE3TVlkEVt13TIyBZ69Yry4';
 
@@ -68,11 +68,42 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 }
 
 // Proteger páginas (redirigir si no está autenticado)
+// Garantiza que la cuenta tenga su fila en "usuarios". Si faltara (por ejemplo, si el correo se confirmó
+// después de registrarse), la completa con los datos del registro o con unos básicos.
+async function asegurarPerfil(user) {
+  if (!user || !user.id) return;
+  const clave = 'arnexu_perfil_ok_' + user.id;
+  try { if (sessionStorage.getItem(clave)) return; } catch (e) { /* sin sessionStorage */ }
+  const { data: existe, error } = await window.supabaseClient.from('usuarios').select('id').eq('id', user.id).maybeSingle();
+  if (error) return;
+  if (!existe) {
+    let pend = null;
+    try { pend = JSON.parse(localStorage.getItem('arnexu_perfil_pendiente') || 'null'); } catch (e) { /* sin datos guardados */ }
+    const usar = pend && pend.email && user.email && String(pend.email).toLowerCase() === String(user.email).toLowerCase() ? pend : null;
+    const base = (String(user.email || 'usuario').split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20)) || 'usuario';
+    const fila = {
+      id: user.id, email: user.email || null, telefono: usar ? (usar.telefono || null) : (user.phone || null),
+      nombre_completo: usar ? usar.nombre_completo : base, nombre_usuario: usar ? usar.nombre_usuario : base + '_' + String(user.id).slice(0, 4),
+      foto_perfil: null, rol: usar && usar.rol ? usar.rol : 'ambos', biografia: ''
+    };
+    let r = await window.supabaseClient.from('usuarios').insert([fila]);
+    if (r.error && /duplicate|unique/i.test(r.error.message || '')) {
+      fila.nombre_usuario = base + '_' + String(user.id).slice(0, 8);
+      r = await window.supabaseClient.from('usuarios').insert([fila]);
+    }
+    if (r.error) { console.warn('No se pudo crear tu perfil automáticamente:', r.error); return; }
+    try { localStorage.removeItem('arnexu_perfil_pendiente'); } catch (e) { /* ok */ }
+  }
+  try { sessionStorage.setItem(clave, '1'); } catch (e) { /* ok */ }
+}
+
 async function protegerPagina() {
   const session = await checkSession();
   if (!session) {
     window.location.href = 'index.html';
+    return;
   }
+  await asegurarPerfil(session.user);
 }
 
 console.log('✅ Configuración de Supabase cargada');
@@ -529,6 +560,54 @@ document.addEventListener('DOMContentLoaded', () => {
     escalando: '🚀 Escalando'
   };
 
+  // Lo que un proyecto puede NECESITAR, y la oferta con la que otras personas pueden responder
+  const NECESIDADES = {
+    capital:  { icono: '💰', texto: 'Capital',          oferta: 'invertir', participar: 'Invertir' },
+    socio:    { icono: '🤝', texto: 'Socio',            oferta: 'socio',    participar: 'Ser socio' },
+    talento:  { icono: '🛠️', texto: 'Talento',          oferta: 'talento',  participar: 'Ofrecer talento' },
+    mentoria: { icono: '🧠', texto: 'Mentoría',         oferta: 'mentoria', participar: 'Mentorear' },
+    clientes: { icono: '🛒', texto: 'Clientes piloto',  oferta: 'cliente',  participar: 'Ser cliente piloto' }
+  };
+
+  const TIPOS_OFERTA = {
+    invertir: { icono: '💰', texto: 'Invertir',        ayuda: 'Indica cuánto podrías invertir y, si quieres, una nota.' },
+    socio:    { icono: '🤝', texto: 'Ser socio',       ayuda: '¿Qué aportarías como socio (habilidades, dinero, contactos, tiempo)?' },
+    talento:  { icono: '🛠️', texto: 'Aportar talento', ayuda: '¿Qué habilidad aportas y cuántas horas por semana?' },
+    mentoria: { icono: '🧠', texto: 'Mentorear',       ayuda: '¿En qué temas puedes guiar a este equipo?' },
+    cliente:  { icono: '🛒', texto: 'Ser cliente piloto', ayuda: '¿Quién eres (persona o negocio) y cómo probarías el producto?' }
+  };
+
+  const ESTADOS_OFERTA = { nueva: 'Nueva', conversando: 'En conversación', aceptada: 'Aceptada', descartada: 'Descartada' };
+
+  // Mi Lab (privado): lista de preparación del proyecto. Cada punto: 0 pendiente · 1 en progreso · 2 listo
+  const LAB = [
+    { id: 'propuesta', nombre: 'Propuesta de valor', items: [
+      { id: 'p1', texto: 'Puedo explicar mi proyecto en una sola frase', pista: 'Si no se entiende en 10 segundos, no se recuerda.' },
+      { id: 'p2', texto: 'Defino con claridad el problema que resuelvo', pista: 'Un problema real y doloroso vale más que una gran idea.' },
+      { id: 'p3', texto: 'Sé en qué me diferencio de las alternativas actuales', pista: 'Incluye lo que la gente hace hoy sin tu solución.' } ] },
+    { id: 'mercado', nombre: 'Mercado', items: [
+      { id: 'm1', texto: 'Conozco a mi cliente ideal (quién es y dónde está)', pista: 'Descríbelo con nombre y apellido, no como "todo el mundo".' },
+      { id: 'm2', texto: 'Estimé el tamaño del mercado al que puedo llegar', pista: 'Cuántas personas o empresas, y cuánto pagarían.' },
+      { id: 'm3', texto: 'Conozco a mis 3 principales competidores', pista: 'Si dices que no tienes competencia, desconfían.' } ] },
+    { id: 'finanzas', nombre: 'Finanzas', items: [
+      { id: 'f1', texto: 'Tengo calculados mis costos mensuales', pista: 'Fijos y variables, incluyendo tu propio tiempo.' },
+      { id: 'f2', texto: 'Definí cómo gano dinero y a qué precio', pista: 'Modelo de ingresos y precio por cliente.' },
+      { id: 'f3', texto: 'Sé cuánto dinero necesito y en qué lo usaría', pista: 'Un monto con destino claro es creíble.' } ] },
+    { id: 'traccion', nombre: 'Tracción', items: [
+      { id: 't1', texto: 'Hablé con clientes reales sobre el problema', pista: 'Al menos 10 conversaciones, con lo aprendido anotado.' },
+      { id: 't2', texto: 'Tengo ventas, usuarios o personas en lista de espera', pista: 'Cualquier número real, por pequeño que sea.' },
+      { id: 't3', texto: 'Mido al menos un indicador clave cada semana', pista: 'Lo que no se mide no mejora.' } ] },
+    { id: 'equipo', nombre: 'Equipo', items: [
+      { id: 'e1', texto: 'Los roles clave del proyecto están cubiertos', pista: 'Producto, tecnología y ventas: ¿quién hace qué?' },
+      { id: 'e2', texto: 'Tenemos acordadas las responsabilidades y participaciones', pista: 'Mejor por escrito y desde el principio.' },
+      { id: 'e3', texto: 'Cuento con mentores o asesores', pista: 'Una voz con experiencia evita errores caros.' } ] },
+    { id: 'riesgos', nombre: 'Riesgos y legal', items: [
+      { id: 'r1', texto: 'Identifiqué mis 3 mayores riesgos y un plan B', pista: 'Mostrar que los ves te da credibilidad.' },
+      { id: 'r2', texto: 'Tengo clara la ruta legal (empresa, contratos)', pista: 'Consulta a un abogado para tu caso concreto.' },
+      { id: 'r3', texto: 'Protegí mi marca o lo que sea único', pista: 'Nombre, dominio y, si aplica, propiedad intelectual.' } ] }
+  ];
+  const LAB_TOTAL = LAB.reduce((n, a) => n + a.items.length, 0);
+
   const MONTO_MAX = 10000000000;
 
   // ---------- utilidades ----------
@@ -586,10 +665,42 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pub.etapa && ETAPAS[pub.etapa]) chips.push(`<span class="chip">${esc(ETAPAS[pub.etapa])}</span>`);
     if (pub.ciudad) chips.push(`<span class="chip">📍 ${esc(pub.ciudad)}</span>`);
     if (pub.monto_busca) chips.push(`<span class="chip chip-dinero">💰 Busca ${esc(formatoUSD(pub.monto_busca))}</span>`);
-    if (pub.lab_puntaje !== null && pub.lab_puntaje !== undefined) {
-      chips.push(`<span class="chip chip-lab" title="Puntaje de preparación Arnexu Lab">🧪 Lab ${Number(pub.lab_puntaje) | 0}/100</span>`);
-    }
     return chips.length ? `<div class="chips">${chips.join('')}</div>` : '';
+  }
+
+  // "Necesita: 💰 Capital · 🛠️ Talento": lo primero que ve quien llega a un proyecto
+  function necesidadesHTML(pub) {
+    const lista = (pub.necesidades || []).filter((n) => NECESIDADES[n]);
+    if (!lista.length) return '';
+    return `<div class="necesita"><span class="necesita-titulo">Necesita</span>${lista.map((n) =>
+      `<span class="chip chip-necesidad">${NECESIDADES[n].icono} ${esc(NECESIDADES[n].texto)}</span>`).join('')}</div>`;
+  }
+
+  // 🔥 si hubo algún hito en los últimos 14 días
+  function enMovimiento(pub) {
+    if (!pub.ultimo_hito_en) return false;
+    return (Date.now() - new Date(pub.ultimo_hito_en).getTime()) < 14 * 24 * 3600 * 1000;
+  }
+
+  // Progreso (0-100) de la lista de preparación de Mi Lab
+  function progresoLab(estado) {
+    const e = estado || {};
+    let suma = 0;
+    LAB.forEach((area) => area.items.forEach((it) => { suma += Math.min(2, Math.max(0, Number(e[it.id]) || 0)); }));
+    return Math.round((suma / (LAB_TOTAL * 2)) * 100);
+  }
+
+  // Selector de necesidades (casillas). Devuelve una función que entrega las elegidas.
+  function selectorNecesidades(contenedor, seleccion) {
+    contenedor.className = 'ax-checks';
+    contenedor.replaceChildren();
+    Object.entries(NECESIDADES).forEach(([clave, n]) => {
+      const lbl = document.createElement('label'); lbl.className = 'ax-check';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = clave; cb.checked = (seleccion || []).includes(clave);
+      lbl.append(cb, document.createTextNode(' ' + n.icono + ' ' + n.texto));
+      contenedor.appendChild(lbl);
+    });
+    return () => Array.from(contenedor.querySelectorAll('input:checked')).map((i) => i.value);
   }
 
   // ---------- modal genérico ----------
@@ -623,132 +734,174 @@ document.addEventListener('DOMContentLoaded', () => {
     return b;
   }
 
-  // ---------- SEÑAL DE INTERÉS ----------
-  // miSenal: { monto, nota } o null. alGuardar(estado) recibe { monto, nota, count } o null si se retiró
-  function abrirModalSenal(pub, miSenal, alGuardar) {
+  // ---------- OFERTAS (participar en un proyecto) ----------
+  // miOferta: { tipo, monto, nota } o null. alGuardar(estado, countRetirado): estado = { tipo, monto, nota, count } o null si se retiró
+  function abrirModalSenal(pub, miOferta, alGuardar) {
     abrirModal((caja, cerrar) => {
-      caja.setAttribute('aria-labelledby', 'tituloSenal');
-      const h = el('h3', '', '💰 Señal de interés');
-      h.id = 'tituloSenal';
-      const ayuda = el('p', '', `¿Cuánto podrías invertir en "${String(pub.titulo).slice(0, 80)}"? Solo el dueño del proyecto verá el monto. No es un compromiso legal.`);
+      caja.setAttribute('aria-labelledby', 'tituloOferta');
+      const h = el('h3', '', '✋ Quiero participar');
+      h.id = 'tituloOferta';
+      const ayuda = el('p', '', `Elige cómo quieres sumarte a "${String(pub.titulo).slice(0, 80)}". El dueño recibe tu oferta y puede escribirte. Nada de esto es un compromiso legal.`);
       ayuda.className = 'ayuda';
 
-      const lblMonto = el('label', '', 'Monto que invertirías (en dólares, solo el número)');
-      lblMonto.htmlFor = 'senalMonto';
-      const monto = el('input');
-      monto.type = 'text';
-      monto.id = 'senalMonto';
-      monto.inputMode = 'numeric';
-      monto.autocomplete = 'off';
-      monto.placeholder = 'Ej: 5000';
-      monto.maxLength = 11;
-      monto.value = miSenal ? String(miSenal.monto) : '';
-      campoSoloNumeros(monto);
+      const pide = (pub.necesidades || []).map((n) => NECESIDADES[n] && NECESIDADES[n].oferta).filter(Boolean);
+      const orden = Object.keys(TIPOS_OFERTA).sort((a, b) => (pide.includes(b) ? 1 : 0) - (pide.includes(a) ? 1 : 0));
+      let tipo = miOferta ? miOferta.tipo : (orden[0] || 'invertir');
 
-      const lblNota = el('label', '', 'Mensaje para el emprendedor (opcional)');
-      lblNota.htmlFor = 'senalNota';
-      const nota = el('textarea');
-      nota.id = 'senalNota';
-      nota.maxLength = 300;
-      nota.placeholder = 'Ej: Me interesa conversar sobre condiciones.';
-      nota.value = miSenal && miSenal.nota ? miSenal.nota : '';
+      const fila = el('div'); fila.className = 'ax-checks'; fila.setAttribute('role', 'radiogroup');
+      const botones = {};
+      orden.forEach((t) => {
+        const b = el('button', '', TIPOS_OFERTA[t].icono + ' ' + TIPOS_OFERTA[t].texto + (pide.includes(t) ? ' ★' : ''));
+        b.type = 'button'; b.className = 'ax-check'; b.setAttribute('role', 'radio'); b.dataset.tipo = t; b.title = pide.includes(t) ? 'Lo que pide este proyecto' : '';
+        b.addEventListener('click', () => { tipo = t; actualizar(); });
+        botones[t] = b; fila.appendChild(b);
+      });
+      const leyenda = el('div', 'font-size:12px;color:var(--gris-neon);margin-top:8px;', pide.length ? '★ = lo que el proyecto está pidiendo' : '');
 
-      const acciones = el('div');
-      acciones.className = 'acciones';
+      const textoAyuda = el('p', 'font-size:13px;color:var(--gris-neon);margin:14px 0 0;');
+      const lblMonto = el('label', '', 'Monto que invertirías (en dólares, solo el número)'); lblMonto.htmlFor = 'ofertaMonto';
+      const monto = el('input'); monto.type = 'text'; monto.id = 'ofertaMonto'; monto.inputMode = 'numeric'; monto.autocomplete = 'off'; monto.placeholder = 'Ej: 5000'; monto.maxLength = 11;
+      monto.value = miOferta && miOferta.monto ? String(miOferta.monto) : ''; campoSoloNumeros(monto);
+      const lblNota = el('label', '', 'Mensaje para el emprendedor'); lblNota.htmlFor = 'ofertaNota';
+      const nota = el('textarea'); nota.id = 'ofertaNota'; nota.maxLength = 300; nota.value = miOferta && miOferta.nota ? miOferta.nota : '';
 
-      const guardar = botonModal(miSenal ? 'Actualizar señal' : 'Enviar señal', 'btn-primary', async () => {
-        let valor;
-        try { valor = leerMonto(monto.value, true); }
-        catch (e) { mostrarNotificacion(e.message, 'error'); monto.focus(); return; }
+      function actualizar() {
+        Object.entries(botones).forEach(([t, b]) => { b.classList.toggle('activa', t === tipo); b.setAttribute('aria-checked', String(t === tipo)); });
+        textoAyuda.textContent = TIPOS_OFERTA[tipo].ayuda;
+        const esInv = tipo === 'invertir';
+        lblMonto.style.display = monto.style.display = esInv ? '' : 'none';
+        lblNota.textContent = esInv ? 'Mensaje para el emprendedor (opcional)' : 'Cuéntale qué aportas (mínimo 10 caracteres)';
+        nota.placeholder = esInv ? 'Ej: Me interesa conversar sobre condiciones.' : TIPOS_OFERTA[tipo].ayuda;
+      }
+      actualizar();
+
+      const acciones = el('div'); acciones.className = 'acciones';
+      const guardar = botonModal(miOferta ? 'Actualizar oferta' : 'Enviar oferta', 'btn-primary', async () => {
+        const esInv = tipo === 'invertir';
+        let valor = null;
+        if (esInv) { try { valor = leerMonto(monto.value, true); } catch (e) { mostrarNotificacion(e.message, 'error'); monto.focus(); return; } }
+        const texto = nota.value.trim().slice(0, 300);
+        if (!esInv && texto.length < 10) { mostrarNotificacion('Cuéntale al emprendedor qué aportas (mínimo 10 caracteres)', 'error'); nota.focus(); return; }
 
         guardar.disabled = true;
         const user = await getCurrentUser();
-        const datosNota = nota.value.trim().slice(0, 300) || null;
         let error;
-        if (miSenal) {
-          ({ error } = await window.supabaseClient.from('senales_interes')
-            .update({ monto: valor, nota: datosNota })
-            .eq('publicacion_id', pub.id).eq('usuario_id', user.id));
+        const cambioTipo = miOferta && miOferta.tipo !== tipo;
+        if (miOferta && !cambioTipo) {
+          ({ error } = await window.supabaseClient.from('senales_interes').update({ monto: valor, nota: texto || null }).eq('publicacion_id', pub.id).eq('usuario_id', user.id));
         } else {
-          ({ error } = await window.supabaseClient.from('senales_interes')
-            .insert([{ publicacion_id: pub.id, usuario_id: user.id, monto: valor, nota: datosNota }]));
+          if (cambioTipo) {
+            const r = await window.supabaseClient.from('senales_interes').delete().eq('publicacion_id', pub.id).eq('usuario_id', user.id);
+            if (r.error) { mostrarNotificacion('No se pudo cambiar tu oferta', 'error'); guardar.disabled = false; return; }
+          }
+          ({ error } = await window.supabaseClient.from('senales_interes').insert([{ publicacion_id: pub.id, usuario_id: user.id, tipo, monto: valor, nota: texto || null }]));
         }
         if (error) {
-          console.error('Error guardando señal:', error);
-          mostrarNotificacion(error.code === '42501' ? 'No puedes enviar una señal a este proyecto' : 'No se pudo guardar tu señal', 'error');
+          console.error('Error guardando oferta:', error);
+          mostrarNotificacion(error.code === '42501' ? 'No puedes enviar una oferta a este proyecto' : 'No se pudo guardar tu oferta', 'error');
           guardar.disabled = false;
           return;
         }
         const { data: p } = await window.supabaseClient.from('publicaciones').select('senales_count').eq('id', pub.id).maybeSingle();
         cerrar();
-        mostrarNotificacion(miSenal ? 'Señal actualizada' : '💰 Señal enviada al emprendedor');
-        if (alGuardar) alGuardar({ monto: valor, nota: datosNota, count: p ? p.senales_count : undefined });
+        mostrarNotificacion(miOferta ? 'Oferta actualizada' : '✋ Oferta enviada al emprendedor');
+        if (alGuardar) alGuardar({ tipo, monto: valor, nota: texto || null, count: p ? p.senales_count : undefined });
       });
 
       acciones.append(botonModal('Cancelar', 'btn-secondary', cerrar));
-      if (miSenal) {
-        acciones.append(botonModal('Retirar señal', 'btn-secondary', async () => {
-          if (!confirm('¿Retirar tu señal de interés?')) return;
+      if (miOferta) {
+        acciones.append(botonModal('Retirar oferta', 'btn-secondary', async () => {
+          if (!confirm('¿Retirar tu oferta?')) return;
           const user = await getCurrentUser();
-          const { error } = await window.supabaseClient.from('senales_interes')
-            .delete().eq('publicacion_id', pub.id).eq('usuario_id', user.id);
-          if (error) { mostrarNotificacion('No se pudo retirar la señal', 'error'); return; }
+          const { error } = await window.supabaseClient.from('senales_interes').delete().eq('publicacion_id', pub.id).eq('usuario_id', user.id);
+          if (error) { mostrarNotificacion('No se pudo retirar la oferta', 'error'); return; }
           const { data: p } = await window.supabaseClient.from('publicaciones').select('senales_count').eq('id', pub.id).maybeSingle();
           cerrar();
-          mostrarNotificacion('Señal retirada');
+          mostrarNotificacion('Oferta retirada');
           if (alGuardar) alGuardar(null, p ? p.senales_count : undefined);
         }));
       }
       acciones.append(guardar);
-
-      caja.append(h, ayuda, lblMonto, monto, lblNota, nota, acciones);
-      monto.focus();
+      caja.append(h, ayuda, fila, leyenda, textoAyuda, lblMonto, monto, lblNota, nota, acciones);
     });
   }
 
-  // El dueño del proyecto ve quién mostró interés y cuánto
+  // El dueño ve sus ofertas como un tablero y las va moviendo de estado
   async function abrirModalSenalesRecibidas(pubId, titulo) {
     const { data, error } = await window.supabaseClient
       .from('senales_interes')
-      .select('monto, nota, created_at, usuario_id, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)')
+      .select('id, tipo, estado, monto, nota, created_at, usuario_id, usuario:usuarios(nombre_completo, nombre_usuario, foto_perfil)')
       .eq('publicacion_id', pubId)
-      .order('monto', { ascending: false });
+      .order('created_at', { ascending: false });
 
     abrirModal((caja, cerrar) => {
-      const h = el('h3', '', '💰 Señales de interés');
-      const ayuda = el('p', '', `Personas interesadas en "${String(titulo).slice(0, 80)}". Esta información es privada.`);
+      const h = el('h3', '', '✋ Ofertas recibidas');
+      const ayuda = el('p', '', `Personas que quieren sumarse a "${String(titulo).slice(0, 80)}". Esta información es privada: solo tú la ves.`);
       ayuda.className = 'ayuda';
       caja.append(h, ayuda);
 
-      if (error) {
-        caja.append(el('p', 'color: var(--error);', 'No se pudieron cargar las señales.'));
-      } else if (!data || data.length === 0) {
-        caja.append(el('p', 'color: var(--gris-neon);', 'Todavía nadie ha enviado una señal. Comparte tu proyecto para recibir las primeras.'));
-      } else {
-        const total = data.reduce((s, x) => s + Number(x.monto), 0);
-        caja.append(el('p', 'margin-bottom: 14px; font-weight: 600;', `${data.length} señal(es) · Total: ${formatoUSD(total)}`));
-        data.forEach(s => {
-          const fila = el('div', 'display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--gris-medio); align-items:flex-start;');
+      if (error) caja.append(el('p', 'color: var(--error);', 'No se pudieron cargar las ofertas.'));
+      else if (!data || data.length === 0) caja.append(el('p', 'color: var(--gris-neon);', 'Todavía no hay ofertas. Comparte tu proyecto y publica un hito para atraer a las primeras.'));
+      else {
+        const inv = data.filter((x) => x.tipo === 'invertir' && x.monto);
+        const total = inv.reduce((s, x) => s + Number(x.monto), 0);
+        const porTipo = {}; data.forEach((x) => { porTipo[x.tipo] = (porTipo[x.tipo] || 0) + 1; });
+        caja.append(el('p', 'margin-bottom: 14px; font-weight: 600; line-height: 1.6;',
+          `${data.length} oferta(s) · ` + Object.entries(porTipo).map(([t, n]) => `${(TIPOS_OFERTA[t] || {}).icono || ''} ${n}`).join('  ') + (total ? ` · Capital ofrecido: ${formatoUSD(total)}` : '')));
+        data.forEach((s) => {
+          const info = TIPOS_OFERTA[s.tipo] || { icono: '✋', texto: s.tipo };
+          const fila = el('div', 'display:flex; gap:12px; padding:14px 0; border-top:1px solid var(--gris-medio); align-items:flex-start; flex-wrap:wrap;' + (s.estado === 'descartada' ? 'opacity:.55;' : ''));
           const foto = el('img', 'width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;');
-          foto.src = urlImagenCruda(s.usuario && s.usuario.foto_perfil);
-          foto.alt = '';
-          const info = el('div', 'flex:1; min-width:0;');
-          const nombre = el('div', 'font-weight:600;', s.usuario ? s.usuario.nombre_completo : 'Usuario');
-          const dinero = el('div', 'color: var(--acento); font-weight:700;', formatoUSD(s.monto));
-          info.append(nombre, dinero);
-          if (s.nota) info.append(el('div', 'font-size:13px; color: var(--gris-neon); margin-top:4px; white-space:pre-wrap; word-break:break-word;', s.nota));
-          const escribir = botonModal('💬 Escribir', 'btn-secondary', () => {
-            window.location.href = 'chat.html?nuevo=' + encodeURIComponent(s.usuario_id);
+          foto.src = urlImagenCruda(s.usuario && s.usuario.foto_perfil); foto.alt = '';
+          const cuerpo = el('div', 'flex:1; min-width:180px;');
+          cuerpo.append(el('div', 'font-weight:700;', s.usuario ? s.usuario.nombre_completo : 'Usuario'),
+            el('div', 'color: var(--acento); font-weight:700;', `${info.icono} ${info.texto}` + (s.monto ? ` · ${formatoUSD(s.monto)}` : '')));
+          if (s.nota) cuerpo.append(el('div', 'font-size:13px; color: var(--gris-neon); margin-top:4px; white-space:pre-wrap; word-break:break-word;', s.nota));
+          const sel = el('select', 'padding:8px 10px; border-radius:10px; border:1px solid var(--borde-fuerte); background: var(--negro); color: var(--blanco); font-family:inherit; font-size:13px;');
+          sel.setAttribute('aria-label', 'Estado de la oferta');
+          Object.entries(ESTADOS_OFERTA).forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; if (v === s.estado) o.selected = true; sel.appendChild(o); });
+          sel.addEventListener('change', async () => {
+            const { error: e2 } = await window.supabaseClient.from('senales_interes').update({ estado: sel.value }).eq('id', s.id);
+            if (e2) { mostrarNotificacion('No se pudo cambiar el estado', 'error'); sel.value = s.estado; return; }
+            s.estado = sel.value; fila.style.opacity = sel.value === 'descartada' ? '.55' : '1';
+            mostrarNotificacion('Estado: ' + ESTADOS_OFERTA[sel.value]);
           });
+          const escribir = botonModal('💬 Escribir', 'btn-secondary', () => { window.location.href = 'chat.html?nuevo=' + encodeURIComponent(s.usuario_id); });
           escribir.style.padding = '8px 12px';
-          fila.append(foto, info, escribir);
-          caja.append(fila);
+          const lado = el('div', 'display:flex; flex-direction:column; gap:8px; align-items:stretch;'); lado.append(sel, escribir);
+          fila.append(foto, cuerpo, lado); caja.append(fila);
         });
       }
-      const acciones = el('div');
-      acciones.className = 'acciones';
+      const acciones = el('div'); acciones.className = 'acciones';
       acciones.append(botonModal('Cerrar', 'btn-secondary', cerrar));
       caja.append(acciones);
+    });
+  }
+
+  // ---------- HITOS (progreso verificable) ----------
+  function abrirModalHito(pub, alGuardar) {
+    abrirModal((caja, cerrar) => {
+      const h = el('h3', '', '🏁 Publicar un hito');
+      const ayuda = el('p', '', `Cuenta un avance real de "${String(pub.titulo).slice(0, 80)}": una venta, un cliente, un lanzamiento, una cifra. Los proyectos con hitos recientes aparecen como 🔥 En movimiento.`);
+      ayuda.className = 'ayuda';
+      const lblT = el('label', '', 'Qué lograste'); lblT.htmlFor = 'hitoTitulo';
+      const t = el('input'); t.type = 'text'; t.id = 'hitoTitulo'; t.maxLength = 100; t.placeholder = 'Ej: Primeras 50 ventas';
+      const lblD = el('label', '', 'Detalle (opcional)'); lblD.htmlFor = 'hitoDetalle';
+      const d = el('textarea'); d.id = 'hitoDetalle'; d.maxLength = 300; d.placeholder = 'Ej: Lo logramos en 3 semanas, con 4 comercios en Medellín.';
+      const acciones = el('div'); acciones.className = 'acciones';
+      const guardar = botonModal('Publicar hito', 'btn-primary', async () => {
+        const titulo = t.value.trim();
+        if (titulo.length < 3) { mostrarNotificacion('Escribe qué lograste (mínimo 3 caracteres)', 'error'); t.focus(); return; }
+        guardar.disabled = true;
+        const user = await getCurrentUser();
+        const { error } = await window.supabaseClient.from('hitos').insert([{ publicacion_id: pub.id, usuario_id: user.id, titulo, detalle: d.value.trim() || null }]);
+        if (error) { console.error(error); mostrarNotificacion('No se pudo publicar el hito', 'error'); guardar.disabled = false; return; }
+        cerrar(); mostrarNotificacion('🏁 Hito publicado');
+        if (alGuardar) alGuardar();
+      });
+      acciones.append(botonModal('Cancelar', 'btn-secondary', cerrar), guardar);
+      caja.append(h, ayuda, lblT, t, lblD, d, acciones);
+      t.focus();
     });
   }
 
@@ -871,9 +1024,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.Proyectos = {
-    CATEGORIAS, ETAPAS, MONTO_MAX,
+    CATEGORIAS, ETAPAS, NECESIDADES, TIPOS_OFERTA, ESTADOS_OFERTA, LAB, LAB_TOTAL, MONTO_MAX,
     formatoUSD, soloDigitos, leerMonto, campoSoloNumeros, limpiarCiudad, terminoBusqueda,
-    chipsProyecto, abrirModal, abrirModalSenal, abrirModalSenalesRecibidas, abrirModalTesis
+    chipsProyecto, necesidadesHTML, enMovimiento, progresoLab, selectorNecesidades,
+    abrirModal, abrirModalSenal, abrirModalSenalesRecibidas, abrirModalHito, abrirModalTesis
   };
 })();
 
@@ -1429,3 +1583,4 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
 })();
+

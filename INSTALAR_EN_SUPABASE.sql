@@ -8,7 +8,7 @@
 
 
 -- #####################################################################
--- PARTE 1 de 4 · Seguridad (RLS), funciones y primer administrador
+-- PARTE 1 de 5 · Seguridad (RLS), funciones y primer administrador
 -- #####################################################################
 
 -- =====================================================================
@@ -415,7 +415,7 @@ update public.usuarios
 
 
 -- #####################################################################
--- PARTE 2 de 4 · Archivos subidos
+-- PARTE 2 de 5 · Archivos subidos
 -- #####################################################################
 
 -- =====================================================================
@@ -526,7 +526,7 @@ create policy chat_borrar_propio on storage.objects for delete to authenticated
 
 
 -- #####################################################################
--- PARTE 3 de 4 · Moderación (reportes y panel)
+-- PARTE 3 de 5 · Moderación (reportes y panel)
 -- #####################################################################
 
 -- =====================================================================
@@ -695,7 +695,7 @@ grant execute on function public.admin_mostrar_publicacion(uuid)               t
 
 
 -- #####################################################################
--- PARTE 4 de 4 · Ficha, señales, bitácora, Para ti y notificaciones
+-- PARTE 4 de 5 · Ficha, señales, bitácora, Para ti y notificaciones
 -- #####################################################################
 
 -- =====================================================================
@@ -1195,5 +1195,192 @@ grant  execute on function public.registrar_push(text, text, text, text)        
 grant  execute on function public.deal_flow(integer)                               to authenticated;
 grant  execute on function public.bitacora_visible(uuid)                           to authenticated;
 grant  execute on function public.es_participante(uuid, uuid)                      to authenticated;
+
+
+-- #####################################################################
+-- PARTE 5 de 5 · Necesidades, ofertas, hitos y Lab privado
+-- #####################################################################
+
+-- =====================================================================
+-- ARNEXU · PASO 5 de 5 · Necesidades, ofertas, hitos y Lab privado
+-- Ejecuta DESPUÉS de 01 a 04. Es seguro ejecutarlo más de una vez.
+--
+-- La idea: en Arnexu cada publicación PIDE algo (necesidades) y cada
+-- interacción OFRECE algo (ofertas). Lo que se publica es PROGRESO (hitos).
+-- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- 1. NECESIDADES de cada proyecto + pulso (movimiento reciente)
+-- ---------------------------------------------------------------------
+alter table public.publicaciones add column if not exists necesidades    text[]      not null default '{}';
+alter table public.publicaciones add column if not exists hitos_count    integer     not null default 0;
+alter table public.publicaciones add column if not exists ultimo_hito_en timestamptz;
+
+alter table public.publicaciones drop constraint if exists pub_necesidades_validas;
+alter table public.publicaciones add constraint pub_necesidades_validas
+  check (necesidades <@ array['capital','socio','talento','mentoria','clientes']::text[] and cardinality(necesidades) <= 5) not valid;
+
+grant insert (necesidades) on public.publicaciones to authenticated;
+grant update (necesidades) on public.publicaciones to authenticated;
+create index if not exists pub_idx_necesidades on public.publicaciones using gin (necesidades);
+create index if not exists pub_idx_movimiento  on public.publicaciones (ultimo_hito_en desc nulls last, created_at desc);
+
+-- ---------------------------------------------------------------------
+-- 2. OFERTAS (antes "señales de interés"): ahora con tipo y estado
+--    tipos:   invertir | socio | talento | mentoria | cliente
+--    estados: nueva | conversando | aceptada | descartada   (los cambia el dueño del proyecto)
+-- ---------------------------------------------------------------------
+alter table public.senales_interes add column if not exists tipo   text not null default 'invertir';
+alter table public.senales_interes add column if not exists estado text not null default 'nueva';
+alter table public.senales_interes alter column monto drop not null;
+
+alter table public.senales_interes drop constraint if exists senal_tipo_valido;
+alter table public.senales_interes add constraint senal_tipo_valido
+  check (tipo in ('invertir','socio','talento','mentoria','cliente'));
+alter table public.senales_interes drop constraint if exists senal_estado_valido;
+alter table public.senales_interes add constraint senal_estado_valido
+  check (estado in ('nueva','conversando','aceptada','descartada'));
+alter table public.senales_interes drop constraint if exists senal_monto_segun_tipo;
+alter table public.senales_interes add constraint senal_monto_segun_tipo
+  check (tipo <> 'invertir' or monto is not null);
+alter table public.senales_interes drop constraint if exists senal_nota_segun_tipo;
+alter table public.senales_interes add constraint senal_nota_segun_tipo
+  check (tipo = 'invertir' or char_length(btrim(coalesce(nota, ''))) >= 10) not valid;
+
+grant insert (publicacion_id, usuario_id, monto, nota, tipo) on public.senales_interes to authenticated;
+grant update (monto, nota, estado) on public.senales_interes to authenticated;
+
+-- El dueño del proyecto puede cambiar el estado de las ofertas que recibe
+drop policy if exists senales_update_dueno on public.senales_interes;
+create policy senales_update_dueno on public.senales_interes for update to authenticated
+  using      (exists (select 1 from public.publicaciones p where p.id = publicacion_id and p.usuario_id = auth.uid()))
+  with check (exists (select 1 from public.publicaciones p where p.id = publicacion_id and p.usuario_id = auth.uid()));
+
+-- Cada quien toca solo lo suyo: quien ofrece edita monto y mensaje; el dueño cambia solo el estado
+create or replace function public.senales_proteger_columnas()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_dueno uuid;
+begin
+  if auth.uid() is null then return new; end if;
+  select usuario_id into v_dueno from public.publicaciones where id = old.publicacion_id;
+  if auth.uid() = old.usuario_id then
+    if new.estado is distinct from old.estado then
+      raise exception 'Solo el dueño del proyecto puede cambiar el estado de la oferta' using errcode = '42501';
+    end if;
+  elsif auth.uid() = v_dueno then
+    if new.monto is distinct from old.monto or new.nota is distinct from old.nota then
+      raise exception 'Solo quien hizo la oferta puede cambiar su contenido' using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists trg_senales_proteger on public.senales_interes;
+create trigger trg_senales_proteger before update on public.senales_interes
+  for each row execute function public.senales_proteger_columnas();
+
+-- Notificación push según el tipo de oferta
+create or replace function public.push_por_senal()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_dueno uuid; v_titulo text; v_nombre text; v_que text;
+begin
+  select usuario_id, titulo into v_dueno, v_titulo from public.publicaciones where id = new.publicacion_id;
+  select nombre_completo into v_nombre from public.usuarios where id = new.usuario_id;
+  v_que := case new.tipo
+    when 'invertir' then 'invertir USD ' || coalesce(to_char(new.monto, 'FM999,999,999,999'), '?')
+    when 'socio'    then 'ser tu socio'
+    when 'talento'  then 'aportar su talento'
+    when 'mentoria' then 'mentorearte'
+    when 'cliente'  then 'ser cliente piloto'
+    else 'participar' end;
+  perform public.enviar_push(v_dueno, '✋ Nueva oferta para tu proyecto',
+    coalesce(v_nombre, 'Alguien') || ' quiere ' || v_que || ' en "' || left(coalesce(v_titulo, 'tu proyecto'), 60) || '"',
+    'perfil.html', 'senal-' || new.publicacion_id);
+  return null;
+end $$;
+
+-- ---------------------------------------------------------------------
+-- 3. HITOS: lo que se publica es progreso (verificable), no opinión
+-- ---------------------------------------------------------------------
+create table if not exists public.hitos (
+  id             uuid primary key default gen_random_uuid(),
+  publicacion_id uuid not null references public.publicaciones(id) on delete cascade,
+  usuario_id     uuid not null references public.usuarios(id) on delete cascade,
+  titulo         text not null check (char_length(btrim(titulo)) between 3 and 100),
+  detalle        text check (detalle is null or char_length(detalle) <= 300),
+  created_at     timestamptz not null default now()
+);
+create index if not exists hitos_idx_pub   on public.hitos (publicacion_id, created_at desc);
+create index if not exists hitos_idx_fecha on public.hitos (created_at desc);
+
+create or replace function public.actualizar_pulso()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_pub uuid := coalesce(new.publicacion_id, old.publicacion_id);
+begin
+  update public.publicaciones p
+     set hitos_count    = (select count(*) from public.hitos h where h.publicacion_id = v_pub),
+         ultimo_hito_en = (select max(h.created_at) from public.hitos h where h.publicacion_id = v_pub)
+   where p.id = v_pub;
+  return null;
+end $$;
+
+drop trigger if exists trg_pulso on public.hitos;
+create trigger trg_pulso after insert or delete on public.hitos
+  for each row execute function public.actualizar_pulso();
+
+alter table public.hitos enable row level security;
+drop policy if exists hitos_select on public.hitos;
+drop policy if exists hitos_insert on public.hitos;
+drop policy if exists hitos_delete on public.hitos;
+create policy hitos_select on public.hitos for select to authenticated
+  using (exists (select 1 from public.publicaciones p where p.id = publicacion_id));
+create policy hitos_insert on public.hitos for insert to authenticated
+  with check (
+    usuario_id = auth.uid()
+    and not public.esta_suspendido()
+    and exists (select 1 from public.publicaciones p where p.id = publicacion_id and p.usuario_id = auth.uid())
+  );
+create policy hitos_delete on public.hitos for delete to authenticated
+  using (usuario_id = auth.uid() or public.soy_admin());
+
+revoke all on public.hitos from anon, authenticated;
+grant select, delete on public.hitos to authenticated;
+grant insert (publicacion_id, usuario_id, titulo, detalle) on public.hitos to authenticated;
+
+-- ---------------------------------------------------------------------
+-- 4. MI LAB (privado): lista de preparación y notas de cada proyecto.
+--    Solo la persona dueña lo ve; nadie más, ni siquiera los administradores desde la web.
+-- ---------------------------------------------------------------------
+create table if not exists public.lab_privado (
+  id             uuid primary key default gen_random_uuid(),
+  usuario_id     uuid not null references public.usuarios(id) on delete cascade,
+  publicacion_id uuid not null references public.publicaciones(id) on delete cascade,
+  estado         jsonb not null default '{}'::jsonb,
+  notas          jsonb not null default '{}'::jsonb,
+  updated_at     timestamptz not null default now(),
+  unique (usuario_id, publicacion_id),
+  check (char_length(estado::text) <= 4000 and char_length(notas::text) <= 16000)
+);
+
+drop trigger if exists trg_lab_privado_updated on public.lab_privado;
+create trigger trg_lab_privado_updated before update on public.lab_privado
+  for each row execute function public.set_updated_at();
+
+alter table public.lab_privado enable row level security;
+drop policy if exists lab_priv_select on public.lab_privado;
+drop policy if exists lab_priv_insert on public.lab_privado;
+drop policy if exists lab_priv_update on public.lab_privado;
+drop policy if exists lab_priv_delete on public.lab_privado;
+create policy lab_priv_select on public.lab_privado for select to authenticated using (usuario_id = auth.uid());
+create policy lab_priv_insert on public.lab_privado for insert to authenticated
+  with check (usuario_id = auth.uid() and exists (select 1 from public.publicaciones p where p.id = publicacion_id and p.usuario_id = auth.uid()));
+create policy lab_priv_update on public.lab_privado for update to authenticated
+  using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+create policy lab_priv_delete on public.lab_privado for delete to authenticated using (usuario_id = auth.uid());
+
+revoke all on public.lab_privado from anon, authenticated;
+grant select, delete on public.lab_privado to authenticated;
+grant insert (usuario_id, publicacion_id, estado, notas) on public.lab_privado to authenticated;
+grant update (estado, notas) on public.lab_privado to authenticated;
 
 
